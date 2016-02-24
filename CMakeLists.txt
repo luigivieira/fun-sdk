@@ -41,11 +41,6 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 # Qt configuration
-if(WIN32)
-    set (CMAKE_PREFIX_PATH "C:\\Qt\\Qt5.6.0\\5.6\\msvc2015\\")
-elseif(UNIX)
-    set(CMAKE_PREFIX_PATH $ENV{HOME}/Qt5.5.1/5.5/gcc/)
-endif()
 set(CMAKE_INCLUDE_CURRENT_DIR ON) # Find includes in corresponding build directories
 set(CMAKE_AUTOMOC ON) # Instruct CMake to run moc automatically when needed
 find_package(Qt5Core)
