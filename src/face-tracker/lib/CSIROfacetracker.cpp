@@ -17,7 +17,27 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define FSDK_VERSION_MAJOR @FSDK_VERSION_MAJOR@
-#define FSDK_VERSION_MINOR @FSDK_VERSION_MINOR@
-#define FSDK_VERSION_PATCH @FSDK_VERSION_PATCH@
-#define FSDK_VERSION "@FSDK_VERSION@"
+#include "CSIROfacetracker.h"
+
+// +-----------------------------------------------------------
+fsdk::CSIROFaceTracker::CSIROFaceTracker()
+{
+}
+
+// +-----------------------------------------------------------
+void fsdk::CSIROFaceTracker::track(const Mat &oFrame)
+{
+
+}
+
+// +-----------------------------------------------------------
+float fsdk::CSIROFaceTracker::getQuality()
+{
+	return 0.85f;
+}
+
+// +-----------------------------------------------------------
+void fsdk::CSIROFaceTracker::reset()
+{
+
+}

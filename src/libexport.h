@@ -16,8 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+ 
+#ifndef LIBEXPORT_H
+#define LIBEXPORT_H
+ 
+#if defined(_WIN32)
+	#if defined(COMPILING_LIB)
+		#define LIBEXPORT __declspec(dllexport)
+	#else
+		#define LIBEXPORT __declspec(dllimport)
+	#endif
+#else
+    #define LIBEXPORT
+#endif
 
-#define FSDK_VERSION_MAJOR @FSDK_VERSION_MAJOR@
-#define FSDK_VERSION_MINOR @FSDK_VERSION_MINOR@
-#define FSDK_VERSION_PATCH @FSDK_VERSION_PATCH@
-#define FSDK_VERSION "@FSDK_VERSION@"
+#endif // LIBEXPORT_H

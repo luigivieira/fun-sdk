@@ -15,13 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-# Minimum CMake version required 
-cmake_minimum_required(VERSION 2.8.11)
-
-# Project information
+cmake_minimum_required(VERSION 3.1.0)
 project (fun-sdk)
 
-# Version data and header file
+#############################################
+# Configuration
+#############################################
+
 set (FSDK_VERSION_MAJOR 1)
 set (FSDK_VERSION_MINOR 0)
 set (FSDK_VERSION_PATCH 0)
@@ -30,21 +30,29 @@ configure_file (
   "${PROJECT_SOURCE_DIR}/version.h.in"
   "${PROJECT_BINARY_DIR}/version.h"
 )
+include_directories(src/)
 include_directories("${PROJECT_BINARY_DIR}")
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-# Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
-  # Set the possible values of build type for cmake-gui
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
     "MinSizeRel" "RelWithDebInfo")
 endif()
 
-# Qt configuration
-set(CMAKE_INCLUDE_CURRENT_DIR ON) # Find includes in corresponding build directories
-set(CMAKE_AUTOMOC ON) # Instruct CMake to run moc automatically when needed
-find_package(Qt5Core)
-find_package(Qt5Widgets)
+# Qt5
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+find_package(Qt5 REQUIRED Core Gui Widgets)
+list(APPEND Qt5_LIBS Qt5::Core Qt5::Gui Qt5::Widgets)
 
-# GUI application
-add_subdirectory(gui)
+# OpenCV
+find_package(OpenCV REQUIRED core highgui imgproc)
+include_directories(${OpenCV_INCLUDE_DIRS})
+
+#############################################
+# Sub-projects
+#############################################
+
+add_subdirectory(src/face-tracker)
