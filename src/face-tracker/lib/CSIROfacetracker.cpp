@@ -17,7 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "CSIROfacetracker.h"
+#include "csirofacetracker.h"
 
 // +-----------------------------------------------------------
 fsdk::CSIROFaceTracker::CSIROFaceTracker()

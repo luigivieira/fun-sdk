@@ -23,7 +23,7 @@
 #include <QCoreApplication>
 #include <QCommandLineParser>
 
-#include "CSIROfacetracker.h"
+#include "csirofacetracker.h"
 
 using namespace std;
 
