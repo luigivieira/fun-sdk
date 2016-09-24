@@ -24,8 +24,10 @@
 #include <QCommandLineParser>
 
 #include "csirofacetracker.h"
+#include "csvfile.h"
 
 using namespace std;
+using namespace fsdk;
 
 // +-----------------------------------------------------------
 /**
@@ -163,13 +165,15 @@ int main(int argc, char* argv[])
 	}
 
 	if(bShowProgress)
-	{
-		cout << "Reading video from " << qPrintable(sVideoFile) << "..." << endl;
-		cout << "Saving CSV file to " << qPrintable(sCSVFile) << "..." << endl;
-		cout << "done." << endl;
-	}
-	else
-		cout << qPrintable(sVideoFile) << " " << qPrintable(sCSVFile) << endl;
+		cout << "Loading CSV file..." << endl;
+
+	CSVFile oFile("c:/temp/teste.csv");
+	bool bRet = oFile.load();
+
+	cout << "Rows: " << oFile.rows() << " Columns: " << oFile.columns() << endl;
+	cout << "Header: " << qPrintable(oFile.header().join(' ')) << endl;
+	cout << "First line: " << qPrintable(oFile.rowValues(0).join(' ')) << endl;
+	cout << "Last line: " << qPrintable(oFile.rowValues(oFile.rows() - 1).join(' ')) << endl;
     
     return 0;
 }

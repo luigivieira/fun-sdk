@@ -23,8 +23,8 @@ add_library(lib-ft SHARED ${LIB_FILES})
 add_executable(app-ft ${APP_FILES})
 add_executable(gui-ft ${GUI_FILES})
 
-target_include_directories(app-ft PUBLIC lib)
-target_include_directories(gui-ft PUBLIC lib)
+target_include_directories(app-ft PUBLIC lib ../utils)
+target_include_directories(gui-ft PUBLIC lib ../utils)
 
 set_target_properties(lib-ft PROPERTIES OUTPUT_NAME fsdk-ft)
 set_target_properties(lib-ft PROPERTIES OUTPUT_NAME_DEBUG fsdk-ftd)
@@ -35,5 +35,5 @@ set_target_properties(gui-ft PROPERTIES OUTPUT_NAME fsdk-ft-gui)
 set_target_properties(gui-ft PROPERTIES OUTPUT_NAME_DEBUG fsdk-ft-guid)
 
 target_link_libraries(lib-ft ${OpenCV_LIBS})
-target_link_libraries(app-ft Qt5::Core lib-fsdk-ft)
-target_link_libraries(gui-ft ${Qt5_LIBS} lib-fsdk-ft)
+target_link_libraries(app-ft Qt5::Core lib-utils lib-ft )
+target_link_libraries(gui-ft ${Qt5_LIBS} lib-utils lib-ft)

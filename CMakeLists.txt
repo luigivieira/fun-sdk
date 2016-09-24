@@ -55,4 +55,5 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 # Sub-projects
 #############################################
 
+add_subdirectory(src/utils)
 add_subdirectory(src/face-tracker)
