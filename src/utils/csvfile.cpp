@@ -44,40 +44,43 @@ bool fsdk::CSVFile::load(const bool bHasHeader)
 
 	int iColumns = -1;
 
-	QString sLine;
-	QStringList lHeader, lLine;
-	QList<QStringList> lValues;
+	QString sRow;
+	QStringList lHeader, lRow;
+	QList<QStringList> lRows;
 
 	if(bHasHeader)
 	{
-		sLine = oReader.readLine();
-		lHeader = sLine.split(m_cSeparator);
+		sRow = oReader.readLine();
+		lHeader = sRow.split(m_cSeparator);
 		iColumns = lHeader.count();
 	}
 
 	while(!oReader.atEnd())
 	{
-		sLine = oReader.readLine();
-		lLine = sLine.split(m_cSeparator);
+		sRow = oReader.readLine();
+		if(sRow.isEmpty()) // Ignore blank rows
+			continue;
+
+		lRow = sRow.split(m_cSeparator);
 
 		if(iColumns == -1)
-			iColumns = lLine.count();
+			iColumns = lRow.count();
 		
 		// Guarantee that header and each row have the
 		// exactly same number of elements
-		if(lLine.count() != iColumns)
+		if(lRow.count() != iColumns)
 		{
 			close();
 			return false;
 		}
 
-		lValues.push_back(lLine);
+		lRows.push_back(lRow);
 	}
 
 	close();
 
 	m_lHeader = lHeader;
-	m_lValues = lValues;
+	m_lRows = lRows;
 	m_iColumns = iColumns;
 	return true;
 }
@@ -92,15 +95,54 @@ bool fsdk::CSVFile::loadFromFile(const QString &sName, const bool bHasHeader)
 }
 
 // +-----------------------------------------------------------
-int fsdk::CSVFile::columns() const
+bool fsdk::CSVFile::save()
+{
+	if(!open(QIODevice::WriteOnly | QIODevice::Text))
+		return false;
+
+	QTextStream oWriter(this);
+
+	if(m_lHeader.count() > 0)
+		oWriter << m_lHeader.join(m_cSeparator) << endl;
+
+	foreach(QStringList lRow, m_lRows)
+		oWriter << lRow.join(m_cSeparator) << endl;
+	
+	close();
+	return true;
+}
+
+// +-----------------------------------------------------------
+bool fsdk::CSVFile::saveToFile(const QString &sName)
+{
+	if(isOpen())
+		close();
+	setFileName(sName);
+	return save();
+}
+
+// +-----------------------------------------------------------
+QChar fsdk::CSVFile::separator() const
+{
+	return m_cSeparator;
+}
+
+// +-----------------------------------------------------------
+void fsdk::CSVFile::setSeparator(const QChar cSeparator)
+{
+	m_cSeparator = cSeparator;
+}
+
+// +-----------------------------------------------------------
+int fsdk::CSVFile::columnsCount() const
 {
 	return m_iColumns;
 }
 
 // +-----------------------------------------------------------
-int fsdk::CSVFile::rows() const
+int fsdk::CSVFile::rowsCount() const
 {
-	return m_lValues.count();
+	return m_lRows.count();
 }
 
 // +-----------------------------------------------------------
@@ -128,27 +170,27 @@ bool fsdk::CSVFile::setHeader(const QStringList &lHeader)
 }
 
 // +-----------------------------------------------------------
-QList<QStringList> fsdk::CSVFile::values() const
+QList<QStringList> fsdk::CSVFile::rows() const
 {
-	return m_lValues;
+	return m_lRows;
 }
 
 // +-----------------------------------------------------------
-QStringList fsdk::CSVFile::rowValues(const int iRow) const
+QStringList fsdk::CSVFile::row(const int iRow) const
 {
-	if(iRow >= 0 && iRow < m_lValues.size())
-		return m_lValues[iRow];
+	if(iRow >= 0 && iRow < m_lRows.size())
+		return m_lRows[iRow];
 	else
 		return QStringList();
 }
 
 // +-----------------------------------------------------------
-bool fsdk::CSVFile::setValues(const QList<QStringList> &lValues)
+bool fsdk::CSVFile::setRows(const QList<QStringList> &lRows)
 {
 	int iColumns = -1;
 
 	// Check if all new rows have the same number of columns
-	foreach(QStringList lRow, lValues)
+	foreach(QStringList lRow, lRows)
 	{
 		if(iColumns == -1)
 			iColumns = lRow.count();
@@ -157,9 +199,9 @@ bool fsdk::CSVFile::setValues(const QList<QStringList> &lValues)
 			return false;
 	}
 
-	if(lValues.count() == 0 || iColumns == m_iColumns)
+	if(lRows.count() == 0 || iColumns == m_iColumns)
 	{
-		m_lValues = lValues;
+		m_lRows = lRows;
 		return true;
 	}
 	else
@@ -167,13 +209,13 @@ bool fsdk::CSVFile::setValues(const QList<QStringList> &lValues)
 }
 
 // +-----------------------------------------------------------
-bool fsdk::CSVFile::setRowValues(const int iRow, const QStringList &lValues)
+bool fsdk::CSVFile::setRow(const int iRow, const QStringList &lRow)
 {
-	if(iRow >= 0 && iRow < m_lValues.count())
+	if(iRow >= 0 && iRow < m_lRows.count())
 	{
-		if(lValues.count() == m_iColumns)
+		if(lRow.count() == m_iColumns)
 		{
-			m_lValues[iRow] = lValues;
+			m_lRows[iRow] = lRow;
 			return true;
 		}
 		else
