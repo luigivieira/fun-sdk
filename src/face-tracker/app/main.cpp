@@ -18,13 +18,11 @@
  */
 
 #include "version.h"
+#include "task.h"
 #include <iostream>
-
 #include <QCoreApplication>
 #include <QCommandLineParser>
-
-#include "csirofacetracker.h"
-#include "csvfile.h"
+#include <QTimer>
 
 using namespace std;
 using namespace fsdk;
@@ -135,11 +133,13 @@ int parseCommandLine(QCommandLineParser &oParser, QString &sErrorMessage, QStrin
  */
 int main(int argc, char* argv[])
 {
+	// Application definition
 	QCoreApplication oApp(argc, argv);
 
 	QCoreApplication::setApplicationName(QCoreApplication::translate("main", "FSDK Face Tracker (Command Line)"));
 	QCoreApplication::setApplicationVersion(FSDK_VERSION);
 	
+	// Parsing of command line options
 	QCommandLineParser oParser;
 	oParser.setApplicationDescription(QCoreApplication::translate("main", "Tracks facial landmarks in video streams and save them in a CSV file."));
 	
@@ -164,16 +164,15 @@ int main(int argc, char* argv[])
 			Q_UNREACHABLE();
 	}
 
-	if(bShowProgress)
-		cout << "Loading CSV file..." << endl;
+	// Processing
+	QStringList lVideos;
+	lVideos.append(sVideoFile);
+	Task *pTask = new Task(lVideos, sCSVFile, &oApp);
 
-	CSVFile oFile("c:/temp/teste.csv");
-	bool bRet = oFile.load();
+	pTask->setShowProgress(bShowProgress);
 
-	cout << "Rows: " << oFile.rows() << " Columns: " << oFile.columns() << endl;
-	cout << "Header: " << qPrintable(oFile.header().join(' ')) << endl;
-	cout << "First line: " << qPrintable(oFile.rowValues(0).join(' ')) << endl;
-	cout << "Last line: " << qPrintable(oFile.rowValues(oFile.rows() - 1).join(' ')) << endl;
+	QObject::connect(pTask, &Task::finished, &oApp, &QCoreApplication::exit);
+	QTimer::singleShot(0, pTask, &Task::run);
     
-    return 0;
+    return oApp.exec();
 }
