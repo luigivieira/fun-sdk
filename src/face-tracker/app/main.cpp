@@ -22,7 +22,9 @@
 #include <iostream>
 #include <QCoreApplication>
 #include <QCommandLineParser>
+#include <QDebug>
 #include <QTimer>
+#include <QDir>
 
 using namespace std;
 using namespace fsdk;
@@ -53,16 +55,16 @@ enum CommandLineParseResult
  * @param oParser Reference to the QCommandLineParser to help parsing the arguments.
  * @param sErrorMessage Reference to a QString to receive the error message in case
  * of errors are found while the arguments are parsed.
- * @param sVideoFile Reference to a QString to receive the path and name of the video
- * file received from the command line.
- * @param sCSVFile Reference to a QString to receive the path and name of the CSV
+ * @param sInput Reference to a QString to receive the name of the video file or the
+ * wildcard mask (for globbing) received from the command line.
+ * @param sOutput Reference to a QString to receive the path and name of the CSV
  * file received from the command line.
  * @param bShowProgress Reference to a boolean to receive the indication to show or
  * not the tracking progress received from the command line.
  * @return One of the values in the CommandLineParseResult enum indicating
  * how the parsing of the command line proceeded.
  */
-int parseCommandLine(QCommandLineParser &oParser, QString &sErrorMessage, QString &sVideoFile, QString &sCSVFile, bool &bShowProgress)
+int parseCommandLine(QCommandLineParser &oParser, QString &sErrorMessage, QString &sInput, QString &sOutput, bool &bShowProgress)
 {
 	oParser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
 
@@ -71,10 +73,10 @@ int parseCommandLine(QCommandLineParser &oParser, QString &sErrorMessage, QStrin
 	QCommandLineOption oVersionOpt = oParser.addVersionOption();
 
 	// Parameter: Input video file
-	oParser.addPositionalArgument("input", QCoreApplication::translate("main", "Input file with the video from where to track the face"), "<input video file>");
+	oParser.addPositionalArgument("input", QCoreApplication::translate("main", "File name or wildcard pattern with the input video file(s) from where to perform the face tracking"), "<input file name or mask>");
 
 	// Parameter: Output CSV file
-	oParser.addPositionalArgument("output", QCoreApplication::translate("main", "Output CSV file with the landmarks tracked in the input video file"), "<output CSV file>");
+	oParser.addPositionalArgument("output", QCoreApplication::translate("main", "File name with the output CSV file to be created with the landmarks tracked in the input video files"), "<output file name>");
 
 	// Parameter: Boolean indication on if progress must be shown
 	QCommandLineOption oShowProgressOpt(QStringList() << "p" << "progress",
@@ -113,10 +115,39 @@ int parseCommandLine(QCommandLineParser &oParser, QString &sErrorMessage, QStrin
 				return CommandLineError;
 		}
 
-		sVideoFile = oParser.positionalArguments()[0];
-		sCSVFile = oParser.positionalArguments()[1];
+		sInput = oParser.positionalArguments()[0];
+		sOutput = oParser.positionalArguments()[1];
 		bShowProgress = oParser.isSet(oShowProgressOpt);
 		return CommandLineOk;
+	}
+}
+
+/** Indication on whether the progress should be displayed (true) or not (false). */
+bool g_bShowProgress;
+
+// +-----------------------------------------------------------
+/**
+ * Captures and handles the application log messages.
+ * @param eType QtMsgType enum value with the type of the log event.
+ * @param oContext QMessageLogContext instance with information on where
+ * the event happened (function, line, etc).
+ * @param sMessage QString instance with the event message.
+ */
+void handleLogs(QtMsgType eType, const QMessageLogContext &oContext, const QString &sMessage)
+{
+	switch(eType)
+	{
+		case QtDebugMsg:
+		case QtInfoMsg:
+		case QtWarningMsg:
+			if(g_bShowProgress)
+				cout << sMessage.toStdString() << endl;
+			break;
+
+		case QtCriticalMsg:
+		case QtFatalMsg:
+			cerr << sMessage.toStdString() << endl;
+			break;
 	}
 }
 
@@ -138,21 +169,22 @@ int main(int argc, char* argv[])
 
 	QCoreApplication::setApplicationName(QCoreApplication::translate("main", "FSDK Face Tracker (Command Line)"));
 	QCoreApplication::setApplicationVersion(FSDK_VERSION);
-	
+
+	qInstallMessageHandler(&handleLogs);
+
 	// Parsing of command line options
 	QCommandLineParser oParser;
 	oParser.setApplicationDescription(QCoreApplication::translate("main", "Tracks facial landmarks in video streams and save them in a CSV file."));
 	
-	QString sErrorMsg, sVideoFile, sCSVFile;
-	bool bShowProgress;
-	switch(parseCommandLine(oParser, sErrorMsg, sVideoFile, sCSVFile, bShowProgress))
+	QString sErrorMsg, sInput, sOutput;
+	switch(parseCommandLine(oParser, sErrorMsg, sInput, sOutput, g_bShowProgress))
 	{
 		case CommandLineOk:
 			break;
 
 		case CommandLineError:
-			cerr << "(ERROR) " << qPrintable(sErrorMsg) << endl << endl;
-			cout << qPrintable(oParser.helpText()) << endl;
+			qCritical() << sErrorMsg << endl;
+			oParser.showHelp();
 			return 1;
 
 		case CommandLineVersionRequested:
@@ -165,11 +197,23 @@ int main(int argc, char* argv[])
 	}
 
 	// Processing
-	QStringList lVideos;
-	lVideos.append(sVideoFile);
-	Task *pTask = new Task(lVideos, sCSVFile, &oApp);
 
-	pTask->setShowProgress(bShowProgress);
+	QFileInfo oInput(sInput);
+
+	QStringList lVideos;
+	QDir oDir = oInput.dir();
+	oDir.setNameFilters(QStringList(oInput.fileName()));
+	foreach(QFileInfo oFile, oDir.entryInfoList())
+		lVideos.append(oFile.absoluteFilePath());
+
+	if(lVideos.count() == 0)
+	{
+		qCritical() << QCoreApplication::translate("main", "invalid file name or wildcard mask: %1").arg(sInput) << endl;
+		oParser.showHelp();
+		return 1;
+	}
+
+	Task *pTask = new Task(lVideos, sOutput, &oApp);
 
 	QObject::connect(pTask, &Task::finished, &oApp, &QCoreApplication::exit);
 	QTimer::singleShot(0, pTask, &Task::run);

@@ -36,10 +36,12 @@ fsdk::Task::Task(QStringList lVideoFiles, QString sCSVFile, QObject *pParent): Q
 // +-----------------------------------------------------------
 void fsdk::Task::run()
 {
-	qDebug() << "Teste de debug";
-	qWarning() << "Teste de warning";
-	qInfo() << "Teste de info";
+	foreach(QString sFile, m_lVideoFiles)
+		qInfo("Tracking face in video %s...", qPrintable(sFile));
 
+	qInfo("Saving data to CSV %s", qPrintable(m_sCSVFile));
+
+	qInfo("Done.");
 	emit finished(0);
 }
 
