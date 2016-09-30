@@ -36,12 +36,44 @@ fsdk::Task::Task(QStringList lVideoFiles, QString sCSVFile, QObject *pParent): Q
 // +-----------------------------------------------------------
 void fsdk::Task::run()
 {
-	foreach(QString sFile, m_lVideoFiles)
-		qInfo("Tracking face in video %s...", qPrintable(sFile));
+	VideoCapture oCap;
+	Mat oFrame;
 
-	qInfo("Saving data to CSV %s", qPrintable(m_sCSVFile));
+	for(int i = 0; i < m_lVideoFiles.count(); i++)
+	{
+		QString sFile = m_lVideoFiles[i];
+		qInfo(qPrintable(tr("processing video %d/%d: %s")), i+1, m_lVideoFiles.count(), qPrintable(sFile));
+		
+		if(!oCap.open(sFile.toStdString()))
+		{
+			qCritical(qPrintable(tr("could not read file %s")), qPrintable(sFile));
+			emit finished(i + 2);
+			return;
+		}
 
-	qInfo("Done.");
+		int iFrameCount = oCap.get(CV_CAP_PROP_FRAME_COUNT);
+		int iProg = 0, iLastProg = -1;
+		qDebug("\t");
+		qDebug(qPrintable(tr("completed:")));
+		qDebug("     ");
+		for(int iFrame = 0; iFrame < iFrameCount; iFrame++)
+		{
+			iProg = qRound(float(iFrame) / float(iFrameCount) * 100.0f);
+			if(iProg != iLastProg)
+			{
+				qDebug("\b\b\b\b%3d%%", iProg);
+				iLastProg = iProg;
+			}
+			oCap >> oFrame;
+		}
+		qDebug() << endl;
+
+		oCap.release();
+	}
+
+	qInfo(qPrintable(tr("saving data to %s")), qPrintable(m_sCSVFile));
+
+	qInfo(qPrintable(tr("done.")));
 	emit finished(0);
 }
 

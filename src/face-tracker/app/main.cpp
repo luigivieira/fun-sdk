@@ -138,6 +138,10 @@ void handleLogs(QtMsgType eType, const QMessageLogContext &oContext, const QStri
 	switch(eType)
 	{
 		case QtDebugMsg:
+			if(g_bShowProgress)
+				cout << sMessage.toStdString();
+			break;
+
 		case QtInfoMsg:
 		case QtWarningMsg:
 			if(g_bShowProgress)

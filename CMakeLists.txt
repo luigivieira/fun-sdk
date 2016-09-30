@@ -51,6 +51,9 @@ list(APPEND Qt5_LIBS Qt5::Core Qt5::Gui Qt5::Widgets)
 find_package(OpenCV REQUIRED core highgui imgproc)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
+# CSIRO Face Analysis SDK
+find_package(CSIRO REQUIRED clmTracker)
+
 #############################################
 # Sub-projects
 #############################################

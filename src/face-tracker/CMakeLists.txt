@@ -34,6 +34,6 @@ set_target_properties(app-ft PROPERTIES OUTPUT_NAME_DEBUG fsdk-ftd)
 set_target_properties(gui-ft PROPERTIES OUTPUT_NAME fsdk-ft-gui)
 set_target_properties(gui-ft PROPERTIES OUTPUT_NAME_DEBUG fsdk-ft-guid)
 
-target_link_libraries(lib-ft ${OpenCV_LIBS})
+target_link_libraries(lib-ft ${OpenCV_LIBS} clmTracker)
 target_link_libraries(app-ft Qt5::Core lib-utils lib-ft )
 target_link_libraries(gui-ft ${Qt5_LIBS} lib-utils lib-ft)
