@@ -18,13 +18,12 @@
  */
 
 #include "version.h"
-#include "task.h"
 #include <iostream>
 #include <QCoreApplication>
 #include <QCommandLineParser>
 #include <QDebug>
-#include <QTimer>
 #include <QDir>
+#include "consoleapp.h"
 
 using namespace std;
 using namespace fsdk;
@@ -75,8 +74,8 @@ int parseCommandLine(QCommandLineParser &oParser, QString &sErrorMessage, QStrin
 	// Parameter: Input video file
 	oParser.addPositionalArgument("input", QCoreApplication::translate("main", "File name or wildcard pattern with the input video file(s) from where to perform the face tracking"), "<input file name or mask>");
 
-	// Parameter: Output CSV file
-	oParser.addPositionalArgument("output", QCoreApplication::translate("main", "File name with the output CSV file to be created with the landmarks tracked in the input video files"), "<output file name>");
+	// Parameter: Output directory
+	oParser.addPositionalArgument("output", QCoreApplication::translate("main", "Directory where the CSV files will be created"), "<output directory>");
 
 	// Parameter: Boolean indication on if progress must be shown
 	QCommandLineOption oShowProgressOpt(QStringList() << "p" << "progress",
@@ -138,10 +137,6 @@ void handleLogs(QtMsgType eType, const QMessageLogContext &oContext, const QStri
 	switch(eType)
 	{
 		case QtDebugMsg:
-			if(g_bShowProgress)
-				cout << sMessage.toStdString();
-			break;
-
 		case QtInfoMsg:
 		case QtWarningMsg:
 			if(g_bShowProgress)
@@ -166,6 +161,7 @@ void handleLogs(QtMsgType eType, const QMessageLogContext &oContext, const QStri
  *		0 indicates success
  *		1 indicates error in the command line call
  */
+
 int main(int argc, char* argv[])
 {
 	// Application definition
@@ -187,7 +183,7 @@ int main(int argc, char* argv[])
 			break;
 
 		case CommandLineError:
-			qCritical() << sErrorMsg << endl;
+			qCritical(qPrintable(sErrorMsg));
 			oParser.showHelp();
 			return 1;
 
@@ -212,15 +208,22 @@ int main(int argc, char* argv[])
 
 	if(lVideos.count() == 0)
 	{
-		qCritical() << QCoreApplication::translate("main", "invalid file name or wildcard mask: %1").arg(sInput) << endl;
+		qCritical(qPrintable(QCoreApplication::translate("main", "invalid file name or wildcard mask: %1").arg(sInput)));
 		oParser.showHelp();
-		return 1;
+		return -1;
 	}
 
-	Task *pTask = new Task(lVideos, sOutput, &oApp);
+	QDir oOutput(sOutput);
+	if(!oOutput.exists())
+	{
+		qCritical(qPrintable(QCoreApplication::translate("main", "invalid file name or wildcard mask: %1").arg(sInput)));
+		oParser.showHelp();
+		return -2;
+	}
 
-	QObject::connect(pTask, &Task::finished, &oApp, &QCoreApplication::exit);
-	QTimer::singleShot(0, pTask, &Task::run);
+	ConsoleApp oConsoleApp(lVideos, sOutput);
+	QObject::connect(&oConsoleApp, &ConsoleApp::finished, &oApp, &QCoreApplication::exit);
+	oConsoleApp.run();
     
     return oApp.exec();
 }

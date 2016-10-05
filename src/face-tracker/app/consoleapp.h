@@ -17,19 +17,19 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef TASK_H
-#define TASK_H
+#ifndef CONSOLEAPP_H
+#define CONSOLEAPP_H
 
 #include <QObject>
 #include <QStringList>
+#include "featureextractor.h"
 
 namespace fsdk
 {
 	/**
-	 * Implements the execution of the console application,
-	 * running in the Qt's event loop.
+	 * Implements the execution of the console app for the face tracker
 	 */
-	class Task: public QObject
+	class ConsoleApp: public QObject
 	{
 		Q_OBJECT
 	public:
@@ -38,45 +38,39 @@ namespace fsdk
 		 * Default constructor.
 		 * @param lVideoFiles QStringList with the list of video files
 		 * to process (i.e. track the face landmarks).
-		 * @param sCSVFile QString with the CSV file to store the
-		 * produced data.
+		 * @param sOutputDir QString with the output path for saving
+		 * the created CSV files.
 		 * @param pParent Pointer to a QObject that will be the parent
 		 * of this instance. The default is NULL (0).
 		 */
-		Task(QStringList lVideoFiles, QString sCSVFile, QObject *pParent = 0);
-
-		/**
-		 * Indicates if the task is configured to show progress information.
-		 * @return Boolean indicating if the task is showing (true) or not (false)
-		 * progress information.
-		 */
-		bool showProgress() const;
-
-		/**
-		 * Configures the task to show or not progress information.
-		 * @param bShow Boolean indicating if the task shall show
-		 * (true) or not (false) progress information.
-		 */
-		void setShowProgress(const bool bShow);
+		ConsoleApp(QStringList lVideoFiles, QString sOutputDir, QObject *pParent = 0);
 
 	public slots:
 
 		/**
-		 * Runs the task.
+		 * Runs the task. The termination will be indicated
+		 * by the signal 'finished'.
 		 */
 		void run();
+
+	protected slots:
+
+		void onTaskError(QString sVideoFile, FeatureExtractor::ExtractionError eError);
+
+		void onTaskProgress(QString sVideoFile, int iProgress);
+
+		void onTaskFinished(QString sVideoFile);
 
 	signals:
 
 		/**
-		 * Signal indicating that the task has concluded.
+		 * Signals the indication that the app has terminated.
 		 * @param iExitCode Integer with the exit code:
 		 *		- 0 indicates success.
-		 *		- 1 indicates failure in writing the CSV file.
-		 *		- 2, 3, ... indicate failure in reading a video file.
-		 *		  The index (in the input QStringList given at
-		 *		  the constructor) of the video for which the error
-		 *		  ocurred is equal to (iExitCode - 2).
+		 *		- 1, 2, 3, ... indicates failure in processing the
+		 *        corresponding video file ('iExitCode - 1' is the
+		 *        index of the failed file at the QStringList
+		 *        received at the constructor).
 		 */
 		void finished(int iExitCode);
 
@@ -85,12 +79,12 @@ namespace fsdk
 		/** List of video files to process. */
 		QStringList m_lVideoFiles;
 
-		/** CSV file to store the produced data. */
-		QString m_sCSVFile;
+		/** Output directory to save the created CSV files. */
+		QString m_sOutputDir;
 
-		/** Indicates if the task should display progress information. */
-		bool m_bShowProgress;
+		/** List of tasks in execution. */
+		QList<FeatureExtractor*> m_lTasks;
 	};
 }
 
-#endif // TASK_H
+#endif // CONSOLEAPP_H

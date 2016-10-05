@@ -32,7 +32,7 @@ namespace fsdk
 	 * Specific implementations must inherit this class
 	 * and implement its pure virtual methods.
 	 */
-	class LIBEXPORT CSVFile: QFile
+	class LIBEXPORT CSVFile: public QFile
 	{
 	public:
 		/**
@@ -181,16 +181,26 @@ namespace fsdk
 		bool setRows(const QList<QStringList> &lRows);
 
 		/**
-		* Sets the values for the given row in the CSV.
-		* @param iRow Integer with the row to update. The row is
-		* counted from 0 to rowsCount()-1.
-		* @param lRow A QStringList with the values of the
-		* rows. It must have the same number of values as in
-		* columnsCount().
-		* @return A boolean indicating if the update was succesful
-		* (true) or not (false).
-		*/
+		 * Sets the values for the given row in the CSV.
+		 * @param iRow Integer with the row to update. The row is
+		 * counted from 0 to rowsCount()-1.
+		 * @param lRow A QStringList with the values of the
+		 * rows. It must have the same number of values as in
+		 * columnsCount().
+		 * @return A boolean indicating if the update was succesful
+		 * (true) or not (false).
+		 */
 		bool setRow(const int iRow, const QStringList &lRow);
+
+		/**
+		 * Adds the values for a new row in the CSV.
+		 * @param lRow A QStringList with the values of the
+		 * new row. It must have the same number of values as in
+		 * columnsCount().
+		 * @return A boolean indicating if the update was succesful
+		 * (true) or not (false).
+		 */
+		bool addRow(const QStringList &lRow);
 
 	private:
 		

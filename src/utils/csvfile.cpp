@@ -224,3 +224,15 @@ bool fsdk::CSVFile::setRow(const int iRow, const QStringList &lRow)
 	else
 		return false;
 }
+
+// +-----------------------------------------------------------
+bool fsdk::CSVFile::addRow(const QStringList &lRow)
+{
+	if(lRow.count() == m_iColumns)
+	{
+		m_lRows.append(lRow);
+		return true;
+	}
+	else
+		return false;
+}

@@ -22,6 +22,13 @@
 
 #include "facetracker.h"
 
+// Predefinition of the CSIRO face tracker classes
+namespace FACETRACKER
+{
+	class FaceTracker;
+	class FaceTrackerParams;
+}
+
 namespace fsdk
 {
 	/**
@@ -38,15 +45,20 @@ namespace fsdk
 		CSIROFaceTracker();
 
 		/**
+		 * Class destructor.
+		 */
+		virtual ~CSIROFaceTracker();
+
+		/**
 		 * Tracks a face in the given frame. If the frame is the first one
 		 * (after the class has been instantiated or a call to reset() has
 		 * been performed), the face is firstly detected. If the frame is
 		 * a new frame after a previous successful detection/tracking,
 		 * the face model is ajusted to the face's new position.
-		 * @param oFrame Constant reference to an OpenCV's Mat with the
+		 * @param oFrame Reference to an OpenCV's Mat with the
 		 * data of the image where the face is to be found.
 		 */
-		void track(const Mat &oFrame);
+		void track(Mat &oFrame);
 
 		/**
 		 * Queries the quality of the current tracking.
@@ -57,13 +69,43 @@ namespace fsdk
 		 * in the tracking (a face could not be tracked from a previous frame,
 		 * case in which a call to reset() might be helpful).
 		 */
-		float getQuality();
+		float getQuality() const;
+
+		/**
+		 * Queries the positions of the currently tracked facial landmarks.
+		 * @return Q QList of QPoint values for all facial landmarks tracked,
+		 * or an empty QList() in case the quality of the tracker is 0 or too
+		 * small for the tracking to worker properly.
+		 */
+		QList<QPoint> getLandmarks() const;
+
+		/**
+		 * Queries the total number of facial landmarks supported by the
+		 * implemented tracker. This method should be overwritten by the
+		 * children classes. The CSIRO Face Tracking SDK uses 66 landmarks.
+		 * @return Unsigned integer with the number of landmarks supported.
+		 */
+		static uint landmarksCount() { return 66; };
 
 		/**
 		 * Resets the tracking by attempting to find the face again in the next
 		 * frame.
 		 */
 		void reset();
+
+	private:
+
+		/** Instance of the CSIRO Face Tracker. */
+		FACETRACKER::FaceTracker *m_pTracker;
+
+		/** Instance of the CSIRO Face Tracker parameters. */
+		FACETRACKER::FaceTrackerParams *m_pTrackerParams;
+
+		/** Current quality of the tracking. */
+		float m_fQuality;
+
+		/** Cached list of the landmarks obtained from the previous tracking. */
+		QList<QPoint> m_lLandmarks;
 	};
 }
 

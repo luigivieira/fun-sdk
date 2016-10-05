@@ -22,6 +22,8 @@
 
 #include "libexport.h"
 #include <opencv2\core\core.hpp>
+#include <QList>
+#include <QPoint>
 
 using namespace cv;
 
@@ -41,10 +43,10 @@ namespace fsdk
 		 * been performed), the face is firstly detected. If the frame is
 		 * a new frame after a previous successful detection/tracking,
 		 * the face model is ajusted to the face's new position.
-		 * @param oFrame Constant reference to an OpenCV's Mat with the
+		 * @param oFrame Reference to an OpenCV's Mat with the
 		 * data of the image where the face is to be found.
 		 */
-		virtual void track(const Mat &oFrame) = 0;
+		virtual void track(Mat &oFrame) = 0;
 
 		/**
 		 * Queries the quality of the current tracking.
@@ -55,7 +57,23 @@ namespace fsdk
 		 * in the tracking (a face could not be tracked from a previous frame,
 		 * case in which a call to reset() might be helpful).
 		 */
-		virtual float getQuality() = 0;
+		virtual float getQuality() const = 0;
+
+		/**
+		 * Queries the positions of the currently tracked facial landmarks.
+		 * @return Q QList of QPoint values for all facial landmarks tracked,
+		 * or an empty QList() in case the quality of the tracker is 0 or too
+		 * small for the tracking to worker properly.
+		 */
+		virtual QList<QPoint> getLandmarks() const = 0;
+
+		/**
+		 * Queries the total number of facial landmarks supported by the
+		 * implemented tracker. This method should be overwritten by the
+		 * children classes. The default implementation returns 0.
+		 * @return Unsigned integer with the number of landmarks supported.
+		 */
+		static uint landmarksCount() { return 0; };
 
 		/**
 		 * Resets the tracking by attempting to redetect the face in the next

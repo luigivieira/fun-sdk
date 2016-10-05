@@ -18,26 +18,74 @@
  */
 
 #include "csirofacetracker.h"
+#include <tracker/FaceTracker.hpp>
+#include <QCoreApplication>
+#include <exception>
 
 // +-----------------------------------------------------------
 fsdk::CSIROFaceTracker::CSIROFaceTracker()
 {
+	m_pTracker = FACETRACKER::LoadFaceTracker();
+	if(!m_pTracker)
+	{
+		QString sMsg = QCoreApplication::translate("CSIROFaceTracker", "failed to init the CSIRO face tracker");
+		qCritical("%s", qPrintable(sMsg));
+		throw new std::runtime_error(sMsg.toStdString());
+	}
+
+	m_pTrackerParams = FACETRACKER::LoadFaceTrackerParams();
+	if(!m_pTrackerParams)
+	{
+		QString sMsg = QCoreApplication::translate("CSIROFaceTracker", "failed to init the CSIRO face tracker parameters");
+		qCritical("%s", qPrintable(sMsg));
+		delete m_pTracker;
+		throw new std::runtime_error(sMsg.toStdString());
+	}
+
+	reset();
 }
 
 // +-----------------------------------------------------------
-void fsdk::CSIROFaceTracker::track(const Mat &oFrame)
+fsdk::CSIROFaceTracker::~CSIROFaceTracker()
 {
-
+	if(m_pTrackerParams)
+		delete m_pTrackerParams;
+	if(m_pTracker)
+		delete m_pTracker;
 }
 
 // +-----------------------------------------------------------
-float fsdk::CSIROFaceTracker::getQuality()
+void fsdk::CSIROFaceTracker::track(Mat &oFrame)
 {
-	return 0.85f;
+	m_lLandmarks.clear();
+	int iQuality = m_pTracker->Track(oFrame, m_pTrackerParams);
+	if(iQuality == FACETRACKER::FaceTracker::TRACKER_FAILED || iQuality == FACETRACKER::FaceTracker::TRACKER_FACE_OUT_OF_FRAME)
+		m_fQuality = 0.0f;
+	else
+	{
+		m_fQuality = static_cast<float>(iQuality) / 10.0f;
+		FACETRACKER::PointVector vShape = m_pTracker->getShape();
+		for(unsigned int i = 0; i < vShape.size(); i++)
+			m_lLandmarks.append(QPoint(vShape[i].x, vShape[i].y));
+	}
+}
+
+// +-----------------------------------------------------------
+float fsdk::CSIROFaceTracker::getQuality() const
+{
+	return m_fQuality;
+}
+
+// +-----------------------------------------------------------
+QList<QPoint> fsdk::CSIROFaceTracker::getLandmarks() const
+{
+	return m_lLandmarks;
 }
 
 // +-----------------------------------------------------------
 void fsdk::CSIROFaceTracker::reset()
 {
-
+	m_pTracker->Reset();
+	m_lLandmarks.clear();
+	m_fQuality = 0.0f;
 }
