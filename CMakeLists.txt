@@ -30,9 +30,6 @@ configure_file (
   "${PROJECT_SOURCE_DIR}/version.h.in"
   "${PROJECT_BINARY_DIR}/version.h"
 )
-include_directories(src/)
-include_directories("${PROJECT_BINARY_DIR}")
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
@@ -53,11 +50,15 @@ list(APPEND Qt5_LIBS Qt5::Core Qt5::Gui Qt5::Widgets)
 
 # OpenCV
 find_package(OpenCV REQUIRED core highgui imgproc)
-include_directories(${OpenCV_INCLUDE_DIRS})
+
+# CSIRO Face Analysis SDK
+find_package(CSIRO REQUIRED clmTracker)
 
 #############################################
 # Sub-projects
 #############################################
+include_directories("${PROJECT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}/src")
 
-add_subdirectory(src/utils)
-add_subdirectory(src/face-tracker)
+add_subdirectory(src/libs/common)
+add_subdirectory(src/libs/face-tracker)
+add_subdirectory(src/utils/feature-extractor)

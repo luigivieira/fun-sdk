@@ -20,7 +20,7 @@
 #ifndef FACETRACKER_H
 #define FACETRACKER_H
 
-#include "libexport.h"
+#include "global.h"
 #include <opencv2\core\core.hpp>
 #include <QList>
 #include <QPoint>
@@ -34,7 +34,7 @@ namespace fsdk
 	 * Specific implementations must inherit this class
 	 * and implement its pure virtual methods.
 	 */
-	class LIBEXPORT FaceTracker
+	class SHARED_LIB_EXPORT FaceTracker
 	{
 	public:
 		/**

@@ -15,12 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-file(GLOB LIB_FILES *.cpp *.h)
+file(GLOB SRC *.cpp *.h)
+add_library(lib-common SHARED ${SRC})
 
-add_library(lib-utils SHARED ${LIB_FILES})
+target_link_libraries(lib-common Qt5::Core)
 
-set_target_properties(lib-utils PROPERTIES OUTPUT_NAME fsdk-utils)
-set_target_properties(lib-utils PROPERTIES OUTPUT_NAME_DEBUG fsdk-utilsd)
-set_target_properties(lib-utils PROPERTIES DEFINE_SYMBOL "COMPILING_LIB")
-
-target_link_libraries(lib-utils Qt5::Core)
+set_target_properties(lib-common PROPERTIES OUTPUT_NAME fsdk-common)
+set_target_properties(lib-common PROPERTIES OUTPUT_NAME_DEBUG fsdk-commond)
+set_target_properties(lib-common PROPERTIES DEFINE_SYMBOL "SHARED_LIB")

@@ -20,7 +20,7 @@
 #ifndef FEATUREEXTRACTOR_H
 #define FEATUREEXTRACTOR_H
 
-#include "libexport.h"
+#include "global.h"
 #include <QObject>
 #include <QRunnable>
 
@@ -30,7 +30,7 @@ namespace fsdk
 	 * Threaded-task to perform the extraction of the required 
 	 * features from a video file containing the face of a player.
 	 */
-	class LIBEXPORT FeatureExtractor: public QObject, public QRunnable
+	class SHARED_LIB_EXPORT FeatureExtractor: public QObject, public QRunnable
 	{
 		Q_OBJECT
 	public:

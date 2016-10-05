@@ -36,7 +36,7 @@ namespace fsdk
 	 * Specific implementations must inherit this class
 	 * and implement its pure virtual methods.
 	 */
-	class LIBEXPORT CSIROFaceTracker: FaceTracker
+	class SHARED_LIB_EXPORT CSIROFaceTracker: FaceTracker
 	{
 	public:
 		/**

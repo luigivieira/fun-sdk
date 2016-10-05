@@ -17,17 +17,15 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
  
-#ifndef LIBEXPORT_H
-#define LIBEXPORT_H
+#ifndef GLOBAL_H
+#define GLOBAL_H
  
-#if defined(_WIN32)
-	#if defined(COMPILING_LIB)
-		#define LIBEXPORT __declspec(dllexport)
-	#else
-		#define LIBEXPORT __declspec(dllimport)
-	#endif
+#include <QtGlobal>
+ 
+#if defined(SHARED_LIB)
+	#define SHARED_LIB_EXPORT Q_DECL_EXPORT
 #else
-    #define LIBEXPORT
+	#define SHARED_LIB_EXPORT Q_DECL_IMPORT
 #endif
 
-#endif // LIBEXPORT_H
+#endif // GLOBAL_H

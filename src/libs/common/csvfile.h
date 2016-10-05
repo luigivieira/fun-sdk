@@ -20,7 +20,7 @@
 #ifndef CSVFILE_H
 #define CSVFILE_H
 
-#include "libexport.h"
+#include "global.h"
 #include <QFile>
 #include <QList>
 #include <QStringList>
@@ -32,7 +32,7 @@ namespace fsdk
 	 * Specific implementations must inherit this class
 	 * and implement its pure virtual methods.
 	 */
-	class LIBEXPORT CSVFile: public QFile
+	class SHARED_LIB_EXPORT CSVFile: public QFile
 	{
 	public:
 		/**
