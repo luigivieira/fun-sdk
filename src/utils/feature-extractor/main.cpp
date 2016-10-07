@@ -18,35 +18,15 @@
  */
 
 #include "version.h"
+#include "runtimeapp.h"
 #include <iostream>
-#include <QCoreApplication>
-#include <QCommandLineParser>
-#include <QDebug>
 #include <QDir>
-#include "consoleapp.h"
 
 using namespace std;
 using namespace fsdk;
 
 // +-----------------------------------------------------------
-/**
- * Enumeration that defines the possible outcomes of the parsing
- * of the command line arguments.
- */
-enum CommandLineParseResult
-{
-	/** The command line was parsed correctly with all required arguments. */
-	CommandLineOk,
-	
-	/** There was an error in the parsing of the command line arguments. */
-	CommandLineError,
 
-	/** The user requested the application to display its version information. */
-	CommandLineVersionRequested,
-
-	/** The user requested the application to display its help information. */
-	CommandLineHelpRequested
-};
 
 // +-----------------------------------------------------------
 /**
@@ -63,92 +43,10 @@ enum CommandLineParseResult
  * @return One of the values in the CommandLineParseResult enum indicating
  * how the parsing of the command line proceeded.
  */
-int parseCommandLine(QCommandLineParser &oParser, QString &sErrorMessage, QString &sInput, QString &sOutput, bool &bShowProgress)
-{
-	oParser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
 
-	// Basic options: help and version
-	QCommandLineOption oHelpOpt = oParser.addHelpOption();
-	QCommandLineOption oVersionOpt = oParser.addVersionOption();
-
-	// Parameter: Input video file
-	oParser.addPositionalArgument("input", QCoreApplication::translate("main", "File name or wildcard pattern with the input video file(s) from where to perform the face tracking"), "<input file name or mask>");
-
-	// Parameter: Output directory
-	oParser.addPositionalArgument("output", QCoreApplication::translate("main", "Directory where the CSV files will be created"), "<output directory>");
-
-	// Parameter: Boolean indication on if progress must be shown
-	QCommandLineOption oShowProgressOpt(QStringList() << "p" << "progress",
-		QCoreApplication::translate("main", "Displays the tracking progress"));
-	oParser.addOption(oShowProgressOpt);
-
-	// Parse the arguments given by the user
-	if(!oParser.parse(QCoreApplication::arguments()))
-	{
-		sErrorMessage = oParser.errorText();
-		return CommandLineError;
-	}
-
-	// Check values
-	if(oParser.isSet(oHelpOpt))
-		return CommandLineHelpRequested;
-	else if(oParser.isSet(oVersionOpt))
-		return CommandLineVersionRequested;
-	else
-	{
-		switch(oParser.positionalArguments().count())
-		{
-			case 0:
-				sErrorMessage = QCoreApplication::translate("main", "arguments %1 and %2 are required").arg("<input>").arg("<output>");
-				return CommandLineError;
-
-			case 1:
-				sErrorMessage = QCoreApplication::translate("main", "argument %1 is required").arg("<output>");
-				return CommandLineError;
-
-			case 2:
-				break;
-
-			default:
-				sErrorMessage = QCoreApplication::translate("main", "unknown arguments (only two required): %1").arg(oParser.positionalArguments().join(' '));
-				return CommandLineError;
-		}
-
-		sInput = oParser.positionalArguments()[0];
-		sOutput = oParser.positionalArguments()[1];
-		bShowProgress = oParser.isSet(oShowProgressOpt);
-		return CommandLineOk;
-	}
-}
 
 /** Indication on whether the progress should be displayed (true) or not (false). */
 bool g_bShowProgress;
-
-// +-----------------------------------------------------------
-/**
- * Captures and handles the application log messages.
- * @param eType QtMsgType enum value with the type of the log event.
- * @param oContext QMessageLogContext instance with information on where
- * the event happened (function, line, etc).
- * @param sMessage QString instance with the event message.
- */
-void handleLogs(QtMsgType eType, const QMessageLogContext &oContext, const QString &sMessage)
-{
-	switch(eType)
-	{
-		case QtDebugMsg:
-		case QtInfoMsg:
-		case QtWarningMsg:
-			if(g_bShowProgress)
-				cout << sMessage.toStdString() << endl;
-			break;
-
-		case QtCriticalMsg:
-		case QtFatalMsg:
-			cerr << sMessage.toStdString() << endl;
-			break;
-	}
-}
 
 // +-----------------------------------------------------------
 /**
@@ -165,12 +63,7 @@ void handleLogs(QtMsgType eType, const QMessageLogContext &oContext, const QStri
 int main(int argc, char* argv[])
 {
 	// Application definition
-	QCoreApplication oApp(argc, argv);
-
-	QCoreApplication::setApplicationName(QCoreApplication::translate("main", "FSDK Face Tracker (Command Line)"));
-	QCoreApplication::setApplicationVersion(FSDK_VERSION);
-
-	qInstallMessageHandler(&handleLogs);
+	RuntimeApp oApp(argc, argv, "University of Sao Paulo", "Fun SDK", "Feature Extractor", FSDK_VERSION);
 
 	// Parsing of command line options
 	QCommandLineParser oParser;
@@ -192,7 +85,7 @@ int main(int argc, char* argv[])
 			Q_UNREACHABLE();
 
 		case CommandLineHelpRequested:
-			oParser.showHelp();
+			
 			Q_UNREACHABLE();
 	}
 

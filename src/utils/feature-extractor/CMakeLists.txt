@@ -23,3 +23,4 @@ target_link_libraries(util-feature-extractor Qt5::Core lib-common lib-face-track
 
 set_target_properties(util-feature-extractor PROPERTIES OUTPUT_NAME fsdk-fext)
 set_target_properties(util-feature-extractor PROPERTIES OUTPUT_NAME_DEBUG fsdk-fextd)
+set_target_properties(util-feature-extractor PROPERTIES DEFINE_SYMBOL "CONSOLE")

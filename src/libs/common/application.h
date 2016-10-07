@@ -36,7 +36,9 @@
 namespace fsdk
 {
 	/**
-	 * Custom application class.
+	 * Custom application class. It can be used for both Console or GUI-based
+	 * applications. The default is a GUI implementation, but if a console
+	 * application is needed just define a macro named 'CONSOLE'.
 	 */
 	class SHARED_LIB_EXPORT Application :
 #ifdef CONSOLE
