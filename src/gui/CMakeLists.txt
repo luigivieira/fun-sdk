@@ -16,7 +16,12 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 file(GLOB SRC *.cpp *.h)
-add_executable(gui-fun ${SRC})
+if(WIN32)
+	set(APP_TYPE WIN32)
+else()
+	set(APP_TYPE )
+endif()
+add_executable(gui-fun ${APP_TYPE} ${SRC})
 
 include_directories("${PROJECT_SOURCE_DIR}/src/libs/common" "${PROJECT_SOURCE_DIR}/src/libs/face-tracker")
 target_link_libraries(gui-fun ${Qt5_LIBS} lib-common lib-face-tracker)

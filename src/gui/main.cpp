@@ -18,21 +18,17 @@
  */
  
 #include "application.h"
-#include "window.h"
-#include <QScreen>
+#include "version.h"
+#include <QMainWindow>
 
-using namespace gc;
+using namespace fsdk;
 
 int main(int argc, char** argv)
 {
-    Application oApp(argc, argv);
+    Application oApp(argc, argv, "University of Sao Paulo", "Fun SDK", "GUI", FSDK_VERSION, true);
 
-    Window oMain;
-	oMain.show();
-	oMain.resize(QApplication::primaryScreen()->size());
-	oMain.move(0, 0);
+    QMainWindow oMain;
+	oMain.showMaximized();
 
-	oApp.setMainWindow(&oMain);
-    
 	return oApp.exec();
 }
