@@ -132,6 +132,8 @@ namespace fsdk
 		/** Settings maintained by the application. */
 		QSettings *m_pSettings;
 	};
+
+
 }
 
 #endif // APPLICATION_H
