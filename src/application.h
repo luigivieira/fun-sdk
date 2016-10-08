@@ -20,8 +20,6 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
-#include "global.h"
-
 #ifdef CONSOLE
 	#include <QCoreApplication>
 #else
@@ -40,7 +38,7 @@ namespace fsdk
 	 * applications. The default is a GUI implementation, but if a console
 	 * application is needed just define a macro named 'CONSOLE'.
 	 */
-	class SHARED_LIB_EXPORT Application :
+	class Application :
 #ifdef CONSOLE
 		public QCoreApplication
 #else
@@ -117,16 +115,16 @@ namespace fsdk
 		static void handleLogOutput(QtMsgType eType, const QMessageLogContext& oContext, const QString& sMessage);
 
 	private:
-    
-		/** File used to log application messages. */
-		QFile *m_pLogFile;
-
-#ifndef CONSOLE
-		/** Text stream used to output the application log messages (only used in non-console apps). */
-		QTextStream *m_pLogStream;
 
 		/** Maximum level of the messages to log (only used in non-console apps). */
 		LogLevel m_eLogLevel;
+
+#ifndef CONSOLE
+		/** File used to log application messages. */
+		QFile *m_pLogFile;
+
+		/** Text stream used to output the application log messages (only used in non-console apps). */
+		QTextStream *m_pLogStream;
 #endif
 
 		/** Settings maintained by the application. */

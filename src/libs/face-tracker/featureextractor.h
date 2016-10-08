@@ -20,7 +20,7 @@
 #ifndef FEATUREEXTRACTOR_H
 #define FEATUREEXTRACTOR_H
 
-#include "global.h"
+#include "libexport.h"
 #include <QObject>
 #include <QRunnable>
 

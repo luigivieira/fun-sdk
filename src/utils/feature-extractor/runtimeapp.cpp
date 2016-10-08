@@ -24,14 +24,15 @@
 #include <QDebug>
 #include <QDir>
 #include <QThreadPool>
-#include <QTimer>
 
  // +-----------------------------------------------------------
 fsdk::RuntimeApp::RuntimeApp(int &argc, char **argv, const QString &sOrgName, const QString &sOrgDomain, const QString &sAppName, const QString &sAppVersion, const bool bUseSettings):
 	Application(argc, argv, sOrgName, sOrgDomain, sAppName, sAppVersion, bUseSettings)
 {
-	// Schedule to run as soon as the event loop starts
-	QTimer::singleShot(0, this, SLOT(run()));
+	// Replace the original message pattern from the parent class Application.
+	// i.e.: - remove the source and line number from trace even in debug;
+	//       - add the progress level instead of the log type;
+	qSetMessagePattern("%{time yyyy.MM.dd h:mm:ss.zzz} [%{if-critical}p1%{endif}%{if-warning}p2%{endif}%{if-info}p3%{endif}%{if-debug}p4%{endif}]: %{message}");
 }
 
 // +-----------------------------------------------------------
@@ -49,21 +50,21 @@ fsdk::RuntimeApp::CommandLineParseResult fsdk::RuntimeApp::parseCommandLine()
 	oParser.addPositionalArgument("input", tr("File name or wildcard pattern with the input video file(s) from where to perform the face tracking"), "<input file name or mask>");
 	oParser.addPositionalArgument("output", tr("Directory where the CSV files will be created"), "<output directory>");
 
-	QCommandLineOption oShowProgressOpt(QStringList() << "p" << "progress",
+	QCommandLineOption oShowProgressOpt(QStringList({ "p", "progress" }),
 		tr("Sets the level of progress messages that shall be displayed."
 		   "The possible values are in range [1, 4], meaning: \n"
-		   "\t1: only display critical error messages\n"
-		   "\t2: display critical and warning messages\n"
-		   "\t3: display critical, warning and informational messages\n"
-		   "\t4: display all messages\n"
-		));
-	oShowProgressOpt.setDefaultValue("1"); // The default value is to show only Critical messages
+		   "1: display only critical error messages (default)\n"
+		   "2: display critical and warning messages\n"
+		   "3: display critical, warning and informational messages\n"
+		   "4: display critical, warning, informational and debug messages\n"
+		), "level", "1");
 	oParser.addOption(oShowProgressOpt);
 
 	// Parse the arguments
 	if(!oParser.parse(arguments()))
 	{
-		qCritical() << oParser.errorText();
+		QString s = oParser.errorText();
+		qCritical() << oParser.errorText() << endl;
 		oParser.showHelp();
 		return CommandLineError;
 	}
@@ -84,6 +85,7 @@ fsdk::RuntimeApp::CommandLineParseResult fsdk::RuntimeApp::parseCommandLine()
 	int iLogLevel = oParser.value(oShowProgressOpt).toInt();
 	if(iLogLevel < Critical || iLogLevel > Debug)
 	{
+		qCritical().noquote() << tr("invalid level of progress messages %1").arg(iLogLevel) << endl;
 		oParser.showHelp();
 		return CommandLineError;
 	}
@@ -92,12 +94,12 @@ fsdk::RuntimeApp::CommandLineParseResult fsdk::RuntimeApp::parseCommandLine()
 	switch(oParser.positionalArguments().count())
 	{
 		case 0:
-			qCritical() << tr("arguments %1 and %2 are required").arg("<input>").arg("<output>");
+			qCritical().noquote() << tr("arguments %1 and %2 are required").arg("<input>").arg("<output>") << endl;
 			oParser.showHelp();
 			return CommandLineError;
 
 		case 1:
-			qCritical() << tr("argument %1 is required").arg("<output>");
+			qCritical().noquote() << tr("argument %1 is required").arg("<output>") << endl;
 			oParser.showHelp();
 			return CommandLineError;
 
@@ -105,7 +107,7 @@ fsdk::RuntimeApp::CommandLineParseResult fsdk::RuntimeApp::parseCommandLine()
 			break;
 
 		default:
-			qCritical() << tr("unknown arguments (only two required): %1").arg(oParser.positionalArguments().join(' '));
+			qCritical().noquote() << tr("unknown arguments (only two required): %1").arg(oParser.positionalArguments().join(' ')) << endl;
 			oParser.showHelp();
 			return CommandLineError;
 	}
@@ -123,7 +125,7 @@ fsdk::RuntimeApp::CommandLineParseResult fsdk::RuntimeApp::parseCommandLine()
 
 	if(lInputFiles.count() == 0)
 	{
-		qCritical() << tr("invalid input file name or wildcard mask: %1").arg(sInput);
+		qCritical().noquote() << tr("invalid input file name or wildcard mask: %1").arg(sInput) << endl;
 		oParser.showHelp();
 		return CommandLineError;
 	}
@@ -131,7 +133,7 @@ fsdk::RuntimeApp::CommandLineParseResult fsdk::RuntimeApp::parseCommandLine()
 	QDir oOutput(sOutput);
 	if(!oOutput.exists())
 	{
-		qCritical() << tr("invalid output directory: %1").arg(sInput);
+		qCritical().noquote() << tr("invalid output directory: %1").arg(sInput) << endl;
 		oParser.showHelp();
 		return CommandLineError;
 	}
@@ -144,23 +146,6 @@ fsdk::RuntimeApp::CommandLineParseResult fsdk::RuntimeApp::parseCommandLine()
 // +-----------------------------------------------------------
 void fsdk::RuntimeApp::run()
 {
-	// Parse command line
-	switch(parseCommandLine())
-	{
-		case CommandLineError:
-			exit(-1);
-			return;
-
-		case CommandLineVersionRequested:
-		case CommandLineHelpRequested:
-			exit(0);
-			return;
-
-		case CommandLineOk:
-		default:
-			break;
-	}
-
 	// Run an extraction task for each input file received from command line
 	foreach(QString sFile, m_lInputFiles)
 	{
@@ -187,21 +172,21 @@ void fsdk::RuntimeApp::onTaskError(QString sVideoFile, FeatureExtractor::Extract
 	switch(eError)
 	{
 		case FeatureExtractor::InvalidVideoFile:
-			qCritical() << tr("error reading input video file %1").arg(sVideoFile);
+			qCritical().noquote() << tr("error reading input video file %1").arg(sVideoFile);
 			break;
 
 		case FeatureExtractor::ErrorSavingLandmarks:
 			oFile.setFile(sVideoFile);
 			sLandmarks = QString("%1/%2-landmarks.csv").arg(m_sOutputDir, oFile.baseName());
-			qCritical() << tr("error saving CSV data to output file %1").arg(sLandmarks);
+			qCritical().noquote() << tr("error saving CSV data to output file %1").arg(sLandmarks);
 			break;
 
 		case FeatureExtractor::UnknownError:
-			qCritical() << tr("unknown error while processing input video file %1").arg(sVideoFile);
+			qCritical().noquote() << tr("unknown error while processing input video file %1").arg(sVideoFile);
 			break;
 
 		case FeatureExtractor::CancelRequested:
-			qDebug() << tr("(cancellation) task for file %1 stoped.").arg(sVideoFile);
+			qDebug().noquote() << tr("(cancellation) task for file %1 stoped.").arg(sVideoFile);
 			return; // The thread that requested the cancellation is handling the conclusion
 	}
 
@@ -229,13 +214,13 @@ void fsdk::RuntimeApp::onTaskError(QString sVideoFile, FeatureExtractor::Extract
 // +-----------------------------------------------------------
 void fsdk::RuntimeApp::onTaskProgress(QString sVideoFile, int iProgress)
 {
-	qInfo() << tr("file %1 progress: %2%%").arg(sVideoFile).arg(iProgress);
+	qDebug().noquote() << tr("file %1 progress: %2%").arg(sVideoFile).arg(iProgress);
 }
 
 // +-----------------------------------------------------------
 void fsdk::RuntimeApp::onTaskFinished(QString sVideoFile)
 {
-	qInfo() << tr("file %1 done.").arg(sVideoFile);
+	qInfo().noquote() << tr("file %1 done.").arg(sVideoFile);
 
 	// Delete the pointer to the task that concluded
 	FeatureExtractor *pTask = static_cast<FeatureExtractor*>(sender());

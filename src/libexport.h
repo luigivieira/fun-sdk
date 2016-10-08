@@ -17,8 +17,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
  
-#ifndef GLOBAL_H
-#define GLOBAL_H
+#ifndef LIBEXPORT_H
+#define LIBEXPORT_H
  
 #include <QtGlobal>
  
@@ -28,4 +28,4 @@
 	#define SHARED_LIB_EXPORT Q_DECL_IMPORT
 #endif
 
-#endif // GLOBAL_H
+#endif // LIBEXPORT_H

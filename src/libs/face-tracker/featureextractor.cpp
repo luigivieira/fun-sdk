@@ -40,13 +40,13 @@ void fsdk::FeatureExtractor::cancel()
 // +-----------------------------------------------------------
 void fsdk::FeatureExtractor::run()
 {
-	qInfo() << tr("starting feature extraction from file %1...").arg(m_sVideoFile);
+	qInfo().noquote() << tr("starting feature extraction from file %1...").arg(m_sVideoFile);
 
 	// Open the video for reading
 	VideoCapture oCap;
 	if(!oCap.open(m_sVideoFile.toStdString()))
 	{
-		qCritical() << tr("error reading file %1").arg(m_sVideoFile);
+		qCritical().noquote() << tr("error reading file %1").arg(m_sVideoFile);
 		emit error(m_sVideoFile, InvalidVideoFile);
 		return;
 	}

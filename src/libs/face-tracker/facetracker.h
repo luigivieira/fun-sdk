@@ -20,7 +20,7 @@
 #ifndef FACETRACKER_H
 #define FACETRACKER_H
 
-#include "global.h"
+#include "libexport.h"
 #include <opencv2\core\core.hpp>
 #include <QList>
 #include <QPoint>

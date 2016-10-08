@@ -20,7 +20,7 @@
 #ifndef CSVFILE_H
 #define CSVFILE_H
 
-#include "global.h"
+#include "libexport.h"
 #include <QFile>
 #include <QList>
 #include <QStringList>

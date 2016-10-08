@@ -60,9 +60,9 @@ fsdk::Application::Application(int& argc, char** argv, const QString &sOrgName, 
 #endif
 
 #if defined(_DEBUG)
-	qSetMessagePattern("[%{time yyyy.MM.dd h:mm:ss.zzz} %{type} (%{function} in %{file}:%{line})]: %{message}");
+	qSetMessagePattern("%{time yyyy.MM.dd h:mm:ss.zzz} [%{type} (%{function} in %{file}:%{line})]: %{message}");
 #else
-	qSetMessagePattern("[%{time yyyy.MM.dd h:mm:ss.zzz} %{type}]: %{message}");
+	qSetMessagePattern("%{time yyyy.MM.dd h:mm:ss.zzz} [%{type}]: %{message}");
 #endif
 	qInstallMessageHandler(&fsdk::Application::handleLogOutput);
 
@@ -79,10 +79,6 @@ fsdk::Application::Application(int& argc, char** argv, const QString &sOrgName, 
 		m_pSettings = NULL;
 		setLogLevel(Fatal);
 	}
-
-	// Conclusion...
-	qInfo("%s (v%s) started.", qPrintable(applicationName()), qPrintable(applicationVersion()));
-	qDebug("Running from %s", qPrintable(applicationFilePath()));
 }
 
 // +-----------------------------------------------------------
@@ -111,11 +107,15 @@ QSettings* fsdk::Application::settings()
 // +-----------------------------------------------------------
 int fsdk::Application::exec()
 {
-	int iRet = QApplication::exec();
+	qDebug("%s (v%s) started.", qPrintable(applicationName()), qPrintable(applicationVersion()));
+	qDebug("Running from %s", qPrintable(applicationFilePath()));
+
+	int iRet = QCoreApplication::exec();
+
 	if (iRet == 0)
-		qInfo("%s (v%s) terminated successfully.", qPrintable(applicationName()), qPrintable(applicationVersion()));
+		qDebug("%s (v%s) terminated successfully.", qPrintable(applicationName()), qPrintable(applicationVersion()));
 	else
-		qInfo("%s (v%s) terminated with error code: %d.", qPrintable(applicationName()), qPrintable(applicationVersion()), iRet);
+		qDebug("%s (v%s) terminated with error code: %d.", qPrintable(applicationName()), qPrintable(applicationVersion()), iRet);
 	return iRet;
 }
 
@@ -144,7 +144,11 @@ bool fsdk::Application::notify(QObject* pReceiver, QEvent* pEvent)
 {
     try
 	{
-        return QApplication::notify(pReceiver, pEvent);
+#ifdef CONSOLE
+		return QCoreApplication::notify(pReceiver, pEvent);
+#else
+		return QApplication::notify(pReceiver, pEvent);
+#endif
     }
     catch (std::exception &e)
 	{
@@ -185,9 +189,9 @@ void fsdk::Application::handleLogOutput(QtMsgType eType, const QMessageLogContex
 	// (i.e. CONSOLE vs GUI)
 #ifdef CONSOLE
 	if(eType == QtFatalMsg || eType == QtCriticalMsg)
-		std::cerr << sMsg << std::endl;
+		std::cerr << sMsg.toStdString() << std::endl;
 	else
-		std::cout << sMsg << std::endl;
+		std::cout << sMsg.toStdString() << std::endl;
 #else
 	*(static_cast<Application*>(qApp)->m_pLogStream) << sMsg << endl;
 	static_cast<Application*>(qApp)->m_pLogStream->flush();

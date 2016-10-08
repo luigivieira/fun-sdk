@@ -58,8 +58,6 @@ namespace fsdk
 		 */
 		RuntimeApp(int &argc, char **argv, const QString &sOrgName, const QString &sOrgDomain, const QString &sAppName, const QString &sAppVersion, const bool bUseSettings = false);
 
-	protected:
-
 		/**
 		 * Enumeration that defines the possible outcomes of the parsing
 		 * of the command line arguments.
