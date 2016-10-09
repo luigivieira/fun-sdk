@@ -29,6 +29,7 @@ fsdk::MainWindow::MainWindow(QWidget *pParent) :
     QMainWindow(pParent)
 {
     setWindowIcon(QIcon(":/icons/fun-inspector.png"));
+	setWindowTitle(qApp->applicationName());
 
 	setupUI();
 	refreshUI();
@@ -227,7 +228,7 @@ void fsdk::MainWindow::saveSessionAs()
 // +-----------------------------------------------------------
 void fsdk::MainWindow::quit()
 {
-	exit(0);
+	close();
 }
 
 // +-----------------------------------------------------------

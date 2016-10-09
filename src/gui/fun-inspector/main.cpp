@@ -27,8 +27,7 @@ int main(int argc, char** argv)
 {
     Application oApp(argc, argv, "University of Sao Paulo", "Fun SDK", "Fun Inspector", FSDK_VERSION, true);
 
-    MainWindow oMain;
-	oMain.setWindowTitle(oApp.applicationName());
+    MainWindow oMain;	
 	oMain.showMaximized();
 
 	return oApp.exec();
