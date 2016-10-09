@@ -35,11 +35,6 @@ fsdk::MainWindow::MainWindow(QWidget *pParent) :
 }
 
 // +-----------------------------------------------------------
-fsdk::MainWindow::~MainWindow()
-{
-}
-
-// +-----------------------------------------------------------
 void fsdk::MainWindow::setupUI()
 {
 	setDockNestingEnabled(true);

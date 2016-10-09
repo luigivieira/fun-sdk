@@ -42,15 +42,18 @@ namespace fsdk
          */
         explicit MainWindow(QWidget *pParent = 0);
 
-        /**
-         * Class destructor.
-         */
-        virtual ~MainWindow();
-
 	protected:
 
+		/**
+		 * Captures the event of window show.
+		 * @param pEvent QShowEvent instance with the event data.
+		 */
 		void showEvent(QShowEvent *pEvent);
 
+		/**
+		 * Captures the event of window close.
+		 * @param pEvent QCloseEvent instance with the event data.
+		 */
 		void closeEvent(QCloseEvent *pEvent);
 
 		/**
