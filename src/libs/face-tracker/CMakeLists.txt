@@ -21,6 +21,6 @@ add_library(lib-face-tracker SHARED ${SRC})
 include_directories("${CSIRO_INCLUDE_DIRS}" "${PROJECT_SOURCE_DIR}/src/libs/common")
 target_link_libraries(lib-face-tracker Qt5::Core ${OpenCV_LIBS} clmTracker lib-common)
 
-set_target_properties(lib-face-tracker PROPERTIES OUTPUT_NAME fsdk-ft)
-set_target_properties(lib-face-tracker PROPERTIES OUTPUT_NAME_DEBUG fsdk-ftd)
+set_target_properties(lib-face-tracker PROPERTIES OUTPUT_NAME ftracker)
+set_target_properties(lib-face-tracker PROPERTIES OUTPUT_NAME_DEBUG ftrackerd)
 set_target_properties(lib-face-tracker PROPERTIES DEFINE_SYMBOL "SHARED_LIB")

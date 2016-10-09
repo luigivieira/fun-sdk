@@ -21,7 +21,7 @@ add_executable(util-feature-extractor ${SRC})
 include_directories("${PROJECT_SOURCE_DIR}/src/libs/common" "${PROJECT_SOURCE_DIR}/src/libs/face-tracker")
 target_link_libraries(util-feature-extractor Qt5::Core lib-common lib-face-tracker)
 
-set_target_properties(util-feature-extractor PROPERTIES OUTPUT_NAME fsdk-fext)
-set_target_properties(util-feature-extractor PROPERTIES OUTPUT_NAME_DEBUG fsdk-fextd)
+set_target_properties(util-feature-extractor PROPERTIES OUTPUT_NAME fextractor)
+set_target_properties(util-feature-extractor PROPERTIES OUTPUT_NAME_DEBUG fextractord)
 
 add_definitions(-DCONSOLE)

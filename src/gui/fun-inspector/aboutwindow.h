@@ -16,19 +16,36 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
- 
-#include "application.h"
-#include "version.h"
-#include <QMainWindow>
 
-using namespace fsdk;
+#ifndef ABOUTWINDOW_H
+#define ABOUTWINDOW_H
 
-int main(int argc, char** argv)
+#include <QDialog>
+
+namespace fsdk
 {
-    Application oApp(argc, argv, "University of Sao Paulo", "Fun SDK", "GUI", FSDK_VERSION, true);
+    /**
+     * About box dialog class.
+     */
+    class AboutWindow : public QDialog
+    {
+        Q_OBJECT
 
-    QMainWindow oMain;
-	oMain.showMaximized();
+    public:
+        /**
+         * Class constructor.
+         * @param pParent QWidget with the window parent.
+         */
+        explicit AboutWindow(QWidget *pParent = 0);
 
-	return oApp.exec();
+        /**
+         * Class destructor
+         */
+        virtual ~AboutWindow();
+
+    private:
+        
+    };
 }
+
+#endif // ABOUTWINDOW_H

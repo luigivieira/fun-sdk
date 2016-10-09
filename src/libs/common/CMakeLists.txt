@@ -20,6 +20,6 @@ add_library(lib-common SHARED ${SRC})
 
 target_link_libraries(lib-common Qt5::Core Qt5::Widgets)
 
-set_target_properties(lib-common PROPERTIES OUTPUT_NAME fsdk-common)
-set_target_properties(lib-common PROPERTIES OUTPUT_NAME_DEBUG fsdk-commond)
+set_target_properties(lib-common PROPERTIES OUTPUT_NAME fcommon)
+set_target_properties(lib-common PROPERTIES OUTPUT_NAME_DEBUG fcommond)
 set_target_properties(lib-common PROPERTIES DEFINE_SYMBOL "SHARED_LIB")

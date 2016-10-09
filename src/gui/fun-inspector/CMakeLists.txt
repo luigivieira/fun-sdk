@@ -15,16 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-file(GLOB SRC *.cpp *.h)
+file(GLOB SRC *.cpp *.h ${PROJECT_SOURCE_DIR}/src/application.cpp ${PROJECT_SOURCE_DIR}/src/application.h)
 if(WIN32)
 	set(APP_TYPE WIN32)
+	file(GLOB RSC resources/*.qrc resources/*.rc)
 else()
 	set(APP_TYPE )
+	file(GLOB RSC resources/*.qrc)
 endif()
-add_executable(gui-fun ${APP_TYPE} ${SRC})
+add_executable(gui-fun-inspector ${APP_TYPE} ${SRC} ${RSC})
 
 include_directories("${PROJECT_SOURCE_DIR}/src/libs/common" "${PROJECT_SOURCE_DIR}/src/libs/face-tracker")
-target_link_libraries(gui-fun ${Qt5_LIBS} lib-common lib-face-tracker)
+target_link_libraries(gui-fun-inspector ${Qt5_LIBS} lib-common lib-face-tracker)
 
-set_target_properties(gui-fun PROPERTIES OUTPUT_NAME fsdk-gui)
-set_target_properties(gui-fun PROPERTIES OUTPUT_NAME_DEBUG fsdk-guid)
+set_target_properties(gui-fun-inspector PROPERTIES OUTPUT_NAME finspector)
+set_target_properties(gui-fun-inspector PROPERTIES OUTPUT_NAME_DEBUG finspectord)
