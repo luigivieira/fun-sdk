@@ -18,9 +18,9 @@
  */
 
 #include "mainwindow.h"
-#include "aboutwindow.h"
+#include "application.h"
 #include <QMenuBar>
-#include <QToolBar>
+#include <QStatusBar>
 #include <QDesktopServices>
 #include <QURL>
 
@@ -31,6 +31,7 @@ fsdk::MainWindow::MainWindow(QWidget *pParent) :
     setWindowIcon(QIcon(":/icons/fun-inspector.png"));
 
 	setupUI();
+	refreshUI();
 }
 
 // +-----------------------------------------------------------
@@ -41,8 +42,21 @@ fsdk::MainWindow::~MainWindow()
 // +-----------------------------------------------------------
 void fsdk::MainWindow::setupUI()
 {
-	QMenuBar *pMenuBar = new QMenuBar(this);
-	setMenuBar(pMenuBar);
+	setDockNestingEnabled(true);
+
+	setMenuBar(new QMenuBar(this));
+	setStatusBar(new QStatusBar(this));
+
+	//-------------------------------
+	// Video windows
+	//-------------------------------
+	m_pPlayerWindow = new VideoWindow(this);
+	m_pPlayerWindow->setObjectName("playerWindow");
+	addDockWidget(Qt::LeftDockWidgetArea, m_pPlayerWindow);
+
+	m_pGameplayWindow = new VideoWindow(this);
+	m_pGameplayWindow->setObjectName("gameplayWindow");
+	addDockWidget(Qt::RightDockWidgetArea, m_pGameplayWindow);
 
 	//-------------------------------
 	// "File" menu/toolbar
@@ -79,6 +93,26 @@ void fsdk::MainWindow::setupUI()
 	connect(m_pExitAction, &QAction::triggered, this, &MainWindow::quit);
 
 	//-------------------------------
+	// "View" menu
+	//-------------------------------
+	m_pViewMenu = menuBar()->addMenu("");
+
+	// Submenu "Windows"
+	m_pViewWindowsMenu = m_pViewMenu->addMenu("");
+
+	// Action for toggling the view of the player's face window
+	m_pViewWindowsMenu->addAction(m_pPlayerWindow->toggleViewAction());
+
+	// Action for toggling the view of the gameplay window
+	m_pViewWindowsMenu->addAction(m_pGameplayWindow->toggleViewAction());
+
+	// Submenu "Toolbars"
+	m_pViewToolbarsMenu = m_pViewMenu->addMenu("");
+
+	// Action for toggling the view of the File toolbar
+	m_pViewToolbarsMenu->addAction(m_pFileToolbar->toggleViewAction());
+
+	//-------------------------------
 	// "Help" menu
 	//-------------------------------
 	m_pHelpMenu = menuBar()->addMenu("");
@@ -88,7 +122,9 @@ void fsdk::MainWindow::setupUI()
 	m_pHelpAction->setShortcut(QKeySequence::HelpContents);
 	connect(m_pHelpAction, &QAction::triggered, this, &MainWindow::help);
 
-	refreshUI();
+	// Action "About"
+	m_pAboutAction = m_pHelpMenu->addAction("");
+	connect(m_pAboutAction, &QAction::triggered, this, &MainWindow::about);
 }
 
 // +-----------------------------------------------------------
@@ -117,6 +153,17 @@ void fsdk::MainWindow::refreshUI()
 	m_pExitAction->setStatusTip(tr("Quits from the application"));
 	
 	//-------------------------------
+	// "View" menu
+	//-------------------------------
+	m_pViewMenu->setTitle(tr("&View"));
+
+	// Submenu "Windows"
+	m_pViewWindowsMenu->setTitle(tr("&Windows"));
+
+	// Submenu "Toolbars"
+	m_pViewToolbarsMenu->setTitle(tr("&Toolbars"));
+
+	//-------------------------------
 	// "Help" menu
 	//-------------------------------
 	m_pHelpMenu->setTitle(tr("&Help"));
@@ -124,6 +171,44 @@ void fsdk::MainWindow::refreshUI()
 	// Action "Help"
 	m_pHelpAction->setText(tr("&Help"));
 	m_pHelpAction->setStatusTip(tr("Opens a browser to display the online help"));
+
+	// Action "About"
+	m_pAboutAction->setText(tr("&About"));
+	m_pAboutAction->setStatusTip(tr("Shows information about this application"));
+
+	//-------------------------------
+	// Video windows
+	//-------------------------------
+	m_pPlayerWindow->setWindowTitle(tr("Player video"));
+	m_pGameplayWindow->setWindowTitle(tr("Gameplay video"));
+}
+
+// +-----------------------------------------------------------
+void fsdk::MainWindow::showEvent(QShowEvent *pEvent)
+{
+	QMainWindow::showEvent(pEvent);
+
+	// Restores the previous geometry and state of the main window
+	QSettings *pSettings = static_cast<Application*>(qApp)->settings();
+
+	pSettings->beginGroup("mainWindow");
+	restoreGeometry(pSettings->value("geometry").toByteArray());
+	restoreState(pSettings->value("state").toByteArray());
+	pSettings->endGroup();
+}
+
+// +-----------------------------------------------------------
+void fsdk::MainWindow::closeEvent(QCloseEvent *pEvent)
+{
+	// Save the current geometry and state of the main window
+	QSettings *pSettings = static_cast<Application*>(qApp)->settings();
+
+	pSettings->beginGroup("mainWindow");
+	pSettings->setValue("geometry", saveGeometry());
+	pSettings->setValue("state", saveState());
+	pSettings->endGroup();
+
+	QMainWindow::closeEvent(pEvent);
 }
 
 // +-----------------------------------------------------------
@@ -154,4 +239,10 @@ void fsdk::MainWindow::quit()
 void fsdk::MainWindow::help()
 {
 	QDesktopServices::openUrl(QUrl("https://github.com/luigivieira/fun-sdk"));
+}
+
+// +-----------------------------------------------------------
+void fsdk::MainWindow::about()
+{
+
 }

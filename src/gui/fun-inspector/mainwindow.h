@@ -20,6 +20,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "videowindow.h"
 #include <QMainWindow>
 #include <QMenu>
 #include <QAction>
@@ -47,6 +48,10 @@ namespace fsdk
         virtual ~MainWindow();
 
 	protected:
+
+		void showEvent(QShowEvent *pEvent);
+
+		void closeEvent(QCloseEvent *pEvent);
 
 		/**
 		 * Sets up the UI elements.
@@ -87,7 +92,22 @@ namespace fsdk
 		 */
 		void help();
 
+		/**
+		* Shows information about the application.
+		*/
+		void about();
+
     private:
+
+		/** Video window that displays the player's face video. */
+		VideoWindow *m_pPlayerWindow;
+
+		/** Video window that displays the gameplay video. */
+		VideoWindow *m_pGameplayWindow;
+
+		//-------------------------------
+		// "File" menu/toolbar
+		//-------------------------------
 
 		/** Main menu item called "File". */
 		QMenu *m_pFileMenu;
@@ -107,11 +127,31 @@ namespace fsdk
 		/** Action called "Exit": terminates the application. */
 		QAction *m_pExitAction;
 
-		/** Action called "Help": shows online help. */
-		QAction *m_pHelpAction;
+		//-------------------------------
+		// "View" menu/toolbar
+		//-------------------------------
+
+		/** Main menu item called "View". */
+		QMenu *m_pViewMenu;
+
+		/** View menu's submenu called "Windows". */
+		QMenu *m_pViewWindowsMenu;
+
+		/** View menu's submenu called "Toolbars". */
+		QMenu *m_pViewToolbarsMenu;
+
+		//-------------------------------
+		// "Help" menu/toolbar
+		//-------------------------------
 
 		/** Main menu item called "Help". */
 		QMenu *m_pHelpMenu;
+
+		/** Action called "Help": shows online help. */
+		QAction *m_pHelpAction;
+
+		/** Action called "About": shows application information. */
+		QAction *m_pAboutAction;
 
     };
 };

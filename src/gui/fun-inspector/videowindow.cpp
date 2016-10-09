@@ -1,4 +1,4 @@
-<!--
+/*
  * Copyright (C) 2016-2017 Luiz Carlos Vieira (http://www.luiz.vieira.nom.br)
  *
  * This file is part of Fun SDK (FSDK).
@@ -15,15 +15,16 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
--->
-<RCC>
-    <qresource prefix="/icons">
-        <file>fun-inspector.png</file>
-		<file>open.png</file>
-		<file>save.png</file>
-		<file>save-as.png</file>
-    </qresource>
-    <qresource prefix="/images">
-        <file>darth.jpg</file>
-    </qresource>	
-</RCC>
+ */
+
+#include "videowindow.h"
+
+// +-----------------------------------------------------------
+fsdk::VideoWindow::VideoWindow(QWidget *pParent) :
+	QDockWidget("Video Window", pParent)
+{
+	m_pFrame = new FrameWidget(this);
+	setWidget(m_pFrame);
+	QPixmap oImage(":/images/darth.jpg");
+	m_pFrame->setPixmap(oImage);
+}
