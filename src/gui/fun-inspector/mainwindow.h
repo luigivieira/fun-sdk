@@ -21,6 +21,9 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QMenu>
+#include <QAction>
+#include <QToolBar>
 
 namespace fsdk
 {
@@ -45,12 +48,71 @@ namespace fsdk
 
 	protected:
 
+		/**
+		 * Sets up the UI elements.
+		 */
+		void setupUI();
+
+		/**
+		 * Refreshes the text in UI elements (so translation changes
+		 * can be applied).
+		 */
+		void refreshUI();
 		
 	private slots:
-		
+	
+		/**
+		 * Opens a session file selected by the user.
+		 */
+		void openSession();
+
+		/**
+		 * Saves the current session file.
+		 */
+		void saveSession();
+
+		/**
+		 * Saves the current session file with a different file name
+		 * selected by the user.
+		 */
+		void saveSessionAs();
+
+		/**
+		 * Quits the application.
+		 */
+		void quit();
+
+		/**
+		 * Shows help for the application.
+		 */
+		void help();
 
     private:
-        
+
+		/** Main menu item called "File". */
+		QMenu *m_pFileMenu;
+
+		/** Toolbar for the "File" menu. */
+		QToolBar *m_pFileToolbar;
+
+		/** Action called "Open": opens a project file. */
+		QAction *m_pOpenAction;
+
+		/** Action called "Save": saves the current project file. */
+		QAction *m_pSaveAction;
+
+		/** Action called "Save As": saves the current project file with a different name. */
+		QAction *m_pSaveAsAction;
+
+		/** Action called "Exit": terminates the application. */
+		QAction *m_pExitAction;
+
+		/** Action called "Help": shows online help. */
+		QAction *m_pHelpAction;
+
+		/** Main menu item called "Help". */
+		QMenu *m_pHelpMenu;
+
     };
 };
 

@@ -19,5 +19,8 @@
 <RCC>
     <qresource prefix="/icons">
         <file>fun-inspector.png</file>
+		<file>open.png</file>
+		<file>save.png</file>
+		<file>save-as.png</file>
     </qresource>
 </RCC>
