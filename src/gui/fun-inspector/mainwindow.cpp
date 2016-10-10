@@ -44,22 +44,22 @@ void fsdk::MainWindow::setupUI()
 	setStatusBar(new QStatusBar(this));
 
 	//-------------------------------
-	// Video windows
-	//-------------------------------
-	m_pPlayerWindow = new VideoWindow(this);
-	m_pPlayerWindow->setObjectName("playerWindow");
-	addDockWidget(Qt::LeftDockWidgetArea, m_pPlayerWindow);
-
-	m_pGameplayWindow = new VideoWindow(this);
-	m_pGameplayWindow->setObjectName("gameplayWindow");
-	addDockWidget(Qt::RightDockWidgetArea, m_pGameplayWindow);
-
-	//-------------------------------
 	// Session explorer window
 	//-------------------------------
 	m_pSessionExplorer = new SessionExplorer(this);
 	m_pSessionExplorer->setObjectName("sessionExplorer");
-	addDockWidget(Qt::LeftDockWidgetArea, m_pSessionExplorer);
+	addDockWidget(Qt::LeftDockWidgetArea, m_pSessionExplorer, Qt::Horizontal);
+
+	//-------------------------------
+	// Video windows
+	//-------------------------------
+	m_pPlayerWindow = new VideoWindow(this);
+	m_pPlayerWindow->setObjectName("playerWindow");
+	addDockWidget(Qt::RightDockWidgetArea, m_pPlayerWindow, Qt::Horizontal);
+
+	m_pGameplayWindow = new VideoWindow(this);
+	m_pGameplayWindow->setObjectName("gameplayWindow");
+	addDockWidget(Qt::RightDockWidgetArea, m_pGameplayWindow, Qt::Horizontal);
 
 	//-------------------------------
 	// "File" menu/toolbar

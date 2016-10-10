@@ -35,9 +35,9 @@ fsdk::SessionExplorer::SessionExplorer(QWidget *pParent) :
 	m_pRoot->setIcon(0, QIcon(":/icons/session-folder.png"));
 	m_pData->addTopLevelItem(m_pRoot);
 
-	m_pVideoFolder = new QTreeWidgetItem();
-	m_pVideoFolder->setIcon(0, QIcon(":/icons/videos-folder.png"));
-	m_pRoot->addChild(m_pVideoFolder);
+	m_pVideosFolder = new QTreeWidgetItem();
+	m_pVideosFolder->setIcon(0, QIcon(":/icons/videos-folder.png"));
+	m_pRoot->addChild(m_pVideosFolder);
 
 	m_pAnnotationsFolder = new QTreeWidgetItem();
 	m_pAnnotationsFolder->setIcon(0, QIcon(":/icons/annotations-folder.png"));
@@ -45,11 +45,15 @@ fsdk::SessionExplorer::SessionExplorer(QWidget *pParent) :
 
 	m_pPlayerFile = new QTreeWidgetItem();
 	m_pPlayerFile->setIcon(0, QIcon(":/icons/player-file.png"));
-	m_pVideoFolder->addChild(m_pPlayerFile);
+	m_pVideosFolder->addChild(m_pPlayerFile);
 
 	m_pGameplayFile = new QTreeWidgetItem();
 	m_pGameplayFile->setIcon(0, QIcon(":/icons/gameplay-file.png"));
-	m_pVideoFolder->addChild(m_pGameplayFile);
+	m_pVideosFolder->addChild(m_pGameplayFile);
+
+	m_pLandmarksFile = new QTreeWidgetItem();
+	m_pLandmarksFile->setIcon(0, QIcon(":/icons/landmarks-file.png"));
+	m_pAnnotationsFolder->addChild(m_pLandmarksFile);
 
 	m_pData->expandAll();
 }
@@ -58,8 +62,9 @@ fsdk::SessionExplorer::SessionExplorer(QWidget *pParent) :
 void fsdk::SessionExplorer::refreshUI()
 {
 	m_pRoot->setText(0, tr("Session"));
-	m_pVideoFolder->setText(0, tr("Videos"));
+	m_pVideosFolder->setText(0, tr("Videos"));
 	m_pAnnotationsFolder->setText(0, tr("Annotations"));
 	m_pPlayerFile->setText(0, tr("Player"));
 	m_pGameplayFile->setText(0, tr("Gameplay"));
+	m_pLandmarksFile->setText(0, tr("Facial landmarks"));
 }

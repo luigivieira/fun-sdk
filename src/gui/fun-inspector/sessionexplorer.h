@@ -50,16 +50,23 @@ namespace fsdk
 		/** Tree widget used to present the session data. */
 		QTreeWidget *m_pData;
 
+		/** Element that holds the tree root (i.e. the node "session"). */
 		QTreeWidgetItem *m_pRoot;
 
-		QTreeWidgetItem *m_pVideoFolder;
+		/** Element that holds the videos folder. */
+		QTreeWidgetItem *m_pVideosFolder;
 
-		QTreeWidgetItem *m_pAnnotationsFolder;
-
+		/** Element that holds the player video file. */
 		QTreeWidgetItem *m_pPlayerFile;
 
+		/** Element that holds the gameplay video file. */
 		QTreeWidgetItem *m_pGameplayFile;
 
+		/** Element that holds the annotations folder. */
+		QTreeWidgetItem *m_pAnnotationsFolder;
+
+		/** Element that holds the landmarks annotation file. */
+		QTreeWidgetItem *m_pLandmarksFile;
     };
 }
 
