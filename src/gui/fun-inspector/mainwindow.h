@@ -21,6 +21,7 @@
 #define MAINWINDOW_H
 
 #include "videowindow.h"
+#include "sessionexplorer.h"
 #include <QMainWindow>
 #include <QMenu>
 #include <QAction>
@@ -102,11 +103,14 @@ namespace fsdk
 
     private:
 
-		/** Video window that displays the player's face video. */
+		/** Window that displays the player's face video. */
 		VideoWindow *m_pPlayerWindow;
 
-		/** Video window that displays the gameplay video. */
+		/** Window that displays the gameplay video. */
 		VideoWindow *m_pGameplayWindow;
+
+		/** Window that displays the session explorer. */
+		SessionExplorer *m_pSessionExplorer;
 
 		//-------------------------------
 		// "File" menu/toolbar

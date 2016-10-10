@@ -22,6 +22,13 @@
 		<file>open.png</file>
 		<file>save.png</file>
 		<file>save-as.png</file>
+		<file>plain-folder.png</file>
+		<file>session-folder.png</file>
+		<file>videos-folder.png</file>
+		<file>player-file.png</file>
+		<file>gameplay-file.png</file>
+		<file>annotations-folder.png</file>
+		<file>landmarks-file.png</file>
     </qresource>
     <qresource prefix="/images">
         <file>darth.jpg</file>
