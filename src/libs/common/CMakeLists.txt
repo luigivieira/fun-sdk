@@ -18,7 +18,7 @@
 file(GLOB SRC *.cpp *.h)
 add_library(lib-common SHARED ${SRC})
 
-target_link_libraries(lib-common Qt5::Core Qt5::Widgets)
+target_link_libraries(lib-common Qt5::Core Qt5::Widgets ${OpenCV_LIBS})
 
 set_target_properties(lib-common PROPERTIES OUTPUT_NAME fcommon)
 set_target_properties(lib-common PROPERTIES OUTPUT_NAME_DEBUG fcommond)

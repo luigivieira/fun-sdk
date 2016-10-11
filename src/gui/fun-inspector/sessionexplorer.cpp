@@ -68,3 +68,12 @@ void fsdk::SessionExplorer::refreshUI()
 	m_pGameplayFile->setText(0, tr("Gameplay"));
 	m_pLandmarksFile->setText(0, tr("Facial landmarks"));
 }
+
+// +-----------------------------------------------------------
+void fsdk::SessionExplorer::sessionChanged(const QString &sSessionFileName, const QString &sPlayerFileName, const QString &sGameplayFileName, const QString &sLandmarksFileName)
+{
+	m_pRoot->setText(1, sSessionFileName);
+	m_pPlayerFile->setText(1, sPlayerFileName);
+	m_pGameplayFile->setText(1, sGameplayFileName);
+	m_pLandmarksFile->setText(1, sLandmarksFileName);
+}

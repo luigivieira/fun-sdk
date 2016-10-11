@@ -19,9 +19,10 @@
 <RCC>
     <qresource prefix="/icons">
         <file>fun-inspector.png</file>
-		<file>open.png</file>
-		<file>save.png</file>
-		<file>save-as.png</file>
+		<file>new-session.png</file>
+		<file>open-session.png</file>
+		<file>save-session.png</file>
+		<file>save-session-as.png</file>
 		<file>plain-folder.png</file>
 		<file>session-folder.png</file>
 		<file>videos-folder.png</file>
@@ -36,7 +37,4 @@
 		<file>windows-tile-horizontal.png</file>
 		<file>windows-tile-vertical.png</file>
     </qresource>
-    <qresource prefix="/images">
-        <file>darth.jpg</file>
-    </qresource>	
 </RCC>

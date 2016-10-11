@@ -72,22 +72,33 @@ namespace fsdk
 		void setupUI();
 
 	private slots:
-	
+
+		/**
+		 * Creates a new and empty session.
+		 */
+		void newSession();
+
 		/**
 		 * Opens a session file selected by the user.
+		 * @return Boolean indicating if the loading was successful (true)
+		 * or not (false).
 		 */
-		void openSession();
+		bool openSession();
 
 		/**
 		 * Saves the current session file.
+		 * @return Boolean indicating if the saving was successful (true)
+		 * or not (false).
 		 */
-		void saveSession();
+		bool saveSession();
 
 		/**
 		 * Saves the current session file with a different file name
 		 * selected by the user.
+		 * @return Boolean indicating if the saving was successful (true)
+		 * or not (false).
 		 */
-		void saveSessionAs();
+		bool saveSessionAs();
 
 		/**
 		 * Quits the application.
@@ -138,13 +149,16 @@ namespace fsdk
 		/** Toolbar for the "File" menu. */
 		QToolBar *m_pFileToolbar;
 
-		/** Action called "Open": opens a project file. */
+		/** Action called "New": creates a new session. */
+		QAction *m_pNewAction;
+
+		/** Action called "Open": opens a session file. */
 		QAction *m_pOpenAction;
 
-		/** Action called "Save": saves the current project file. */
+		/** Action called "Save": saves the current session file. */
 		QAction *m_pSaveAction;
 
-		/** Action called "Save As": saves the current project file with a different name. */
+		/** Action called "Save As": saves the current session file with a different name. */
 		QAction *m_pSaveAsAction;
 
 		/** Action called "Exit": terminates the application. */
@@ -182,6 +196,8 @@ namespace fsdk
 		/** Action called "About": shows application information. */
 		QAction *m_pAboutAction;
 
+		/** Last used path for open/save operations. */
+		QString m_sLastPathUsed;
     };
 };
 

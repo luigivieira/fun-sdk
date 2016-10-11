@@ -96,6 +96,11 @@ namespace fsdk
 		 */
 		void setWindowTitle(const QString &sTitle);
 
+		/**
+		 * 
+		 */
+		void videoFrameChanged(const uint iFrame, const QPixmap &oFrame);
+
 	protected:
 
 		/**

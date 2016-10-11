@@ -24,6 +24,8 @@
 #include <QDesktopServices>
 #include <QURL>
 #include <QMdiArea>
+#include <QFileDialog>
+#include <QMessageBox>
 
 // +-----------------------------------------------------------
 fsdk::MainWindow::MainWindow(QWidget *pParent) :
@@ -56,6 +58,7 @@ void fsdk::MainWindow::setupUI()
 	m_pSessionExplorer = new SessionExplorer(this);
 	m_pSessionExplorer->setObjectName("sessionExplorer");
 	addDockWidget(Qt::LeftDockWidgetArea, m_pSessionExplorer, Qt::Horizontal);
+	connect(m_pSessionData, &Session::sessionChanged, m_pSessionExplorer, &SessionExplorer::sessionChanged);
 
 	//-------------------------------
 	// Video windows
@@ -77,23 +80,30 @@ void fsdk::MainWindow::setupUI()
 	m_pFileToolbar = addToolBar("");
 	m_pFileToolbar->setIconSize(QSize(32, 32));
 
+	// Action "New"
+	m_pNewAction = m_pFileMenu->addAction("");
+	m_pFileToolbar->addAction(m_pNewAction);
+	m_pNewAction->setIcon(QIcon(":/icons/new-session.png"));
+	m_pNewAction->setShortcut(QKeySequence::New);
+	connect(m_pNewAction, &QAction::triggered, this, &MainWindow::newSession);
+
 	// Action "Open"
 	m_pOpenAction = m_pFileMenu->addAction("");
 	m_pFileToolbar->addAction(m_pOpenAction);
-	m_pOpenAction->setIcon(QIcon(":/icons/open.png"));
+	m_pOpenAction->setIcon(QIcon(":/icons/open-session.png"));
 	m_pOpenAction->setShortcut(QKeySequence::Open);
 	connect(m_pOpenAction, &QAction::triggered, this, &MainWindow::openSession);
 
 	// Action "Save"
 	m_pSaveAction = m_pFileMenu->addAction("");
 	m_pFileToolbar->addAction(m_pSaveAction);
-	m_pSaveAction->setIcon(QIcon(":/icons/save.png"));
+	m_pSaveAction->setIcon(QIcon(":/icons/save-session.png"));
 	m_pSaveAction->setShortcut(QKeySequence::Save);
 	connect(m_pSaveAction, &QAction::triggered, this, &MainWindow::saveSession);
 
 	// Action "Save As"
 	m_pSaveAsAction = m_pFileMenu->addAction("");
-	m_pSaveAsAction->setIcon(QIcon(":/icons/save-as.png"));
+	m_pSaveAsAction->setIcon(QIcon(":/icons/save-session-as.png"));
 	m_pSaveAsAction->setShortcut(QKeySequence::SaveAs);
 	connect(m_pSaveAsAction, &QAction::triggered, this, &MainWindow::saveSessionAs);
 
@@ -174,6 +184,10 @@ void fsdk::MainWindow::refreshUI()
 	m_pFileMenu->setTitle(tr("&File"));
 	m_pFileToolbar->setWindowTitle(tr("&File"));
 
+	// Action "New"
+	m_pNewAction->setText(tr("&New session"));
+	m_pNewAction->setStatusTip(tr("Creates a new empty session"));
+
 	// Action "Open"
 	m_pOpenAction->setText(tr("&Open session..."));
 	m_pOpenAction->setStatusTip(tr("Opens a session file"));
@@ -232,6 +246,7 @@ void fsdk::MainWindow::showEvent(QShowEvent *pEvent)
 	pSettings->beginGroup("mainWindow");
 	restoreGeometry(pSettings->value("geometry").toByteArray());
 	restoreState(pSettings->value("state").toByteArray());
+	m_sLastPathUsed = pSettings->value("lastPathUsed", QDir::toNativeSeparators(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))).toString();
 	pSettings->endGroup();
 }
 
@@ -244,6 +259,7 @@ void fsdk::MainWindow::closeEvent(QCloseEvent *pEvent)
 	pSettings->beginGroup("mainWindow");
 	pSettings->setValue("geometry", saveGeometry());
 	pSettings->setValue("state", saveState());
+	pSettings->setValue("lastPathUsed", m_sLastPathUsed);
 	pSettings->endGroup();
 
 	m_pPlayerWindow->close();
@@ -289,21 +305,77 @@ void fsdk::MainWindow::tileVertically()
 }
 
 // +-----------------------------------------------------------
-void fsdk::MainWindow::openSession()
+void fsdk::MainWindow::newSession()
 {
+	if(m_pSessionData->isModified())
+	{
+		QMessageBox::StandardButton eResp = QMessageBox::question(this, tr("Attention!"), tr("The current session has not been saved yet. If you continue, all unsaved data will be discarded. Do you want to continue (creating a new empty session)?"), QMessageBox::Yes | QMessageBox::No);
+		if(eResp != QMessageBox::Ok)
+			return;
+	}
 
+	m_pSessionData->clear();
 }
 
 // +-----------------------------------------------------------
-void fsdk::MainWindow::saveSession()
+bool fsdk::MainWindow::openSession()
 {
-
+	QString sFile = QFileDialog::getOpenFileName(this, tr("Open session..."), m_sLastPathUsed, tr("Session files (*.session);; All files (*.*)"));
+	if(sFile.length())
+	{
+		if(!m_pSessionData->load(sFile))
+		{
+			QApplication::beep();
+			QMessageBox::critical(this, tr("Attention!"), tr("It was not possible to load the session to file %1. Please check the log file for details.").arg(m_pSessionData->sessionFileName()), QMessageBox::Ok);
+			return false;
+		}
+		else
+		{
+			m_sLastPathUsed = QFileInfo(sFile).absolutePath();
+			return true;
+		}
+	}
+	return false;
 }
 
 // +-----------------------------------------------------------
-void fsdk::MainWindow::saveSessionAs()
+bool fsdk::MainWindow::saveSession()
 {
+	if(m_pSessionData->sessionFileName().isEmpty())
+		return saveSessionAs();
+	else
+	{
+		if(!m_pSessionData->save(m_pSessionData->sessionFileName()))
+		{
+			QApplication::beep();
+			QMessageBox::critical(this, tr("Attention!"), tr("It was not possible to save the session to file %1. Please check the log file for details.").arg(m_pSessionData->sessionFileName()), QMessageBox::Ok);
+			return false;
+		}
+		else
+			return true;
+	}
+}
 
+// +-----------------------------------------------------------
+bool fsdk::MainWindow::saveSessionAs()
+{
+	QString sFile = QFileDialog::getSaveFileName(this, tr("Save session..."), m_sLastPathUsed, tr("Session files (*.session);; All files (*.*)"));
+	if(sFile.length())
+	{
+		if(!m_pSessionData->save(sFile))
+		{
+			QApplication::beep();
+			QMessageBox::critical(this, tr("Attention!"), tr("It was not possible to save the session to file %1. Please check the log file for details.").arg(sFile), QMessageBox::Ok);
+			return false;
+		}
+		else
+		{
+			m_sLastPathUsed = QFileInfo(sFile).absolutePath();
+			return true;
+		}
+	}
+	else
+		return false;
 }
 
 // +-----------------------------------------------------------

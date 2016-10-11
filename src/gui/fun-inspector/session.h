@@ -22,14 +22,12 @@
 
 #include <QObject>
 #include <QFile>
-#include <opencv2\opencv.hpp>
-
-using namespace cv;
+#include <QMediaPlayer>
 
 namespace fsdk
 {
     /**
-     * Session data model class.
+     * Handles the access to session data.
      */
     class Session : public QObject
     {
@@ -44,8 +42,11 @@ namespace fsdk
 			/** Indicates that the video file defined could not be read. */
 			ReadError,
 
-			/** Indicates that the video file defined was opened ok. */
-			Ok
+			/** Indicates that the video file defined is opened. */
+			Opened,
+
+			/** Indicates that the video file defined is closed. */
+			Closed
 		};
 		Q_ENUM(VideoStatus);
 
@@ -84,18 +85,81 @@ namespace fsdk
 		void setGameplayFileName(const QString &sFileName);
 
 
+		/**
+		 * Gets the name of the landmarks file.
+		 * @return QString with the name of the landmarks file.
+		 */
+		QString landmarksFileName() const;
 
-		void save(const QString &sFileName);
+		/**
+		 * Sets the name of the landmarks file.
+		 * @param sFileName QString with the name of the landmarks file.
+		 * If it is an empty string, the current landmarks file is removed
+		 * from the session.
+		 */
+		void setLandmarksFileName(const QString &sFileName);
 
-		void load(const QString &sFileName);
+		/**
+		 * Clears the current session data.
+		 */
+		void clear();
+
+		/**
+		 * 
+		 */
+		bool save(const QString &sFileName);
+
+		/**
+		 *
+		 */
+		bool load(const QString &sFileName);
+
+		/**
+		 * Indicates if the session has been modified since last save/load.
+		 * @return Boolean indicating if session has been modified (true)
+		 * or not (false).
+		 */
+		bool isModified() const;
+
+		/**
+		 * Gets the current session file name (if saved/loaded).
+		 * @return QString with the name of the session file or empty if it
+		 * is a new session.
+		 */
+		QString sessionFileName() const;
+
+	signals:
+
+		/**
+		 * Signal indicating changes in the session contents and saved status.
+		 * @param sSessionFileName QString with the name of the session file in disk (or empty
+		 * if it is a new session).
+		 * @param sPlayerFileName QString with the current value of the corresponding field.
+		 * @param sGameplayFileName QString with the current value of the corresponding field.
+		 * @param sLandmarksFileName QString with the current value of the corresponding field.
+		 */
+		void sessionChanged(const QString &sSessionFileName, const QString &sPlayerFileName, const QString &sGameplayFileName, const QString &sLandmarksFileName);
+
+	public slots:
+
+
+	protected slots:
+
+	protected:
+
+		/**
+		 * Sets the modified flag and emit the signal of modified changed.
+		 * @param bModified Boolean indicating the current modified flag.
+		 */
+		void setModified(const bool bModified);
 
     private:
 
+		/** Name of the file where the session data is stored. */
+		QString m_sSessionFileName;
+
 		/** Name of the video file with the player's face. */
 		QString m_sPlayerFileName;
-
-		/** Opencv's capture of frames of the player video. */
-		VideoCapture m_oPlayerVideo;
 
 		/** Status of the video file with the player's face. */
 		VideoStatus m_ePlayerStatus;
@@ -109,9 +173,8 @@ namespace fsdk
 		/** Status of the video file with the gameplay session. */
 		VideoStatus m_eGameplayStatus;
 
-
-		/** Opencv's capture of frames of the gameplay video. */
-		VideoCapture m_oGameplayVideo;
+		/** Indicates if the session has been modified. */
+		bool m_bModified;
     };
 }
 

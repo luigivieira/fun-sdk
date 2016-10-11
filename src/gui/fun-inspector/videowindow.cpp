@@ -49,9 +49,6 @@ void fsdk::VideoWindow::setupUI()
 	m_pFrame = new FrameWidget(this);
 	layout()->addWidget(m_pFrame);
 
-	QPixmap oImage(":/images/darth.jpg");
-	m_pFrame->setPixmap(oImage);
-
 	/***********************************************
 	 * Toggle actions
 	 ***********************************************/
@@ -178,4 +175,10 @@ QAction *fsdk::VideoWindow::toggleDetachedAction() const
 QMenu *fsdk::VideoWindow::actionsMenu() const
 {
 	return m_pActionsMenu;
+}
+
+// +-----------------------------------------------------------
+void fsdk::VideoWindow::videoFrameChanged(const uint iFrame, const QPixmap &oFrame)
+{
+	m_pFrame->setPixmap(oFrame);
 }
