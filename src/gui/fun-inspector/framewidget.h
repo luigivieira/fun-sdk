@@ -73,12 +73,10 @@ namespace fsdk
 		void zoomOut();
 
 		/**
-		 * Returns the size hint to be used by this widget.
+		 * Gets the size hint to be used by this widget.
+		 * @return QSize with the size hint for this widget.
 		 */
-		QSize sizeHint() const
-		{
-			return QSize(800, 600);
-		};
+		QSize sizeHint() const;
 
 	signals:
 

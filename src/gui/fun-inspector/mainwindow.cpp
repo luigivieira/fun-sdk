@@ -23,13 +23,20 @@
 #include <QStatusBar>
 #include <QDesktopServices>
 #include <QURL>
+#include <QMdiArea>
 
 // +-----------------------------------------------------------
 fsdk::MainWindow::MainWindow(QWidget *pParent) :
     QMainWindow(pParent)
 {
+	setCentralWidget(new QMdiArea(this));
+	static_cast<QMdiArea*>(centralWidget())->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+	static_cast<QMdiArea*>(centralWidget())->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);	
+
     setWindowIcon(QIcon(":/icons/fun-inspector.png"));
 	setWindowTitle(qApp->applicationName());
+
+	m_pSessionData = new Session(this);
 
 	setupUI();
 	refreshUI();
@@ -54,12 +61,14 @@ void fsdk::MainWindow::setupUI()
 	// Video windows
 	//-------------------------------
 	m_pPlayerWindow = new VideoWindow(this);
+	m_pPlayerWindow->setWindowIcon(QIcon(":/icons/player-file.png"));
 	m_pPlayerWindow->setObjectName("playerWindow");
-	addDockWidget(Qt::RightDockWidgetArea, m_pPlayerWindow, Qt::Horizontal);
+	static_cast<QMdiArea*>(centralWidget())->addSubWindow(m_pPlayerWindow);
 
 	m_pGameplayWindow = new VideoWindow(this);
+	m_pGameplayWindow->setWindowIcon(QIcon(":/icons/gameplay-file.png"));
 	m_pGameplayWindow->setObjectName("gameplayWindow");
-	addDockWidget(Qt::RightDockWidgetArea, m_pGameplayWindow, Qt::Horizontal);
+	static_cast<QMdiArea*>(centralWidget())->addSubWindow(m_pGameplayWindow);
 
 	//-------------------------------
 	// "File" menu/toolbar
@@ -103,11 +112,24 @@ void fsdk::MainWindow::setupUI()
 	// Submenu "Windows"
 	m_pViewWindowsMenu = m_pViewMenu->addMenu("");
 
-	// Action for toggling the view of the player's face window
-	m_pViewWindowsMenu->addAction(m_pPlayerWindow->toggleViewAction());
+	// Actions for the player's face window
+	m_pViewWindowsMenu->addMenu(m_pPlayerWindow->actionsMenu());
 
-	// Action for toggling the view of the gameplay window
-	m_pViewWindowsMenu->addAction(m_pGameplayWindow->toggleViewAction());
+	// Action for the view of the gameplay window
+	m_pViewWindowsMenu->addMenu(m_pGameplayWindow->actionsMenu());
+
+	// Separator
+	m_pViewWindowsMenu->addSeparator();
+
+	// Action for tiling the subwindows horizontally
+	m_pTileHorizontalAction = m_pViewWindowsMenu->addAction("");
+	m_pTileHorizontalAction->setIcon(QIcon(":/icons/windows-tile-horizontal.png"));
+	connect(m_pTileHorizontalAction, &QAction::triggered, this, &MainWindow::tileHorizontally);
+
+	// Action for tiling the subwindows vertically
+	m_pTileVerticalAction = m_pViewWindowsMenu->addAction("");
+	m_pTileVerticalAction->setIcon(QIcon(":/icons/windows-tile-vertical.png"));
+	connect(m_pTileVerticalAction, &QAction::triggered, this, &MainWindow::tileVertically);
 
 	// Submenu "Toolbars"
 	m_pViewToolbarsMenu = m_pViewMenu->addMenu("");
@@ -176,6 +198,12 @@ void fsdk::MainWindow::refreshUI()
 	// Submenu "Windows"
 	m_pViewWindowsMenu->setTitle(tr("&Windows"));
 
+	// Action for tiling the subwindows horizontally
+	m_pTileHorizontalAction->setText(tr("Tile horizontally"));
+
+	// Action for tiling the subwindows vertically
+	m_pTileVerticalAction->setText(tr("Tile vertically"));
+
 	// Submenu "Toolbars"
 	m_pViewToolbarsMenu->setTitle(tr("&Toolbars"));
 
@@ -218,7 +246,46 @@ void fsdk::MainWindow::closeEvent(QCloseEvent *pEvent)
 	pSettings->setValue("state", saveState());
 	pSettings->endGroup();
 
+	m_pPlayerWindow->close();
+	m_pGameplayWindow->close();
+
 	QMainWindow::closeEvent(pEvent);
+}
+
+// +-----------------------------------------------------------
+void fsdk::MainWindow::tileHorizontally()
+{
+	QMdiArea *pArea = static_cast<QMdiArea*>(centralWidget());
+
+	if(pArea->subWindowList().isEmpty())
+		return;
+
+	QPoint oPos(0, 0);
+	foreach(QMdiSubWindow *pWindow, pArea->subWindowList())
+	{
+		QRect oRect(0, 0, pArea->width() / pArea->subWindowList().count(), pArea->height());
+		pWindow->setGeometry(oRect);
+		pWindow->move(oPos);
+		oPos.setX(oPos.x() + pWindow->width());
+	}
+}
+
+// +-----------------------------------------------------------
+void fsdk::MainWindow::tileVertically()
+{
+	QMdiArea *pArea = static_cast<QMdiArea*>(centralWidget());
+
+	if(pArea->subWindowList().isEmpty())
+		return;
+
+	QPoint oPos(0, 0);
+	foreach(QMdiSubWindow *pWindow, pArea->subWindowList())
+	{
+		QRect oRect(0, 0, pArea->width(), pArea->height() / pArea->subWindowList().count());
+		pWindow->setGeometry(oRect);
+		pWindow->move(oPos);
+		oPos.setY(oPos.y() + pWindow->height());
+	}
 }
 
 // +-----------------------------------------------------------

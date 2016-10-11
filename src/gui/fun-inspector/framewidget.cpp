@@ -57,6 +57,12 @@ fsdk::FrameWidget::FrameWidget(QWidget *pParent) : QGraphicsView(pParent)
 }
 
 // +-----------------------------------------------------------
+QSize fsdk::FrameWidget::sizeHint() const
+{
+	return QSize(800, 600);
+};
+
+// +-----------------------------------------------------------
 void fsdk::FrameWidget::setPixmap(const QPixmap &oPixmap)
 {
 	m_pPixmapItem->setPixmap(oPixmap);

@@ -24,7 +24,7 @@
 fsdk::SessionExplorer::SessionExplorer(QWidget *pParent) :
 	QDockWidget("", pParent)
 {
-	m_pData = new QTreeWidget(this);
+	m_pData = new TreeWidget(this);
 	setWidget(m_pData);
 	
 	m_pData->setColumnCount(2);

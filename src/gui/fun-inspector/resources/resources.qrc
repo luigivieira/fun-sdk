@@ -29,6 +29,12 @@
 		<file>gameplay-file.png</file>
 		<file>annotations-folder.png</file>
 		<file>landmarks-file.png</file>
+		<file>window-visible.png</file>
+		<file>window-hidden.png</file>
+		<file>window-attached.png</file>
+		<file>window-detached.png</file>
+		<file>windows-tile-horizontal.png</file>
+		<file>windows-tile-vertical.png</file>
     </qresource>
     <qresource prefix="/images">
         <file>darth.jpg</file>

@@ -22,6 +22,7 @@
 
 #include "videowindow.h"
 #include "sessionexplorer.h"
+#include "session.h"
 #include <QMainWindow>
 #include <QMenu>
 #include <QAction>
@@ -43,6 +44,14 @@ namespace fsdk
          */
         explicit MainWindow(QWidget *pParent = 0);
 
+	public slots:
+
+		/**
+		 * Refreshes the text in UI elements (so translation changes
+		 * can be applied).
+		 */
+		void refreshUI();
+
 	protected:
 
 		/**
@@ -62,12 +71,6 @@ namespace fsdk
 		 */
 		void setupUI();
 
-		/**
-		 * Refreshes the text in UI elements (so translation changes
-		 * can be applied).
-		 */
-		void refreshUI();
-		
 	private slots:
 	
 		/**
@@ -101,16 +104,29 @@ namespace fsdk
 		*/
 		void about();
 
+		/**
+		 * Tiles the attached subwindows horizontally.
+		 */
+		void tileHorizontally();
+
+		/**
+		 * Tiles the attached subwindows vertically.
+		 */
+		void tileVertically();
+
     private:
+
+		/** Allows the access to the session data. */
+		Session *m_pSessionData;
+
+		/** Window that displays the session explorer. */
+		SessionExplorer *m_pSessionExplorer;
 
 		/** Window that displays the player's face video. */
 		VideoWindow *m_pPlayerWindow;
 
 		/** Window that displays the gameplay video. */
 		VideoWindow *m_pGameplayWindow;
-
-		/** Window that displays the session explorer. */
-		SessionExplorer *m_pSessionExplorer;
 
 		//-------------------------------
 		// "File" menu/toolbar
@@ -143,6 +159,12 @@ namespace fsdk
 
 		/** View menu's submenu called "Windows". */
 		QMenu *m_pViewWindowsMenu;
+
+		/** Action called "Tile Horizontally": tiles the subwindows in a horizontal fashion. */
+		QAction *m_pTileHorizontalAction;
+
+		/** Action called "Tile Vertically": tiles the subwindows in a vertical fashion. */
+		QAction *m_pTileVerticalAction;
 
 		/** View menu's submenu called "Toolbars". */
 		QMenu *m_pViewToolbarsMenu;

@@ -25,6 +25,33 @@
 
 namespace fsdk
 {
+	/**
+	 * Inheritance of QTreeWidget to allow redefining its sizeHint().
+	 */
+	class TreeWidget : public QTreeWidget
+	{
+	public:
+		/**
+		 * Class constructor.
+		 * @param pParent Instance of QWidget with the object's parent.
+		 * Default is NULL.
+		 */
+		TreeWidget(QWidget *pParent = NULL) :
+			QTreeWidget(pParent)
+		{
+			//setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+		}
+
+		/**
+		 * Gets the size hint for this widget.
+		 * @return QSize with the size hint.
+		 */
+		QSize sizeHint() const
+		{
+			return QSize(200, 400);
+		}
+	};
+
     /**
      * Dockable window that displays the loaded session content.
      */
@@ -39,6 +66,8 @@ namespace fsdk
          */
 		SessionExplorer(QWidget *pParent = 0);
 
+	public slots:
+
 		/**
 		 * Refreshes the text in UI elements (so translation changes
 		 * can be applied).
@@ -48,7 +77,7 @@ namespace fsdk
     private:
         
 		/** Tree widget used to present the session data. */
-		QTreeWidget *m_pData;
+		TreeWidget *m_pData;
 
 		/** Element that holds the tree root (i.e. the node "session"). */
 		QTreeWidgetItem *m_pRoot;
