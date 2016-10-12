@@ -26,6 +26,7 @@
 #include <QMdiArea>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QTimer>
 
 // +-----------------------------------------------------------
 fsdk::MainWindow::MainWindow(QWidget *pParent) :
@@ -249,23 +250,72 @@ void fsdk::MainWindow::refreshUI()
 }
 
 // +-----------------------------------------------------------
-void fsdk::MainWindow::showEvent(QShowEvent *pEvent)
+void fsdk::MainWindow::unloadApp() const
 {
-	// Restores the previous geometry and state of the main window
+	// Save the application settings
 	QSettings *pSettings = static_cast<Application*>(qApp)->settings();
 
 	pSettings->beginGroup("mainWindow");
-	restoreGeometry(pSettings->value("geometry").toByteArray());
+	pSettings->setValue("state", saveState());
+	pSettings->setValue("geometry", saveGeometry());
+	pSettings->setValue("lastPathUsed", m_sLastPathUsed);
+	pSettings->endGroup();
+
+	pSettings->beginGroup("playerWindow");
+	pSettings->setValue("state", m_pPlayerWindow->saveState());
+	pSettings->setValue("geometry", m_pPlayerWindow->saveGeometry());
+	pSettings->endGroup();
+
+	pSettings->beginGroup("gameplayWindow");
+	pSettings->setValue("state", m_pGameplayWindow->saveState());
+	pSettings->setValue("geometry", m_pGameplayWindow->saveGeometry());
+	pSettings->endGroup();
+
+	// Close all subwindows
+	m_pPlayerWindow->close();
+	m_pGameplayWindow->close();
+}
+
+// +-----------------------------------------------------------
+void fsdk::MainWindow::loadApp()
+{
+	// By default, the subwindows are tiled horizontally
+	tileHorizontally();
+
+	// Read the application settings
+	QSettings *pSettings = static_cast<Application*>(qApp)->settings();
+
+	pSettings->beginGroup("mainWindow");
 	restoreState(pSettings->value("state").toByteArray());
+	restoreGeometry(pSettings->value("geometry").toByteArray());
 	m_sLastPathUsed = pSettings->value("lastPathUsed", QDir::toNativeSeparators(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))).toString();
 	pSettings->endGroup();
 
+	pSettings->beginGroup("playerWindow");
+	m_pPlayerWindow->restoreState(pSettings->value("state").toByteArray());
+	m_pPlayerWindow->restoreGeometry(pSettings->value("geometry").toByteArray());
+	pSettings->endGroup();
+
+	pSettings->beginGroup("gameplayWindow");
+	m_pGameplayWindow->restoreState(pSettings->value("state").toByteArray());
+	m_pGameplayWindow->restoreGeometry(pSettings->value("geometry").toByteArray());
+	pSettings->endGroup();
+
+	activateWindow(); // Foce the focus back to the main window
+}
+
+// +-----------------------------------------------------------
+void fsdk::MainWindow::showEvent(QShowEvent *pEvent)
+{
+	QMainWindow::showEvent(pEvent);
 	pEvent->accept();
+	QTimer::singleShot(50, this, SLOT(loadApp()));
 }
 
 // +-----------------------------------------------------------
 void fsdk::MainWindow::closeEvent(QCloseEvent *pEvent)
 {
+	// Checks if the session has been modified
 	if(m_pSessionData->isModified())
 	{
 		QMessageBox::StandardButton eResp = QMessageBox::question(this, tr("Attention!"), tr("The current session has not been saved yet and if you continue all unsaved data will be discarded. Do you want to close the application nevertheless?"), QMessageBox::Yes | QMessageBox::No);
@@ -276,18 +326,7 @@ void fsdk::MainWindow::closeEvent(QCloseEvent *pEvent)
 		}
 	}
 
-	// Save the current geometry and state of the main window
-	QSettings *pSettings = static_cast<Application*>(qApp)->settings();
-
-	pSettings->beginGroup("mainWindow");
-	pSettings->setValue("geometry", saveGeometry());
-	pSettings->setValue("state", saveState());
-	pSettings->setValue("lastPathUsed", m_sLastPathUsed);
-	pSettings->endGroup();
-
-	m_pPlayerWindow->close();
-	m_pGameplayWindow->close();
-
+	unloadApp();
 	pEvent->accept();
 }
 
@@ -416,7 +455,8 @@ bool fsdk::MainWindow::saveSessionAs()
 // +-----------------------------------------------------------
 void fsdk::MainWindow::quit()
 {
-	close();
+	qWarning().noquote() << "Local: " << m_pPlayerWindow->pos() << " Global: " << m_pPlayerWindow->mapToGlobal(m_pPlayerWindow->pos());
+	//close();
 }
 
 // +-----------------------------------------------------------

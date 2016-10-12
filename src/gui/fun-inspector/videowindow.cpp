@@ -25,6 +25,7 @@
 #include <QMdiArea>
 #include <QApplication>
 #include <QScreen>
+#include <QDebug>
 
 // +-----------------------------------------------------------
 fsdk::VideoWindow::VideoWindow(QWidget *pParent) :
@@ -122,6 +123,8 @@ void fsdk::VideoWindow::closeEvent(QCloseEvent *pEvent)
 // +-----------------------------------------------------------
 void fsdk::VideoWindow::toggleVisible(bool bVisible)
 {
+	m_pToggleViewAction->setChecked(bVisible);
+
 	setVisible(bVisible);
 	refreshUI();
 }
@@ -129,28 +132,29 @@ void fsdk::VideoWindow::toggleVisible(bool bVisible)
 // +-----------------------------------------------------------
 void fsdk::VideoWindow::toggleDetached(bool bDetached)
 {
+	m_pToggleDetachedAction->setChecked(bDetached);
+
 	QMainWindow *pMainWindow = static_cast<QMainWindow*>(m_pParent);
 	QMdiArea *pArea = static_cast<QMdiArea*>(pMainWindow->centralWidget());
 	if(bDetached)
 	{
+		QPoint oPos = static_cast<QWidget*>(parent())->mapToGlobal(pos());
 		pArea->removeSubWindow(this);
 		setParent(NULL);
-		
-		// Center the newly detached window over the main window location
-		QRect oRect = pMainWindow->geometry();
-		QPoint oCenter(oRect.left() + oRect.width() / 2, oRect.top() + oRect.height() / 2);
-		oRect = geometry();
-		move(oCenter.x() - oRect.width() / 2, oCenter.y() - oRect.height() / 2);
+		move(oPos);
 	}
 	else
 	{
+		QPoint oPos = static_cast<QWidget*>(parent())->mapFromGlobal(pos());
 		setParent(m_pParent);
 		pArea->addSubWindow(this);
+		move(oPos);
 	}
 
 	if(m_pToggleViewAction->isChecked())
 		show();
 	refreshUI();
+	activateWindow(); // Foce the focus back on this window
 }
 
 // +-----------------------------------------------------------
@@ -181,4 +185,88 @@ QMenu *fsdk::VideoWindow::actionsMenu() const
 void fsdk::VideoWindow::videoFrameChanged(const uint iFrame, const QPixmap &oFrame)
 {
 	m_pFrame->setPixmap(oFrame);
+}
+
+// +-----------------------------------------------------------
+QByteArray fsdk::VideoWindow::saveState() const
+{
+	QByteArray oData;
+	QDataStream oStream(&oData, QIODevice::WriteOnly);
+
+	oStream << m_pToggleDetachedAction->isChecked();
+	oStream << m_pToggleViewAction->isChecked();
+	oStream << isMaximized();
+
+	return oData;
+}
+
+// +-----------------------------------------------------------
+bool fsdk::VideoWindow::restoreState(const QByteArray &oData)
+{
+	if(oData.isEmpty())
+		return false;
+
+	QByteArray oLocalData = oData;
+	QDataStream oStream(&oLocalData, QIODevice::ReadOnly);
+
+	bool bDetached;
+	oStream >> bDetached;
+	if(oStream.status() != QDataStream::Ok)
+	{
+		qWarning().noquote() << "Error restoring window state due to failure in reading value 'detached'";
+		return false;
+	}
+
+	bool bVisible;
+	oStream >> bVisible;
+	if(oStream.status() != QDataStream::Ok)
+	{
+		qWarning().noquote() << "Error restoring window state due to failure in reading value 'visible'";
+		return false;
+	}
+	
+	bool bMaximized;
+	oStream >> bMaximized;
+	if(oStream.status() != QDataStream::Ok)
+	{
+		qWarning().noquote() << "Error restoring window state due to failure in reading value 'maximized'";
+		return false;
+	}
+
+	toggleDetached(bDetached);
+	toggleVisible(bVisible);
+	if(bMaximized)
+		setWindowState(Qt::WindowMaximized);
+
+	return true;
+}
+
+// +-----------------------------------------------------------
+QByteArray fsdk::VideoWindow::saveGeometry() const
+{
+	QByteArray oData;
+	QDataStream oStream(&oData, QIODevice::WriteOnly);
+	oStream << geometry();
+	return oData;
+}
+
+// +-----------------------------------------------------------
+bool fsdk::VideoWindow::restoreGeometry(const QByteArray &oData)
+{
+	if(oData.isEmpty())
+		return false;
+
+	QByteArray oLocalData = oData;
+	QDataStream oStream(&oLocalData, QIODevice::ReadOnly);
+
+	QRect oGeometry;
+	oStream >> oGeometry;
+	if(oStream.status() != QDataStream::Ok)
+	{
+		qWarning().noquote() << "Error restoring window geometry due to failure in reading value 'geometry'";
+		return false;
+	}
+
+	setGeometry(oGeometry);
+	return true;
 }

@@ -64,6 +64,34 @@ namespace fsdk
 		 */
 		QMenu *actionsMenu() const;
 
+		/**
+		 * Serializes the window state to allow saving it.
+		 * @return QByteArray with the data of the window state.
+		 */
+		QByteArray saveState() const;
+
+		/** 
+		 * Deserializes the window state to allow restoring it.
+		 * @param oData QByteArray with the data of the window state.
+		 * @return Boolean indicating if the restoration was successful
+		 * (true) or not (false).
+		 */
+		bool restoreState(const QByteArray &oData);
+
+		/**
+		 * Serializes the window geometry to allow saving it.
+		 * @return QByteArray with the data of the window geometry.
+		 */
+		QByteArray saveGeometry() const;
+
+		/**
+		 * Deserializes the window geometry to allow restoring it.
+		 * @param oData QByteArray with the data of the window geometry.
+		 * @return Boolean indicating if the restoration was successful
+		 * (true) or not (false).
+		 */
+		bool restoreGeometry(const QByteArray &oData);
+
 	public slots:
 
 		/**

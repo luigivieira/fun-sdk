@@ -53,7 +53,7 @@ namespace fsdk
 		 */
 		QSize sizeHint() const
 		{
-			return QSize(200, 400);
+			return QSize(200, 150);
 		}
 	};
 

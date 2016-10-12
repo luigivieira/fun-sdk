@@ -83,7 +83,17 @@ namespace fsdk
 		 */
 		void setupUI();
 
-	private slots:
+	protected slots:
+
+		/**
+		 * Unloads the application, saving its settings.
+		 */
+		void unloadApp() const;
+
+		/**
+		 * Loads the application settings.
+		 */
+		void loadApp();
 
 		/**
 		 * Creates a new and empty session.
