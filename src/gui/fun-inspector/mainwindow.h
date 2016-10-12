@@ -44,6 +44,18 @@ namespace fsdk
          */
         explicit MainWindow(QWidget *pParent = 0);
 
+		/**
+		 * Get the last path used for open/save operations.
+		 * @return QString with the last path used for open/save operations.
+		 */
+		QString lastPathUsed() const;
+
+		/**
+		 * Sets the last path used for open/save operations.
+		 * @param sPath QString with the last path used for open/save operations.
+		 */
+		void setLastPathUsed(const QString &sPath);
+
 	public slots:
 
 		/**

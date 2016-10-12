@@ -20,6 +20,7 @@
 #ifndef SESSIONEXPLORER_H
 #define SESSIONEXPLORER_H
 
+#include "session.h"
 #include <QDockWidget>
 #include <QTreeWidget>
 #include <QAction>
@@ -27,6 +28,9 @@
 
 namespace fsdk
 {
+	// pre-definition of MainWindow class
+	class MainWindow;
+
 	/**
 	 * Inheritance of QTreeWidget to allow redefining its sizeHint().
 	 */
@@ -63,9 +67,10 @@ namespace fsdk
     public:
         /**
          * Class constructor.
-         * @param pParent QWidget with the window parent.
+		 * @param pData Instance of the Session class to access the session data.
+         * @param pParent MainWindow with the window parent.
          */
-		SessionExplorer(QWidget *pParent = 0);
+		SessionExplorer(Session *pData, MainWindow *pParent);
 
 		/**
 		 * Gets the menu of actions for the player file.
@@ -112,10 +117,64 @@ namespace fsdk
 		 */
 		void showContextMenu(const QPoint &oClickPos);
 
+		/**
+		 * Opens a dialog for the user to select an existing video file
+		 * of the player's face to add to the session.
+		 * @return Boolean indicating if the method executed with success
+		 * (true) or not (false).
+		 */
+		bool addPlayerFile();
+
+		/**
+		 * Removes the current video file of the player's face from the session
+		 * (with confirmation from the user).
+		 * @return Boolean indicating if the method executed with success
+		 * (true) or not (false).
+		 */
+		bool removePlayerFile();
+
+		/**
+		 * Opens a dialog for the user to select an existing video file
+		 * of the gameplay to add to the session.
+		 * @return Boolean indicating if the method executed with success
+		 * (true) or not (false).
+		 */
+		bool addGameplayFile();
+
+		/**
+		 * Removes the current video file of the gameplay from the session
+		 * (with confirmation from the user).
+		 * @return Boolean indicating if the method executed with success
+		 * (true) or not (false).
+		 */
+		bool removeGameplayFile();
+
+		/**
+		 * Opens a dialog for the user to select an existing CSV file
+		 * of the facial landmarks to add to the session.
+		 * @return Boolean indicating if the method executed with success
+		 * (true) or not (false).
+		 */
+		bool addLandmarksFile();
+
+		/**
+		 * Removes the current CSV file of the facial landmarks from the session
+		 * (with confirmation from the user).
+		 * @return Boolean indicating if the method executed with success
+		 * (true) or not (false).
+		 */
+		bool removeLandmarksFile();
+
     private:
-        
-		/** Tree widget used to present the session data. */
-		TreeWidget *m_pData;
+
+		/** Reference to the main window instance. */
+		MainWindow *m_pMainWindow;
+
+		/** Access to the session data. */
+		Session *m_pData;
+
+		/** Tree widget used to view and interact with the session data. */
+		TreeWidget *m_pView;
 
 		/** Element that holds the tree root (i.e. the node "session"). */
 		QTreeWidgetItem *m_pRoot;

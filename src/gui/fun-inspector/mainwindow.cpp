@@ -36,7 +36,7 @@ fsdk::MainWindow::MainWindow(QWidget *pParent) :
 	static_cast<QMdiArea*>(centralWidget())->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);	
 
     setWindowIcon(QIcon(":/icons/fun-inspector.png"));
-	setWindowTitle(qApp->applicationName());
+	setWindowTitle(QString("[*]%1").arg(qApp->applicationName()));
 
 	m_pSessionData = new Session(this);
 
@@ -55,10 +55,9 @@ void fsdk::MainWindow::setupUI()
 	//-------------------------------
 	// Session explorer window
 	//-------------------------------
-	m_pSessionExplorer = new SessionExplorer(this);
+	m_pSessionExplorer = new SessionExplorer(m_pSessionData, this);
 	m_pSessionExplorer->setObjectName("sessionExplorer");
 	addDockWidget(Qt::LeftDockWidgetArea, m_pSessionExplorer, Qt::Horizontal);
-	connect(m_pSessionData, &Session::sessionChanged, m_pSessionExplorer, &SessionExplorer::sessionChanged);
 
 	//-------------------------------
 	// Video windows
@@ -252,8 +251,6 @@ void fsdk::MainWindow::refreshUI()
 // +-----------------------------------------------------------
 void fsdk::MainWindow::showEvent(QShowEvent *pEvent)
 {
-	QMainWindow::showEvent(pEvent);
-
 	// Restores the previous geometry and state of the main window
 	QSettings *pSettings = static_cast<Application*>(qApp)->settings();
 
@@ -262,11 +259,23 @@ void fsdk::MainWindow::showEvent(QShowEvent *pEvent)
 	restoreState(pSettings->value("state").toByteArray());
 	m_sLastPathUsed = pSettings->value("lastPathUsed", QDir::toNativeSeparators(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))).toString();
 	pSettings->endGroup();
+
+	pEvent->accept();
 }
 
 // +-----------------------------------------------------------
 void fsdk::MainWindow::closeEvent(QCloseEvent *pEvent)
 {
+	if(m_pSessionData->isModified())
+	{
+		QMessageBox::StandardButton eResp = QMessageBox::question(this, tr("Attention!"), tr("The current session has not been saved yet and if you continue all unsaved data will be discarded. Do you want to close the application nevertheless?"), QMessageBox::Yes | QMessageBox::No);
+		if(eResp == QMessageBox::No)
+		{
+			pEvent->ignore();
+			return;
+		}
+	}
+
 	// Save the current geometry and state of the main window
 	QSettings *pSettings = static_cast<Application*>(qApp)->settings();
 
@@ -279,7 +288,7 @@ void fsdk::MainWindow::closeEvent(QCloseEvent *pEvent)
 	m_pPlayerWindow->close();
 	m_pGameplayWindow->close();
 
-	QMainWindow::closeEvent(pEvent);
+	pEvent->accept();
 }
 
 // +-----------------------------------------------------------
@@ -319,12 +328,24 @@ void fsdk::MainWindow::tileVertically()
 }
 
 // +-----------------------------------------------------------
+QString fsdk::MainWindow::lastPathUsed() const
+{
+	return m_sLastPathUsed;
+}
+
+// +-----------------------------------------------------------
+void fsdk::MainWindow::setLastPathUsed(const QString &sPath)
+{
+	m_sLastPathUsed = sPath;
+}
+
+// +-----------------------------------------------------------
 void fsdk::MainWindow::newSession()
 {
 	if(m_pSessionData->isModified())
 	{
-		QMessageBox::StandardButton eResp = QMessageBox::question(this, tr("Attention!"), tr("The current session has not been saved yet. If you continue, all unsaved data will be discarded. Do you want to continue (creating a new empty session)?"), QMessageBox::Yes | QMessageBox::No);
-		if(eResp != QMessageBox::Ok)
+		QMessageBox::StandardButton eResp = QMessageBox::question(this, tr("Attention!"), tr("The current session has not been saved yet and if you continue all unsaved data will be discarded. Do you want to create a new empty session nevertheless?"), QMessageBox::Yes | QMessageBox::No);
+		if(eResp == QMessageBox::No)
 			return;
 	}
 

@@ -18,25 +18,34 @@
  */
 
 #include "sessionexplorer.h"
+#include "mainwindow.h"
 #include <QHeaderView>
+#include <QFileDialog>
+#include <QMessageBox>
 
 // +-----------------------------------------------------------
-fsdk::SessionExplorer::SessionExplorer(QWidget *pParent) :
+fsdk::SessionExplorer::SessionExplorer(Session *pData, MainWindow *pParent) :
 	QDockWidget("", pParent)
 {
-	m_pData = new TreeWidget(this);
-	setWidget(m_pData);
+	m_pMainWindow = pParent;
 
-	m_pData->setContextMenuPolicy(Qt::CustomContextMenu);
-	connect(m_pData, &QTreeWidget::customContextMenuRequested, this, &SessionExplorer::showContextMenu);
+	m_pData = pData;
+
+	m_pView = new TreeWidget(this);
+	setWidget(m_pView);
+
+	connect(m_pData, &Session::sessionChanged, this, &SessionExplorer::sessionChanged);
+
+	m_pView->setContextMenuPolicy(Qt::CustomContextMenu);
+	connect(m_pView, &QTreeWidget::customContextMenuRequested, this, &SessionExplorer::showContextMenu);
 	
-	m_pData->setColumnCount(2);
-	m_pData->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
-	m_pData->header()->close();
+	m_pView->setColumnCount(2);
+	m_pView->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
+	m_pView->header()->close();
 	
 	m_pRoot = new QTreeWidgetItem();
 	m_pRoot->setIcon(0, QIcon(":/icons/session-folder.png"));
-	m_pData->addTopLevelItem(m_pRoot);
+	m_pView->addTopLevelItem(m_pRoot);
 
 	m_pVideosFolder = new QTreeWidgetItem();
 	m_pVideosFolder->setIcon(0, QIcon(":/icons/videos-folder.png"));
@@ -58,31 +67,37 @@ fsdk::SessionExplorer::SessionExplorer(QWidget *pParent) :
 	m_pLandmarksFile->setIcon(0, QIcon(":/icons/landmarks-file.png"));
 	m_pAnnotationsFolder->addChild(m_pLandmarksFile);
 
-	m_pData->expandAll();
+	m_pView->expandAll();
 
 	m_pPlayerFileMenu = new QMenu(this);
 	m_pPlayerFileAddAction = m_pPlayerFileMenu->addAction("");
 	m_pPlayerFileAddAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_1));
+	connect(m_pPlayerFileAddAction, &QAction::triggered, this, &SessionExplorer::addPlayerFile);
 	m_pPlayerFileRemoveAction = m_pPlayerFileMenu->addAction("");
 	m_pPlayerFileRemoveAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_1));
+	connect(m_pPlayerFileRemoveAction, &QAction::triggered, this, &SessionExplorer::removePlayerFile);
 
 	m_pGameplayFileMenu = new QMenu(this);
 	m_pGameplayFileAddAction = m_pGameplayFileMenu->addAction("");
 	m_pGameplayFileAddAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_2));
+	connect(m_pGameplayFileAddAction, &QAction::triggered, this, &SessionExplorer::addGameplayFile);
 	m_pGameplayFileRemoveAction = m_pGameplayFileMenu->addAction("");
 	m_pGameplayFileRemoveAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_2));
+	connect(m_pGameplayFileRemoveAction, &QAction::triggered, this, &SessionExplorer::removeGameplayFile);
 
 	m_pLandmarksFileMenu = new QMenu(this);
 	m_pLandmarksFileAddAction = m_pLandmarksFileMenu->addAction("");
 	m_pLandmarksFileAddAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_3));
+	connect(m_pLandmarksFileAddAction, &QAction::triggered, this, &SessionExplorer::addLandmarksFile);
 	m_pLandmarksFileRemoveAction = m_pLandmarksFileMenu->addAction("");
 	m_pLandmarksFileRemoveAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_3));
+	connect(m_pLandmarksFileRemoveAction, &QAction::triggered, this, &SessionExplorer::removeLandmarksFile);
 }
 
 // +-----------------------------------------------------------
 void fsdk::SessionExplorer::refreshUI()
 {
-	m_pRoot->setText(0, tr("Session"));
+	m_pRoot->setText(0, tr("%1Session").arg(m_pData->isModified() ? "*" : ""));
 	m_pVideosFolder->setText(0, tr("Videos"));
 	m_pAnnotationsFolder->setText(0, tr("Annotations"));
 	m_pPlayerFile->setText(0, tr("Player"));
@@ -121,6 +136,9 @@ void fsdk::SessionExplorer::sessionChanged(const QString &sSessionFileName, cons
 	m_pPlayerFile->setText(1, sPlayerFileName);
 	m_pGameplayFile->setText(1, sGameplayFileName);
 	m_pLandmarksFile->setText(1, sLandmarksFileName);
+
+	m_pRoot->setText(0, tr("%1Session").arg(m_pData->isModified() ? "*" : ""));
+	m_pMainWindow->setWindowModified(m_pData->isModified());
 }
 
 // +-----------------------------------------------------------
@@ -144,26 +162,107 @@ QMenu *fsdk::SessionExplorer::landmarksFileMenu() const
 // +-----------------------------------------------------------
 void fsdk::SessionExplorer::showContextMenu(const QPoint &oClickPos)
 {
-	QTreeWidgetItem *pItem = m_pData->itemAt(oClickPos);
+	QTreeWidgetItem *pItem = m_pView->itemAt(oClickPos);
 	if(pItem == m_pPlayerFile)
 	{
 		QMenu oMenu(this);
 		oMenu.addAction(m_pPlayerFileAddAction);
 		oMenu.addAction(m_pPlayerFileRemoveAction);
-		oMenu.exec(m_pData->mapToGlobal(oClickPos));
+		oMenu.exec(m_pView->mapToGlobal(oClickPos));
 	}
 	else if(pItem == m_pGameplayFile)
 	{
 		QMenu oMenu(this);
 		oMenu.addAction(m_pGameplayFileAddAction);
 		oMenu.addAction(m_pGameplayFileRemoveAction);
-		oMenu.exec(m_pData->mapToGlobal(oClickPos));
+		oMenu.exec(m_pView->mapToGlobal(oClickPos));
 	}
 	else if(pItem == m_pLandmarksFile)
 	{
 		QMenu oMenu(this);
 		oMenu.addAction(m_pLandmarksFileAddAction);
 		oMenu.addAction(m_pLandmarksFileRemoveAction);
-		oMenu.exec(m_pData->mapToGlobal(oClickPos));
+		oMenu.exec(m_pView->mapToGlobal(oClickPos));
 	}
+}
+
+// +-----------------------------------------------------------
+bool fsdk::SessionExplorer::addPlayerFile()
+{	
+	QString sFile = QFileDialog::getOpenFileName(this, tr("Select player file..."), m_pMainWindow->lastPathUsed(), tr("Video files (*.mp4);; All files (*.*)"));
+	if(sFile.length())
+	{
+		m_pData->setPlayerFileName(sFile);
+		m_pMainWindow->setLastPathUsed(QFileInfo(sFile).absolutePath());
+		return true;
+	}
+	else
+		return false;
+}
+
+// +-----------------------------------------------------------
+bool fsdk::SessionExplorer::removePlayerFile()
+{
+	QMessageBox::StandardButton eResp = QMessageBox::question(this, tr("Attention!"), tr("Do you confirm removing the player video file from the session?"), QMessageBox::Yes | QMessageBox::No);
+	if(eResp == QMessageBox::Yes)
+	{
+		m_pData->setPlayerFileName("");
+		return true;
+	}
+	else
+		return false;
+}
+
+// +-----------------------------------------------------------
+bool fsdk::SessionExplorer::addGameplayFile()
+{
+	QString sFile = QFileDialog::getOpenFileName(this, tr("Select gameplay file..."), m_pMainWindow->lastPathUsed(), tr("Video files (*.mp4);; All files (*.*)"));
+	if(sFile.length())
+	{
+		m_pData->setGameplayFileName(sFile);
+		m_pMainWindow->setLastPathUsed(QFileInfo(sFile).absolutePath());
+		return true;
+	}
+	else
+		return false;
+}
+
+// +-----------------------------------------------------------
+bool fsdk::SessionExplorer::removeGameplayFile()
+{
+	QMessageBox::StandardButton eResp = QMessageBox::question(this, tr("Attention!"), tr("Do you confirm removing the gameplay video file from the session?"), QMessageBox::Yes | QMessageBox::No);
+	if(eResp == QMessageBox::Yes)
+	{
+		m_pData->setGameplayFileName("");
+		return true;
+	}
+	else
+		return false;
+}
+
+// +-----------------------------------------------------------
+bool fsdk::SessionExplorer::addLandmarksFile()
+{
+	QString sFile = QFileDialog::getOpenFileName(this, tr("Select landmarks file..."), m_pMainWindow->lastPathUsed(), tr("Comma-Separated-Value files (*.csv);; All files (*.*)"));
+	if(sFile.length())
+	{
+		m_pData->setLandmarksFileName(sFile);
+		m_pMainWindow->setLastPathUsed(QFileInfo(sFile).absolutePath());
+		return true;
+	}
+	else
+		return false;
+}
+
+// +-----------------------------------------------------------
+bool fsdk::SessionExplorer::removeLandmarksFile()
+{
+	QMessageBox::StandardButton eResp = QMessageBox::question(this, tr("Attention!"), tr("Do you confirm removing the landmarks CSV file from the session?"), QMessageBox::Yes | QMessageBox::No);
+	if(eResp == QMessageBox::Yes)
+	{
+		m_pData->setLandmarksFileName("");
+		return true;
+	}
+	else
+		return false;
 }

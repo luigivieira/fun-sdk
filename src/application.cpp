@@ -72,12 +72,12 @@ fsdk::Application::Application(int& argc, char** argv, const QString &sOrgName, 
 		m_pSettings = new QSettings(QSettings::UserScope, organizationName(), organizationDomain());
 		m_pSettings->beginGroup(applicationName()); // base group for all settings
 
-		setLogLevel(static_cast<LogLevel>(m_pSettings->value(SETTINGS_KEY_LOGLEVEL, Fatal).toInt()));
+		setLogLevel(static_cast<LogLevel>(m_pSettings->value(SETTINGS_KEY_LOGLEVEL, Warning).toInt()));
 	}
 	else
 	{
 		m_pSettings = NULL;
-		setLogLevel(Fatal);
+		setLogLevel(Warning);
 	}
 }
 
