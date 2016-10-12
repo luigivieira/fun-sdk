@@ -105,12 +105,18 @@ namespace fsdk
 		void clear();
 
 		/**
-		 * 
+		 * Saves the session to a file.
+		 * @param sFileName QString with the name of the file to save to.
+		 * @return Boolean indicating if the operation was succesful (true)
+		 * or not (false).
 		 */
 		bool save(const QString &sFileName);
 
 		/**
-		 *
+		 * Loads the session from a file.
+		 * @param sFileName QString with the name of the file to load from.
+		 * @return Boolean indicating if the operation was succesful (true)
+		 * or not (false).
 		 */
 		bool load(const QString &sFileName);
 
@@ -139,11 +145,6 @@ namespace fsdk
 		 * @param sLandmarksFileName QString with the current value of the corresponding field.
 		 */
 		void sessionChanged(const QString &sSessionFileName, const QString &sPlayerFileName, const QString &sGameplayFileName, const QString &sLandmarksFileName);
-
-	public slots:
-
-
-	protected slots:
 
 	protected:
 

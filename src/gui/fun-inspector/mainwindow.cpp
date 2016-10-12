@@ -74,43 +74,54 @@ void fsdk::MainWindow::setupUI()
 	static_cast<QMdiArea*>(centralWidget())->addSubWindow(m_pGameplayWindow);
 
 	//-------------------------------
-	// "File" menu/toolbar
+	// "Session" menu/toolbar
 	//-------------------------------
-	m_pFileMenu = menuBar()->addMenu("");
-	m_pFileToolbar = addToolBar("");
-	m_pFileToolbar->setIconSize(QSize(32, 32));
+	m_pSessionMenu = menuBar()->addMenu("");
+	m_pSessionToolbar = addToolBar("");
+	m_pSessionToolbar->setIconSize(QSize(32, 32));
 
 	// Action "New"
-	m_pNewAction = m_pFileMenu->addAction("");
-	m_pFileToolbar->addAction(m_pNewAction);
+	m_pNewAction = m_pSessionMenu->addAction("");
+	m_pSessionToolbar->addAction(m_pNewAction);
 	m_pNewAction->setIcon(QIcon(":/icons/new-session.png"));
 	m_pNewAction->setShortcut(QKeySequence::New);
 	connect(m_pNewAction, &QAction::triggered, this, &MainWindow::newSession);
 
 	// Action "Open"
-	m_pOpenAction = m_pFileMenu->addAction("");
-	m_pFileToolbar->addAction(m_pOpenAction);
+	m_pOpenAction = m_pSessionMenu->addAction("");
+	m_pSessionToolbar->addAction(m_pOpenAction);
 	m_pOpenAction->setIcon(QIcon(":/icons/open-session.png"));
 	m_pOpenAction->setShortcut(QKeySequence::Open);
 	connect(m_pOpenAction, &QAction::triggered, this, &MainWindow::openSession);
 
 	// Action "Save"
-	m_pSaveAction = m_pFileMenu->addAction("");
-	m_pFileToolbar->addAction(m_pSaveAction);
+	m_pSaveAction = m_pSessionMenu->addAction("");
+	m_pSessionToolbar->addAction(m_pSaveAction);
 	m_pSaveAction->setIcon(QIcon(":/icons/save-session.png"));
 	m_pSaveAction->setShortcut(QKeySequence::Save);
 	connect(m_pSaveAction, &QAction::triggered, this, &MainWindow::saveSession);
 
 	// Action "Save As"
-	m_pSaveAsAction = m_pFileMenu->addAction("");
+	m_pSaveAsAction = m_pSessionMenu->addAction("");
 	m_pSaveAsAction->setIcon(QIcon(":/icons/save-session-as.png"));
 	m_pSaveAsAction->setShortcut(QKeySequence::SaveAs);
 	connect(m_pSaveAsAction, &QAction::triggered, this, &MainWindow::saveSessionAs);
 
-	m_pFileMenu->addSeparator();
+	m_pSessionMenu->addSeparator();
+
+	// Submenu "Files"
+	m_pSessionFilesMenu = m_pSessionMenu->addMenu("");
+
+	// Submenu for the "file" actions
+	m_pSessionFilesMenu->addMenu(m_pSessionExplorer->playerFileMenu());
+	m_pSessionFilesMenu->addMenu(m_pSessionExplorer->gameplayFileMenu());
+	m_pSessionFilesMenu->addSeparator();
+	m_pSessionFilesMenu->addMenu(m_pSessionExplorer->landmarksFileMenu());
+
+	m_pSessionMenu->addSeparator();
 
 	// Action "Exit"
-	m_pExitAction = m_pFileMenu->addAction("");
+	m_pExitAction = m_pSessionMenu->addAction("");
 	m_pExitAction->setShortcut(QKeySequence::Quit);
 	connect(m_pExitAction, &QAction::triggered, this, &MainWindow::quit);
 
@@ -145,7 +156,7 @@ void fsdk::MainWindow::setupUI()
 	m_pViewToolbarsMenu = m_pViewMenu->addMenu("");
 
 	// Action for toggling the view of the File toolbar
-	m_pViewToolbarsMenu->addAction(m_pFileToolbar->toggleViewAction());
+	m_pViewToolbarsMenu->addAction(m_pSessionToolbar->toggleViewAction());
 
 	//-------------------------------
 	// "Help" menu
@@ -179,26 +190,29 @@ void fsdk::MainWindow::refreshUI()
 	m_pSessionExplorer->setWindowTitle(tr("Session explorer"));
 
 	//-------------------------------
-	// "File" menu/toolbar
+	// "Session" menu/toolbar
 	//-------------------------------
-	m_pFileMenu->setTitle(tr("&File"));
-	m_pFileToolbar->setWindowTitle(tr("&File"));
+	m_pSessionMenu->setTitle(tr("&Session"));
+	m_pSessionToolbar->setWindowTitle(tr("&Session"));
 
 	// Action "New"
-	m_pNewAction->setText(tr("&New session"));
+	m_pNewAction->setText(tr("&New"));
 	m_pNewAction->setStatusTip(tr("Creates a new empty session"));
 
 	// Action "Open"
-	m_pOpenAction->setText(tr("&Open session..."));
+	m_pOpenAction->setText(tr("&Open..."));
 	m_pOpenAction->setStatusTip(tr("Opens a session file"));
 
 	// Action "Save"
-	m_pSaveAction->setText(tr("&Save session"));
+	m_pSaveAction->setText(tr("&Save"));
 	m_pSaveAction->setStatusTip(tr("Saves the current session"));
 
 	// Action "Save As"
-	m_pSaveAsAction->setText(tr("Save session &as..."));
+	m_pSaveAsAction->setText(tr("Save &as..."));
 	m_pSaveAsAction->setStatusTip(tr("Saves the current session to a different file"));
+
+	// Submenu "Files"
+	m_pSessionFilesMenu->setTitle(tr("&Files"));
 
 	// Action "Exit"
 	m_pExitAction->setText(tr("&Exit"));

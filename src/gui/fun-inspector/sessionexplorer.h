@@ -22,6 +22,8 @@
 
 #include <QDockWidget>
 #include <QTreeWidget>
+#include <QAction>
+#include <QMenu>
 
 namespace fsdk
 {
@@ -39,7 +41,6 @@ namespace fsdk
 		TreeWidget(QWidget *pParent = NULL) :
 			QTreeWidget(pParent)
 		{
-			//setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 		}
 
 		/**
@@ -65,6 +66,24 @@ namespace fsdk
          * @param pParent QWidget with the window parent.
          */
 		SessionExplorer(QWidget *pParent = 0);
+
+		/**
+		 * Gets the menu of actions for the player file.
+		 * @return Instance of a QMenu with the menu of actions.
+		 */
+		QMenu *playerFileMenu() const;
+
+		/**
+		 * Gets the menu of actions for the gameplay file.
+		 * @return Instance of a QMenu with the menu of actions.
+		 */
+		QMenu *gameplayFileMenu() const;
+
+		/**
+		 * Gets the menu of actions for the facial landmarks file.
+		 * @return Instance of a QMenu with the menu of actions.
+		 */
+		QMenu *landmarksFileMenu() const;
 
 	public slots:
 
@@ -107,6 +126,33 @@ namespace fsdk
 
 		/** Element that holds the landmarks annotation file. */
 		QTreeWidgetItem *m_pLandmarksFile;
+
+		/** Menu of actions for the player file. */
+		QMenu *m_pPlayerFileMenu;
+
+		/** Action to add a player file. */
+		QAction *m_pPlayerFileAddAction;
+
+		/** Action to remove the current player file. */
+		QAction *m_pPlayerFileRemoveAction;
+
+		/** Menu of actions for the gameplay file. */
+		QMenu *m_pGameplayFileMenu;
+
+		/** Action to add a gameplay file. */
+		QAction *m_pGameplayFileAddAction;
+
+		/** Action to remove the current gameplay file. */
+		QAction *m_pGameplayFileRemoveAction;
+
+		/** Menu of actions for the landmarks file. */
+		QMenu *m_pLandmarksFileMenu;
+
+		/** Action to add a landmarks file. */
+		QAction *m_pLandmarksFileAddAction;
+
+		/** Action to remove the current landmarks file. */
+		QAction *m_pLandmarksFileRemoveAction;
     };
 }
 

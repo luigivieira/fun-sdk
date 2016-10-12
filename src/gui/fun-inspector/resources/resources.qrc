@@ -36,5 +36,7 @@
 		<file>window-detached.png</file>
 		<file>windows-tile-horizontal.png</file>
 		<file>windows-tile-vertical.png</file>
+		<file>file-add.png</file>
+		<file>file-remove.png</file>
     </qresource>
 </RCC>

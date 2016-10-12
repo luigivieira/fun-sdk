@@ -140,14 +140,14 @@ namespace fsdk
 		VideoWindow *m_pGameplayWindow;
 
 		//-------------------------------
-		// "File" menu/toolbar
+		// "Session" menu/toolbar
 		//-------------------------------
 
-		/** Main menu item called "File". */
-		QMenu *m_pFileMenu;
+		/** Main menu item called "Session". */
+		QMenu *m_pSessionMenu;
 
-		/** Toolbar for the "File" menu. */
-		QToolBar *m_pFileToolbar;
+		/** Toolbar for the "Session" menu. */
+		QToolBar *m_pSessionToolbar;
 
 		/** Action called "New": creates a new session. */
 		QAction *m_pNewAction;
@@ -160,6 +160,9 @@ namespace fsdk
 
 		/** Action called "Save As": saves the current session file with a different name. */
 		QAction *m_pSaveAsAction;
+
+		/** Session menu's submenu called "Files" */
+		QMenu *m_pSessionFilesMenu;
 
 		/** Action called "Exit": terminates the application. */
 		QAction *m_pExitAction;
