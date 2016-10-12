@@ -104,6 +104,14 @@ namespace fsdk
 		 */
 		void sessionChanged(const QString &sSessionFileName, const QString &sPlayerFileName, const QString &sGameplayFileName, const QString &sLandmarksFileName);
 
+	protected slots:
+
+		/**
+		 * Shows custom context menus when user right-click over specific items.
+		 * @param oClickPos QPoint with the widget coordinates where the user clicked.
+		 */
+		void showContextMenu(const QPoint &oClickPos);
+
     private:
         
 		/** Tree widget used to present the session data. */

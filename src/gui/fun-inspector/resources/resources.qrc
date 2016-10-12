@@ -19,11 +19,12 @@
 <RCC>
     <qresource prefix="/icons">
         <file>fun-inspector.png</file>
+		<file>player-window.png</file>
+		<file>gameplay-window.png</file>
 		<file>new-session.png</file>
 		<file>open-session.png</file>
 		<file>save-session.png</file>
 		<file>save-session-as.png</file>
-		<file>plain-folder.png</file>
 		<file>session-folder.png</file>
 		<file>videos-folder.png</file>
 		<file>player-file.png</file>

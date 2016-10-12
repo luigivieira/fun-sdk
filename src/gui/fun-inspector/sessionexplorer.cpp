@@ -26,6 +26,9 @@ fsdk::SessionExplorer::SessionExplorer(QWidget *pParent) :
 {
 	m_pData = new TreeWidget(this);
 	setWidget(m_pData);
+
+	m_pData->setContextMenuPolicy(Qt::CustomContextMenu);
+	connect(m_pData, &QTreeWidget::customContextMenuRequested, this, &SessionExplorer::showContextMenu);
 	
 	m_pData->setColumnCount(2);
 	m_pData->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
@@ -87,7 +90,7 @@ void fsdk::SessionExplorer::refreshUI()
 	m_pLandmarksFile->setText(0, tr("Facial landmarks"));
 
 	m_pPlayerFileMenu->setTitle(tr("Player video"));
-	m_pPlayerFileAddAction->setText(tr("&Add..."));
+	m_pPlayerFileAddAction->setText(tr("&Select..."));
 	m_pPlayerFileAddAction->setIcon(QIcon(":/icons/file-add.png"));
 	m_pPlayerFileAddAction->setStatusTip(tr("Select a video file of the player's face to add to the session"));
 	m_pPlayerFileRemoveAction->setText(tr("&Remove"));
@@ -95,7 +98,7 @@ void fsdk::SessionExplorer::refreshUI()
 	m_pPlayerFileRemoveAction->setStatusTip(tr("Remove the current video of the player's face from the session"));
 
 	m_pGameplayFileMenu->setTitle(tr("Gameplay video"));
-	m_pGameplayFileAddAction->setText(tr("&Add..."));
+	m_pGameplayFileAddAction->setText(tr("&Select..."));
 	m_pGameplayFileAddAction->setIcon(QIcon(":/icons/file-add.png"));
 	m_pGameplayFileAddAction->setStatusTip(tr("Select a video file of the gameplay to add to the session"));
 	m_pGameplayFileRemoveAction->setText(tr("&Remove"));
@@ -103,7 +106,7 @@ void fsdk::SessionExplorer::refreshUI()
 	m_pGameplayFileRemoveAction->setStatusTip(tr("Remove the current video of the gameplay from the session"));
 
 	m_pLandmarksFileMenu->setTitle(tr("Facial landmarks"));
-	m_pLandmarksFileAddAction->setText(tr("&Add..."));
+	m_pLandmarksFileAddAction->setText(tr("&Select..."));
 	m_pLandmarksFileAddAction->setIcon(QIcon(":/icons/file-add.png"));
 	m_pLandmarksFileAddAction->setStatusTip(tr("Select a landmarks file to add to the session"));
 	m_pLandmarksFileRemoveAction->setText(tr("&Remove"));
@@ -136,4 +139,31 @@ QMenu *fsdk::SessionExplorer::gameplayFileMenu() const
 QMenu *fsdk::SessionExplorer::landmarksFileMenu() const
 {
 	return m_pLandmarksFileMenu;
+}
+
+// +-----------------------------------------------------------
+void fsdk::SessionExplorer::showContextMenu(const QPoint &oClickPos)
+{
+	QTreeWidgetItem *pItem = m_pData->itemAt(oClickPos);
+	if(pItem == m_pPlayerFile)
+	{
+		QMenu oMenu(this);
+		oMenu.addAction(m_pPlayerFileAddAction);
+		oMenu.addAction(m_pPlayerFileRemoveAction);
+		oMenu.exec(m_pData->mapToGlobal(oClickPos));
+	}
+	else if(pItem == m_pGameplayFile)
+	{
+		QMenu oMenu(this);
+		oMenu.addAction(m_pGameplayFileAddAction);
+		oMenu.addAction(m_pGameplayFileRemoveAction);
+		oMenu.exec(m_pData->mapToGlobal(oClickPos));
+	}
+	else if(pItem == m_pLandmarksFile)
+	{
+		QMenu oMenu(this);
+		oMenu.addAction(m_pLandmarksFileAddAction);
+		oMenu.addAction(m_pLandmarksFileRemoveAction);
+		oMenu.exec(m_pData->mapToGlobal(oClickPos));
+	}
 }

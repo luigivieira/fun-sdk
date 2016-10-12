@@ -64,12 +64,12 @@ void fsdk::MainWindow::setupUI()
 	// Video windows
 	//-------------------------------
 	m_pPlayerWindow = new VideoWindow(this);
-	m_pPlayerWindow->setWindowIcon(QIcon(":/icons/player-file.png"));
+	m_pPlayerWindow->setWindowIcon(QIcon(":/icons/player-window.png"));
 	m_pPlayerWindow->setObjectName("playerWindow");
 	static_cast<QMdiArea*>(centralWidget())->addSubWindow(m_pPlayerWindow);
 
 	m_pGameplayWindow = new VideoWindow(this);
-	m_pGameplayWindow->setWindowIcon(QIcon(":/icons/gameplay-file.png"));
+	m_pGameplayWindow->setWindowIcon(QIcon(":/icons/gameplay-window.png"));
 	m_pGameplayWindow->setObjectName("gameplayWindow");
 	static_cast<QMdiArea*>(centralWidget())->addSubWindow(m_pGameplayWindow);
 
