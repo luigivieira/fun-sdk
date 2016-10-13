@@ -45,8 +45,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
-find_package(Qt5 REQUIRED Core Gui Widgets Multimedia Xml)
-list(APPEND Qt5_LIBS Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Multimedia Qt5::Xml)
+find_package(Qt5 REQUIRED Core Gui Widgets Multimedia MultimediaWidgets Xml)
+list(APPEND Qt5_LIBS Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Multimedia Qt5::MultimediaWidgets Qt5::Xml)
 
 # OpenCV
 find_package(OpenCV REQUIRED core highgui imgproc)

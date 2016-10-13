@@ -36,6 +36,13 @@ fsdk::VideoWindow::VideoWindow(QWidget *pParent) :
 	
 	setupUI();
 	refreshUI();
+
+	m_pMediaPlayer = new QMediaPlayer(this);
+	m_pMediaPlayer->setVideoOutput(m_pFrame->graphicsVideoItem());
+	connect(m_pMediaPlayer, &QMediaPlayer::mediaStatusChanged, this, &VideoWindow::mediaStatusChanged);
+	connect(m_pMediaPlayer, &QMediaPlayer::mediaStatusChanged, m_pFrame, &FrameWidget::mediaStatusChanged);
+	connect(m_pMediaPlayer, &QMediaPlayer::stateChanged, this, &VideoWindow::mediaStateChanged);
+	connect(m_pMediaPlayer, &QMediaPlayer::positionChanged, this, &VideoWindow::mediaPositionChanged);
 }
 
 // +-----------------------------------------------------------
@@ -98,26 +105,33 @@ void fsdk::VideoWindow::refreshUI()
 }
 
 // +-----------------------------------------------------------
-void fsdk::VideoWindow::setWindowTitle(const QString &sTitle)
+bool fsdk::VideoWindow::event(QEvent *pEvent)
 {
-	QMdiSubWindow::setWindowTitle(sTitle);
-	m_pActionsMenu->setTitle(windowTitle());
-}
+	switch(pEvent->type())
+	{
+		case QEvent::Show:
+			m_pToggleViewAction->setChecked(true);
+			refreshUI();
+			break;
 
-// +-----------------------------------------------------------
-void fsdk::VideoWindow::showEvent(QShowEvent *pEvent)
-{
-	QMdiSubWindow::showEvent(pEvent);
-	m_pToggleViewAction->setChecked(true);
-	refreshUI();
-}
+		case QEvent::Close:
+			m_pToggleViewAction->setChecked(false);
+			refreshUI();
+			break;
 
-// +-----------------------------------------------------------
-void fsdk::VideoWindow::closeEvent(QCloseEvent *pEvent)
-{
-	QMdiSubWindow::closeEvent(pEvent);
-	m_pToggleViewAction->setChecked(false);
-	refreshUI();
+		case QEvent::Move:
+		case QEvent::Resize:
+		case QEvent::WindowStateChange:
+			if(!isMaximized())
+				m_oGeometry = geometry();
+			break;
+
+		case QEvent::WindowTitleChange:
+			m_pActionsMenu->setTitle(windowTitle());
+			break;
+	}
+
+	return QMdiSubWindow::event(pEvent);
 }
 
 // +-----------------------------------------------------------
@@ -182,12 +196,6 @@ QMenu *fsdk::VideoWindow::actionsMenu() const
 }
 
 // +-----------------------------------------------------------
-void fsdk::VideoWindow::videoFrameChanged(const uint iFrame, const QPixmap &oFrame)
-{
-	m_pFrame->setPixmap(oFrame);
-}
-
-// +-----------------------------------------------------------
 QByteArray fsdk::VideoWindow::saveState() const
 {
 	QByteArray oData;
@@ -233,8 +241,10 @@ bool fsdk::VideoWindow::restoreState(const QByteArray &oData)
 		return false;
 	}
 
-	toggleDetached(bDetached);
-	toggleVisible(bVisible);
+	if(bDetached)
+		toggleDetached(true);
+	if(!bVisible)
+		toggleVisible(false);
 	if(bMaximized)
 		setWindowState(Qt::WindowMaximized);
 
@@ -246,7 +256,7 @@ QByteArray fsdk::VideoWindow::saveGeometry() const
 {
 	QByteArray oData;
 	QDataStream oStream(&oData, QIODevice::WriteOnly);
-	oStream << geometry();
+	oStream << m_oGeometry;
 	return oData;
 }
 
@@ -259,14 +269,41 @@ bool fsdk::VideoWindow::restoreGeometry(const QByteArray &oData)
 	QByteArray oLocalData = oData;
 	QDataStream oStream(&oLocalData, QIODevice::ReadOnly);
 
-	QRect oGeometry;
-	oStream >> oGeometry;
+	oStream >> m_oGeometry;
 	if(oStream.status() != QDataStream::Ok)
 	{
 		qWarning().noquote() << "Error restoring window geometry due to failure in reading value 'geometry'";
 		return false;
 	}
 
-	setGeometry(oGeometry);
+	setGeometry(m_oGeometry);
 	return true;
+}
+
+// +-----------------------------------------------------------
+void fsdk::VideoWindow::mediaStatusChanged(QMediaPlayer::MediaStatus eStatus)
+{
+	qDebug().noquote() << "Media status changed to: " << eStatus;
+}
+
+// +-----------------------------------------------------------
+void fsdk::VideoWindow::mediaStateChanged(QMediaPlayer::State eState)
+{
+	qDebug().noquote() << "Media state changed to: " << eState;
+
+}
+
+// +-----------------------------------------------------------
+void fsdk::VideoWindow::mediaPositionChanged(qint64 iPosition)
+{
+
+}
+
+// +-----------------------------------------------------------
+void fsdk::VideoWindow::playVideo(QString sFileName)
+{
+	QUrl oUrl = QUrl::fromLocalFile(sFileName);
+	QMediaContent oMedia = QMediaContent(oUrl);
+	m_pMediaPlayer->setMedia(oMedia);
+	m_pMediaPlayer->play();
 }

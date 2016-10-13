@@ -49,11 +49,9 @@ fsdk::FrameWidget::FrameWidget(QWidget *pParent) : QGraphicsView(pParent)
 
 	setBackgroundBrush(QApplication::palette().dark());
 
-	// Add the image item
-	QPixmap oPixmap;
-	m_pPixmapItem = m_pScene->addPixmap(oPixmap);
-	m_pPixmapItem->setShapeMode(QGraphicsPixmapItem::BoundingRectShape);
-	m_pScene->setSceneRect(0, 0, oPixmap.width(), oPixmap.height());
+	// Add the video item
+	m_pVideoItem = new QGraphicsVideoItem();
+	m_pScene->addItem(m_pVideoItem);
 }
 
 // +-----------------------------------------------------------
@@ -63,10 +61,9 @@ QSize fsdk::FrameWidget::sizeHint() const
 };
 
 // +-----------------------------------------------------------
-void fsdk::FrameWidget::setPixmap(const QPixmap &oPixmap)
+QGraphicsVideoItem *fsdk::FrameWidget::graphicsVideoItem()
 {
-	m_pPixmapItem->setPixmap(oPixmap);
-	m_pScene->setSceneRect(0, 0, oPixmap.width(), oPixmap.height());
+	return m_pVideoItem;
 }
 
 // +-----------------------------------------------------------
@@ -142,4 +139,11 @@ void fsdk::FrameWidget::zoomIn()
 void fsdk::FrameWidget::zoomOut()
 {
 	zoomBy(ZOOM_OUT_STEP);
+}
+
+// +-----------------------------------------------------------
+void fsdk::FrameWidget::mediaStatusChanged(QMediaPlayer::MediaStatus eStatus)
+{
+	Q_UNUSED(eStatus);
+	m_pVideoItem->setSize(m_pVideoItem->nativeSize());
 }

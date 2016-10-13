@@ -21,8 +21,9 @@
 #define FRAMEWIDGET_H
 
 #include <QGraphicsView>
-#include <QGraphicsPixmapItem>
+#include <QGraphicsVideoItem>
 #include <QWheelEvent>
+#include <QMediaPlayer>
 
 namespace fsdk
 {
@@ -45,10 +46,9 @@ namespace fsdk
 		FrameWidget(QWidget *pParent = 0);
 
 		/**
-		 * Updates the pixmap displayed at the central area.
-		 * @param oPixmap Reference for a QPixmap with the new pixmap to display.
+		 * Gets the graphics item used to present videos at the central area.
 		 */
-		void setPixmap(const QPixmap &oPixmap);
+		QGraphicsVideoItem *graphicsVideoItem();
 
 		/**
 		 * Gets the zoom level with which the image is being displayed.
@@ -86,6 +86,15 @@ namespace fsdk
 		 */
 		void zoomLevelChanged(const double dLevel);
 
+	public slots:
+
+		/**
+		 * Captures indications of changes in the media status.
+		 * @param eStatus Value of the QMediaPlayer::MediaStatus with
+		 * the current media status.
+		 */
+		void mediaStatusChanged(QMediaPlayer::MediaStatus eStatus);
+
 	protected:
 
 	#ifndef QT_NO_WHEELEVENT
@@ -107,8 +116,8 @@ namespace fsdk
 		/** Scene used to render the widget contents. */
 		QGraphicsScene *m_pScene;
 
-		/** Pixmap item used to display the background image. */
-		QGraphicsPixmapItem *m_pPixmapItem;
+		/** Video item used to display the background video. */
+		QGraphicsVideoItem *m_pVideoItem;
 
 		/** Current zoom level. */
 		double m_dZoomLevel;

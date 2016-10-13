@@ -256,19 +256,19 @@ void fsdk::MainWindow::unloadApp() const
 	QSettings *pSettings = static_cast<Application*>(qApp)->settings();
 
 	pSettings->beginGroup("mainWindow");
-	pSettings->setValue("state", saveState());
 	pSettings->setValue("geometry", saveGeometry());
+	pSettings->setValue("state", saveState());
 	pSettings->setValue("lastPathUsed", m_sLastPathUsed);
 	pSettings->endGroup();
 
 	pSettings->beginGroup("playerWindow");
-	pSettings->setValue("state", m_pPlayerWindow->saveState());
 	pSettings->setValue("geometry", m_pPlayerWindow->saveGeometry());
+	pSettings->setValue("state", m_pPlayerWindow->saveState());
 	pSettings->endGroup();
 
 	pSettings->beginGroup("gameplayWindow");
-	pSettings->setValue("state", m_pGameplayWindow->saveState());
 	pSettings->setValue("geometry", m_pGameplayWindow->saveGeometry());
+	pSettings->setValue("state", m_pGameplayWindow->saveState());
 	pSettings->endGroup();
 
 	// Close all subwindows
@@ -279,26 +279,28 @@ void fsdk::MainWindow::unloadApp() const
 // +-----------------------------------------------------------
 void fsdk::MainWindow::loadApp()
 {
-	// By default, the subwindows are tiled horizontally
-	tileHorizontally();
-
 	// Read the application settings
 	QSettings *pSettings = static_cast<Application*>(qApp)->settings();
 
+	// By default, the subwindows are tiled horizontally,
+	// but only if their state has not been previously saved
+	if(!pSettings->contains("playerWindow/geometry"))
+		tileHorizontally();
+
 	pSettings->beginGroup("mainWindow");
-	restoreState(pSettings->value("state").toByteArray());
 	restoreGeometry(pSettings->value("geometry").toByteArray());
+	restoreState(pSettings->value("state").toByteArray());
 	m_sLastPathUsed = pSettings->value("lastPathUsed", QDir::toNativeSeparators(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))).toString();
 	pSettings->endGroup();
 
 	pSettings->beginGroup("playerWindow");
-	m_pPlayerWindow->restoreState(pSettings->value("state").toByteArray());
 	m_pPlayerWindow->restoreGeometry(pSettings->value("geometry").toByteArray());
+	m_pPlayerWindow->restoreState(pSettings->value("state").toByteArray());
 	pSettings->endGroup();
 
 	pSettings->beginGroup("gameplayWindow");
-	m_pGameplayWindow->restoreState(pSettings->value("state").toByteArray());
 	m_pGameplayWindow->restoreGeometry(pSettings->value("geometry").toByteArray());
+	m_pGameplayWindow->restoreState(pSettings->value("state").toByteArray());
 	pSettings->endGroup();
 
 	activateWindow(); // Foce the focus back to the main window
@@ -467,5 +469,5 @@ void fsdk::MainWindow::help()
 // +-----------------------------------------------------------
 void fsdk::MainWindow::about()
 {
-
+	m_pPlayerWindow->playVideo("c:/temp/Data/subject_001/gameplay.mp4");
 }

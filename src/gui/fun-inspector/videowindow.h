@@ -25,6 +25,7 @@
 #include <QAction>
 #include <QToolBar>
 #include <QMenu>
+#include <QMediaPlayer>
 
 namespace fsdk
 {
@@ -92,6 +93,8 @@ namespace fsdk
 		 */
 		bool restoreGeometry(const QByteArray &oData);
 
+		void playVideo(QString sFileName);
+
 	public slots:
 
 		/**
@@ -118,16 +121,28 @@ namespace fsdk
 		 */
 		void toggleVisible(bool bVisible);
 
-		/**
-		 * Sets the window title.
-		 * @param sTitle QString with the new window title.
-		 */
-		void setWindowTitle(const QString &sTitle);
+	protected slots:
 
 		/**
-		 * 
+		 * Captures indications of changes in the media status.
+		 * @param eStatus Value of the QMediaPlayer::MediaStatus with
+		 * the current media status.
 		 */
-		void videoFrameChanged(const uint iFrame, const QPixmap &oFrame);
+		void mediaStatusChanged(QMediaPlayer::MediaStatus eStatus);
+
+		/**
+		 * Captures indications of changes in the media state.
+		 * @param eStatus Value of the QMediaPlayer::State with
+		 * the current media state.
+		 */
+		void mediaStateChanged(QMediaPlayer::State eState);
+
+		/**
+		 * Captures indications of changes in the media position.
+		 * @param iPosition Long integer with the position expressed
+		 * in milliseconds.
+		 */
+		void mediaPositionChanged(qint64 iPosition);
 
 	protected:
 
@@ -137,16 +152,10 @@ namespace fsdk
 		void setupUI();
 
 		/**
-		 * Captures the event of window show.
-		 * @param pEvent QShowEvent instance with the event data.
+		 * Captures window events to handle them.
+		 * @param pEvent Instance of QEvent with the event data.
 		 */
-		void showEvent(QShowEvent *pEvent);
-
-		/**
-		 * Captures the event of window close.
-		 * @param pEvent QCloseEvent instance with the event data.
-		 */
-		void closeEvent(QCloseEvent *pEvent);
+		bool event(QEvent *pEvent);
 
     private:
 
@@ -166,6 +175,12 @@ namespace fsdk
 
 		/** Menu with all actions for this window. */
 		QMenu *m_pActionsMenu;
+
+		/** Media player used to play the video attached to this window. */
+		QMediaPlayer *m_pMediaPlayer;
+
+		/** Original geometry of the window when it is not maximized (so it can be properly saved and restored). */
+		QRect m_oGeometry;
     };
 }
 
