@@ -93,7 +93,25 @@ namespace fsdk
 		 */
 		bool restoreGeometry(const QByteArray &oData);
 
+		/**
+		 * Queries if the window is detached from the main window.
+		 * @return Boolean indicating if the window is detached (true)
+		 * or not (false).
+		 */
+		bool isDetached() const;
+
+		/**
+		 * Plays a video in this window.
+		 * @param sFileName QString with the name of the video to play.
+		 */
 		void playVideo(QString sFileName);
+
+	signals:
+
+		/**
+		 * Indicates that this window has been activated (i.e. brought to front).
+		 */
+		void windowActivated();
 
 	public slots:
 

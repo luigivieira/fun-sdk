@@ -67,6 +67,16 @@ namespace fsdk
 	protected:
 
 		/**
+		 * Event filter that captures events from subwindows in order to
+		 * detect their activation.
+		 * @param pObject Instance of QObject with the object.
+		 * @param pEvent Instance of QEvent with the event received.
+		 * @return Boolean indicating if the event was blocked here (true)
+		 * or not (false).
+		 */
+		bool eventFilter(QObject *pObject, QEvent *pEvent);
+
+		/**
 		 * Captures the event of window show.
 		 * @param pEvent QShowEvent instance with the event data.
 		 */
@@ -82,6 +92,22 @@ namespace fsdk
 		 * Sets up the UI elements.
 		 */
 		void setupUI();
+
+		/**
+		 * Saves the z-order of all sub windows to a semicolon-separated
+		 * string.
+		 * @return QString with the object names of all sub windows
+		 * in the current z-order, separated by a ';'.
+		 */
+		QString saveZOrder() const;
+
+		/**
+		 * Restores the z-order of all sub windows from a semicolon-separated
+		 * string.
+		 * @param sData QString with the object names of all sub windows
+		 * in the intended z-order, separated by a ';'.
+		 */
+		bool restoreZOrder(const QString &sData);
 
 	protected slots:
 
@@ -154,6 +180,13 @@ namespace fsdk
 
 		/** Window that displays the session explorer. */
 		SessionExplorer *m_pSessionExplorer;
+
+		//-------------------------------
+		// Sub windows
+		//-------------------------------
+
+		/** Z-ordered vector of all sub windows in the application. */
+		QVector<QWidget*> m_vSubWindows;
 
 		/** Window that displays the player's face video. */
 		VideoWindow *m_pPlayerWindow;

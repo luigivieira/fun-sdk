@@ -32,7 +32,10 @@
 fsdk::MainWindow::MainWindow(QWidget *pParent) :
     QMainWindow(pParent)
 {
+	setObjectName("mainWindow");
+
 	setCentralWidget(new QMdiArea(this));
+	centralWidget()->setObjectName("Teste");
 	static_cast<QMdiArea*>(centralWidget())->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 	static_cast<QMdiArea*>(centralWidget())->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);	
 
@@ -43,6 +46,10 @@ fsdk::MainWindow::MainWindow(QWidget *pParent) :
 
 	setupUI();
 	refreshUI();
+
+	// Install activation event filters
+	m_pPlayerWindow->installEventFilter(this);
+	m_pGameplayWindow->installEventFilter(this);
 }
 
 // +-----------------------------------------------------------
@@ -78,6 +85,7 @@ void fsdk::MainWindow::setupUI()
 	//-------------------------------
 	m_pSessionMenu = menuBar()->addMenu("");
 	m_pSessionToolbar = addToolBar("");
+	m_pSessionToolbar->setObjectName("sessionToolbar");
 	m_pSessionToolbar->setIconSize(QSize(32, 32));
 
 	// Action "New"
@@ -155,22 +163,22 @@ void fsdk::MainWindow::setupUI()
 	// Submenu "Toolbars"
 	m_pViewToolbarsMenu = m_pViewMenu->addMenu("");
 
-	// Action for toggling the view of the File toolbar
-	m_pViewToolbarsMenu->addAction(m_pSessionToolbar->toggleViewAction());
+// Action for toggling the view of the File toolbar
+m_pViewToolbarsMenu->addAction(m_pSessionToolbar->toggleViewAction());
 
-	//-------------------------------
-	// "Help" menu
-	//-------------------------------
-	m_pHelpMenu = menuBar()->addMenu("");
+//-------------------------------
+// "Help" menu
+//-------------------------------
+m_pHelpMenu = menuBar()->addMenu("");
 
-	// Action "Help"
-	m_pHelpAction = m_pHelpMenu->addAction("");
-	m_pHelpAction->setShortcut(QKeySequence::HelpContents);
-	connect(m_pHelpAction, &QAction::triggered, this, &MainWindow::help);
+// Action "Help"
+m_pHelpAction = m_pHelpMenu->addAction("");
+m_pHelpAction->setShortcut(QKeySequence::HelpContents);
+connect(m_pHelpAction, &QAction::triggered, this, &MainWindow::help);
 
-	// Action "About"
-	m_pAboutAction = m_pHelpMenu->addAction("");
-	connect(m_pAboutAction, &QAction::triggered, this, &MainWindow::about);
+// Action "About"
+m_pAboutAction = m_pHelpMenu->addAction("");
+connect(m_pAboutAction, &QAction::triggered, this, &MainWindow::about);
 }
 
 // +-----------------------------------------------------------
@@ -217,7 +225,7 @@ void fsdk::MainWindow::refreshUI()
 	// Action "Exit"
 	m_pExitAction->setText(tr("&Exit"));
 	m_pExitAction->setStatusTip(tr("Quits from the application"));
-	
+
 	//-------------------------------
 	// "View" menu
 	//-------------------------------
@@ -250,6 +258,50 @@ void fsdk::MainWindow::refreshUI()
 }
 
 // +-----------------------------------------------------------
+bool fsdk::MainWindow::eventFilter(QObject *pObject, QEvent *pEvent)
+{
+	if(pEvent->type() == QEvent::WindowActivate)
+	{
+		QWidget *pWindow = dynamic_cast<QWidget*>(pObject);
+		if(pWindow != NULL)
+		{
+			// Put the window activated in last
+			m_vSubWindows.removeOne(pWindow);
+			m_vSubWindows.push_back(pWindow);
+		}
+	}
+	return false;
+}
+
+// +-----------------------------------------------------------
+QString fsdk::MainWindow::saveZOrder() const
+{
+	QStringList lData;
+	foreach(QWidget *pWidget, m_vSubWindows)
+		lData.append(pWidget->objectName());
+	return lData.join(';');
+}
+
+// +-----------------------------------------------------------
+bool fsdk::MainWindow::restoreZOrder(const QString &sData)
+{
+	if(sData.isEmpty())
+		return false;
+
+	// From the z-ordered list, build a map from objectName -> widgetPointer
+	QMap<QString, QWidget*> mWindows;
+	foreach(QWidget *pWidget, m_vSubWindows)
+		mWindows[pWidget->objectName()] = pWidget;
+
+	// Put the widgets back in order based on the string received
+	QStringList lData = sData.split(';');
+	foreach(QString sObjName, lData)
+		mWindows[sObjName]->activateWindow();
+
+	return true;
+}
+
+// +-----------------------------------------------------------
 void fsdk::MainWindow::unloadApp() const
 {
 	// Save the application settings
@@ -258,6 +310,7 @@ void fsdk::MainWindow::unloadApp() const
 	pSettings->beginGroup("mainWindow");
 	pSettings->setValue("geometry", saveGeometry());
 	pSettings->setValue("state", saveState());
+	pSettings->setValue("zOrder", saveZOrder());
 	pSettings->setValue("lastPathUsed", m_sLastPathUsed);
 	pSettings->endGroup();
 
@@ -290,6 +343,7 @@ void fsdk::MainWindow::loadApp()
 	pSettings->beginGroup("mainWindow");
 	restoreGeometry(pSettings->value("geometry").toByteArray());
 	restoreState(pSettings->value("state").toByteArray());
+	QString sZOrder = pSettings->value("zOrder").toString();
 	m_sLastPathUsed = pSettings->value("lastPathUsed", QDir::toNativeSeparators(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))).toString();
 	pSettings->endGroup();
 
@@ -303,7 +357,7 @@ void fsdk::MainWindow::loadApp()
 	m_pGameplayWindow->restoreState(pSettings->value("state").toByteArray());
 	pSettings->endGroup();
 
-	activateWindow(); // Foce the focus back to the main window
+	restoreZOrder(sZOrder);
 }
 
 // +-----------------------------------------------------------

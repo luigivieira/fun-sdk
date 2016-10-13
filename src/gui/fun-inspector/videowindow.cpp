@@ -48,9 +48,6 @@ fsdk::VideoWindow::VideoWindow(QWidget *pParent) :
 // +-----------------------------------------------------------
 void fsdk::VideoWindow::setupUI()
 {
-	setLayout(new QVBoxLayout());
-	layout()->setMargin(0);
-
 	m_pToolbar = new QToolBar(this);
 	layout()->addWidget(m_pToolbar);
 
@@ -123,7 +120,17 @@ bool fsdk::VideoWindow::event(QEvent *pEvent)
 		case QEvent::Resize:
 		case QEvent::WindowStateChange:
 			if(!isMaximized())
+			{
 				m_oGeometry = geometry();
+				if(isDetached())
+				{
+					QMainWindow *pMainWindow = static_cast<QMainWindow*>(m_pParent);
+					QMdiArea *pArea = static_cast<QMdiArea*>(pMainWindow->centralWidget());
+					QPoint oPos = pArea->mapFromGlobal(m_oGeometry.topLeft());
+					QSize oSize = size();
+					m_oGeometry = QRect(oPos, oSize);
+				}
+			}
 			break;
 
 		case QEvent::WindowTitleChange:
@@ -152,14 +159,14 @@ void fsdk::VideoWindow::toggleDetached(bool bDetached)
 	QMdiArea *pArea = static_cast<QMdiArea*>(pMainWindow->centralWidget());
 	if(bDetached)
 	{
-		QPoint oPos = static_cast<QWidget*>(parent())->mapToGlobal(pos());
+		QPoint oPos = static_cast<QWidget*>(pArea)->mapToGlobal(pos());
 		pArea->removeSubWindow(this);
 		setParent(NULL);
 		move(oPos);
 	}
 	else
 	{
-		QPoint oPos = static_cast<QWidget*>(parent())->mapFromGlobal(pos());
+		QPoint oPos = pArea->mapFromGlobal(pos());
 		setParent(m_pParent);
 		pArea->addSubWindow(this);
 		move(oPos);
@@ -196,13 +203,19 @@ QMenu *fsdk::VideoWindow::actionsMenu() const
 }
 
 // +-----------------------------------------------------------
+bool fsdk::VideoWindow::isDetached() const
+{
+	return m_pToggleDetachedAction->isChecked();
+}
+
+// +-----------------------------------------------------------
 QByteArray fsdk::VideoWindow::saveState() const
 {
 	QByteArray oData;
 	QDataStream oStream(&oData, QIODevice::WriteOnly);
 
-	oStream << m_pToggleDetachedAction->isChecked();
-	oStream << m_pToggleViewAction->isChecked();
+	oStream << isDetached();
+	oStream << isVisible();
 	oStream << isMaximized();
 
 	return oData;
