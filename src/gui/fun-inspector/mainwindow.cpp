@@ -455,8 +455,7 @@ bool fsdk::MainWindow::saveSessionAs()
 // +-----------------------------------------------------------
 void fsdk::MainWindow::quit()
 {
-	qWarning().noquote() << "Local: " << m_pPlayerWindow->pos() << " Global: " << m_pPlayerWindow->mapToGlobal(m_pPlayerWindow->pos());
-	//close();
+	close();
 }
 
 // +-----------------------------------------------------------
