@@ -17,7 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "framewidget.h"
+#include "videowidget.h"
 
 #include <QApplication>
 #include <QPixmap>
@@ -31,7 +31,7 @@
 #define ZOOM_OUT_STEP 0.80
 
 // +-----------------------------------------------------------
-fsdk::FrameWidget::FrameWidget(QWidget *pParent) : QGraphicsView(pParent)
+fsdk::VideoWidget::VideoWidget(QWidget *pParent) : QGraphicsView(pParent)
 {
 	setDragMode(RubberBandDrag);
 
@@ -55,26 +55,26 @@ fsdk::FrameWidget::FrameWidget(QWidget *pParent) : QGraphicsView(pParent)
 }
 
 // +-----------------------------------------------------------
-QSize fsdk::FrameWidget::sizeHint() const
+QSize fsdk::VideoWidget::sizeHint() const
 {
 	return QSize(800, 600);
 };
 
 // +-----------------------------------------------------------
-QGraphicsVideoItem *fsdk::FrameWidget::graphicsVideoItem()
+QGraphicsVideoItem *fsdk::VideoWidget::graphicsVideoItem()
 {
 	return m_pVideoItem;
 }
 
 // +-----------------------------------------------------------
-double fsdk::FrameWidget::zoomLevel() const
+double fsdk::VideoWidget::zoomLevel() const
 {
 	// Returns it with a precision of 5 decimals
 	return qFloor(m_dZoomLevel * 100000.0) / 100000.0;
 }
 
 // +-----------------------------------------------------------
-void fsdk::FrameWidget::setZoomLevel(const double dLevel)
+void fsdk::VideoWidget::setZoomLevel(const double dLevel)
 {
 	if(dLevel == m_dZoomLevel)
 		return;
@@ -96,7 +96,7 @@ void fsdk::FrameWidget::setZoomLevel(const double dLevel)
 }
 
 // +-----------------------------------------------------------
-void fsdk::FrameWidget::zoomBy(double dLevelBy)
+void fsdk::VideoWidget::zoomBy(double dLevelBy)
 {
 	double dLevel = m_dZoomLevel * dLevelBy;
 	if(dLevel >= 0.10 && dLevel <= 10.0)
@@ -111,7 +111,7 @@ void fsdk::FrameWidget::zoomBy(double dLevelBy)
 
 #ifndef QT_NO_WHEELEVENT
 // +-----------------------------------------------------------
-void fsdk::FrameWidget::wheelEvent(QWheelEvent *pEvent)
+void fsdk::VideoWidget::wheelEvent(QWheelEvent *pEvent)
 {
 	bool bCtrl = QApplication::keyboardModifiers() & Qt::ControlModifier;
 	bool bAlt = QApplication::keyboardModifiers() & Qt::AltModifier;
@@ -130,19 +130,19 @@ void fsdk::FrameWidget::wheelEvent(QWheelEvent *pEvent)
 #endif
 
 // +-----------------------------------------------------------
-void fsdk::FrameWidget::zoomIn()
+void fsdk::VideoWidget::zoomIn()
 {
 	zoomBy(ZOOM_IN_STEP);
 }
 
 // +-----------------------------------------------------------
-void fsdk::FrameWidget::zoomOut()
+void fsdk::VideoWidget::zoomOut()
 {
 	zoomBy(ZOOM_OUT_STEP);
 }
 
 // +-----------------------------------------------------------
-void fsdk::FrameWidget::mediaStatusChanged(QMediaPlayer::MediaStatus eStatus)
+void fsdk::VideoWidget::mediaStatusChanged(QMediaPlayer::MediaStatus eStatus)
 {
 	Q_UNUSED(eStatus);
 	m_pVideoItem->setSize(m_pVideoItem->nativeSize());

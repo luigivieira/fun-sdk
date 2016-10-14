@@ -20,7 +20,7 @@
 #ifndef VIDEOWINDOW_H
 #define VIDEOWINDOW_H
 
-#include "framewidget.h"
+#include "videowidget.h"
 #include "volumebutton.h"
 #include <QMdiSubWindow>
 #include <QAction>
@@ -191,8 +191,8 @@ namespace fsdk
 		/** The default parent of this window (kept safe for use in detachment/attachment). */
 		QWidget *m_pParent;
 
-		/** Frame currently displayed at the window. */
-		FrameWidget *m_pFrame;
+		/** Video displayed at this window. */
+		VideoWidget *m_pVideoWidget;
 
 		/** Window toolbar. */
 		QToolBar *m_pToolbar;

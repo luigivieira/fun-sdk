@@ -39,9 +39,9 @@ fsdk::VideoWindow::VideoWindow(QWidget *pParent) :
 	setupUI();
 	refreshUI();
 
-	m_pMediaPlayer->setVideoOutput(m_pFrame->graphicsVideoItem());
+	m_pMediaPlayer->setVideoOutput(m_pVideoWidget->graphicsVideoItem());
 	connect(m_pMediaPlayer, &QMediaPlayer::mediaStatusChanged, this, &VideoWindow::mediaStatusChanged);
-	connect(m_pMediaPlayer, &QMediaPlayer::mediaStatusChanged, m_pFrame, &FrameWidget::mediaStatusChanged);
+	connect(m_pMediaPlayer, &QMediaPlayer::mediaStatusChanged, m_pVideoWidget, &VideoWidget::mediaStatusChanged);
 	connect(m_pMediaPlayer, &QMediaPlayer::stateChanged, this, &VideoWindow::mediaStateChanged);
 	connect(m_pMediaPlayer, &QMediaPlayer::positionChanged, this, &VideoWindow::mediaPositionChanged);
 }
@@ -52,8 +52,8 @@ void fsdk::VideoWindow::setupUI()
 	m_pToolbar = new QToolBar(this);
 	layout()->addWidget(m_pToolbar);
 
-	m_pFrame = new FrameWidget(this);
-	layout()->addWidget(m_pFrame);
+	m_pVideoWidget = new VideoWidget(this);
+	layout()->addWidget(m_pVideoWidget);
 
 	/***********************************************
 	 * Toggle actions

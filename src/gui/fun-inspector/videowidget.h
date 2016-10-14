@@ -17,8 +17,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FRAMEWIDGET_H
-#define FRAMEWIDGET_H
+#ifndef VIDEOWIDGET_H
+#define VIDEOWIDGET_H
 
 #include <QGraphicsView>
 #include <QGraphicsVideoItem>
@@ -28,13 +28,13 @@
 namespace fsdk
 {
     /**
-     * Implements a widget that displays an image frame from a video.
-	 * The frame is implemented using QGraphicsView and QGraphicsScene,
-	 * so the frame image can be zoomed in and out and other graphic itens
+     * Implements a widget that displays a video.
+	 * The widget is implemented using QGraphicsView and QGraphicsScene,
+	 * so the video frames can be zoomed in and out and other graphic itens
 	 * (facial landmarks, for instance) can easily be superimposed and
 	 * even interacted with.
      */
-    class FrameWidget : public QGraphicsView
+    class VideoWidget : public QGraphicsView
     {
         Q_OBJECT
 
@@ -43,7 +43,7 @@ namespace fsdk
 		 * Class constructor.
 		 * @param pParent Instance of the parent widget.
 		 */
-		FrameWidget(QWidget *pParent = 0);
+		VideoWidget(QWidget *pParent = 0);
 
 		/**
 		 * Gets the graphics item used to present videos at the central area.
@@ -124,5 +124,4 @@ namespace fsdk
 	};
 };
 
-
-#endif // FRAMEWIDGET_H
+#endif // VIDEOWIDGET_H
