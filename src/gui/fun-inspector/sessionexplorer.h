@@ -100,14 +100,8 @@ namespace fsdk
 
 		/**
 		 * Captures the signal indicating changes in the session contents and saved status.
-		 * @param sSessionFileName QString with the name of the session file in disk (or empty
-		 * if it is a new session).
-		 * saved or not to a file in disk.
-		 * @param sPlayerFileName QString with the current value of the corresponding field.
-		 * @param sGameplayFileName QString with the current value of the corresponding field.
-		 * @param sLandmarksFileName QString with the current value of the corresponding field.
 		 */
-		void sessionChanged(const QString &sSessionFileName, const QString &sPlayerFileName, const QString &sGameplayFileName, const QString &sLandmarksFileName);
+		void sessionChanged();
 
 	protected slots:
 

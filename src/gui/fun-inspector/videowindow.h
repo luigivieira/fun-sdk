@@ -100,12 +100,6 @@ namespace fsdk
 		 */
 		bool isDetached() const;
 
-		/**
-		 * Plays a video in this window.
-		 * @param sFileName QString with the name of the video to play.
-		 */
-		void playVideo(QString sFileName);
-
 	signals:
 
 		/**
@@ -138,6 +132,19 @@ namespace fsdk
 		 * (true) or not (false).
 		 */
 		void toggleVisible(bool bVisible);
+
+		/**
+		 * Sets the video file to be played on this window.
+		 * @param sFileName QString with the name of the video file to play.
+		 */
+		void setVideoFile(const QString &sFileName);
+
+		/**
+		 * Plays/pauses the video.
+		 */
+		void play();
+
+		void stop();
 
 	protected slots:
 

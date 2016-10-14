@@ -313,10 +313,21 @@ void fsdk::VideoWindow::mediaPositionChanged(qint64 iPosition)
 }
 
 // +-----------------------------------------------------------
-void fsdk::VideoWindow::playVideo(QString sFileName)
+void fsdk::VideoWindow::setVideoFile(const QString &sFileName)
 {
 	QUrl oUrl = QUrl::fromLocalFile(sFileName);
 	QMediaContent oMedia = QMediaContent(oUrl);
 	m_pMediaPlayer->setMedia(oMedia);
-	m_pMediaPlayer->play();
+}
+
+// +-----------------------------------------------------------
+void fsdk::VideoWindow::play()
+{
+
+}
+
+// +-----------------------------------------------------------
+void fsdk::VideoWindow::stop()
+{
+
 }

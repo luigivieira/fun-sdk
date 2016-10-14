@@ -130,12 +130,12 @@ void fsdk::SessionExplorer::refreshUI()
 }
 
 // +-----------------------------------------------------------
-void fsdk::SessionExplorer::sessionChanged(const QString &sSessionFileName, const QString &sPlayerFileName, const QString &sGameplayFileName, const QString &sLandmarksFileName)
+void fsdk::SessionExplorer::sessionChanged()
 {
-	m_pRoot->setText(1, sSessionFileName);
-	m_pPlayerFile->setText(1, sPlayerFileName);
-	m_pGameplayFile->setText(1, sGameplayFileName);
-	m_pLandmarksFile->setText(1, sLandmarksFileName);
+	m_pRoot->setText(1, m_pData->sessionFileName());
+	m_pPlayerFile->setText(1, m_pData->playerFileName());
+	m_pGameplayFile->setText(1, m_pData->gameplayFileName());
+	m_pLandmarksFile->setText(1, m_pData->landmarksFileName());
 
 	m_pRoot->setText(0, tr("%1Session").arg(m_pData->isModified() ? "*" : ""));
 	m_pMainWindow->setWindowModified(m_pData->isModified());

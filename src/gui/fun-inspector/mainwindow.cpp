@@ -134,6 +134,27 @@ void fsdk::MainWindow::setupUI()
 	connect(m_pExitAction, &QAction::triggered, this, &MainWindow::quit);
 
 	//-------------------------------
+	// "Playback" menu/toolbar
+	//-------------------------------
+
+	m_pPlaybackMenu = menuBar()->addMenu("");
+	m_pPlaybackToolbar = addToolBar("");
+	m_pPlaybackToolbar->setObjectName("playbackToolbar");
+	m_pPlaybackToolbar->setIconSize(QSize(32, 32));
+
+	// Action "Play/Pause"
+	m_pTogglePlayPauseAction = m_pPlaybackMenu->addAction("");
+	m_pPlaybackToolbar->addAction(m_pTogglePlayPauseAction);
+	m_pTogglePlayPauseAction->setIcon(QIcon(":/icons/play-videos.png"));
+	m_pTogglePlayPauseAction->setShortcut(Qt::Key_P);
+
+	// Action "Stop"
+	m_pStopAction = m_pPlaybackMenu->addAction("");
+	m_pPlaybackToolbar->addAction(m_pStopAction);
+	m_pStopAction->setIcon(QIcon(":/icons/stop-videos.png"));
+	m_pStopAction->setShortcut(Qt::Key_S);
+
+	//-------------------------------
 	// "View" menu
 	//-------------------------------
 	m_pViewMenu = menuBar()->addMenu("");
@@ -163,22 +184,22 @@ void fsdk::MainWindow::setupUI()
 	// Submenu "Toolbars"
 	m_pViewToolbarsMenu = m_pViewMenu->addMenu("");
 
-// Action for toggling the view of the File toolbar
-m_pViewToolbarsMenu->addAction(m_pSessionToolbar->toggleViewAction());
+	// Action for toggling the view of the File toolbar
+	m_pViewToolbarsMenu->addAction(m_pSessionToolbar->toggleViewAction());
 
-//-------------------------------
-// "Help" menu
-//-------------------------------
-m_pHelpMenu = menuBar()->addMenu("");
+	//-------------------------------
+	// "Help" menu
+	//-------------------------------
+	m_pHelpMenu = menuBar()->addMenu("");
 
-// Action "Help"
-m_pHelpAction = m_pHelpMenu->addAction("");
-m_pHelpAction->setShortcut(QKeySequence::HelpContents);
-connect(m_pHelpAction, &QAction::triggered, this, &MainWindow::help);
+	// Action "Help"
+	m_pHelpAction = m_pHelpMenu->addAction("");
+	m_pHelpAction->setShortcut(QKeySequence::HelpContents);
+	connect(m_pHelpAction, &QAction::triggered, this, &MainWindow::help);
 
-// Action "About"
-m_pAboutAction = m_pHelpMenu->addAction("");
-connect(m_pAboutAction, &QAction::triggered, this, &MainWindow::about);
+	// Action "About"
+	m_pAboutAction = m_pHelpMenu->addAction("");
+	connect(m_pAboutAction, &QAction::triggered, this, &MainWindow::about);
 }
 
 // +-----------------------------------------------------------
@@ -225,6 +246,21 @@ void fsdk::MainWindow::refreshUI()
 	// Action "Exit"
 	m_pExitAction->setText(tr("&Exit"));
 	m_pExitAction->setStatusTip(tr("Quits from the application"));
+
+	//-------------------------------
+	// "Playback" menu/toolbar
+	//-------------------------------
+
+	m_pPlaybackMenu->setTitle(tr("&Playback"));
+	m_pPlaybackToolbar->setWindowTitle(tr("&Playback"));
+
+	// Action "Play/Pause"
+	m_pTogglePlayPauseAction->setText(tr("&Play"));
+	m_pTogglePlayPauseAction->setStatusTip(tr("Plays the videos in the session"));
+
+	// Action "Stop"
+	m_pStopAction->setText(tr("&Stop"));
+	m_pStopAction->setStatusTip(tr("Stops the videos in the session"));
 
 	//-------------------------------
 	// "View" menu
@@ -523,5 +559,5 @@ void fsdk::MainWindow::help()
 // +-----------------------------------------------------------
 void fsdk::MainWindow::about()
 {
-	m_pPlayerWindow->playVideo("c:/temp/Data/subject_001/gameplay.mp4");
+
 }

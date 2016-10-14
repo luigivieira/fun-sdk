@@ -50,6 +50,7 @@ void fsdk::Session::setPlayerFileName(const QString &sFileName)
 	qDebug().noquote() << "Setting player video to: " << sFileName;
 	m_sPlayerFileName = sFileName;
 	setModified(true);
+	emit playerFileChanged(sFileName);
 }
 
 // +-----------------------------------------------------------
@@ -67,6 +68,7 @@ void fsdk::Session::setGameplayFileName(const QString &sFileName)
 	qDebug().noquote() << "Setting gameplay video to: " << sFileName;
 	m_sGameplayFileName = sFileName;
 	setModified(true);
+	emit gameplayFileChanged(sFileName);
 }
 
 // +-----------------------------------------------------------
@@ -84,15 +86,23 @@ void fsdk::Session::setLandmarksFileName(const QString &sFileName)
 	qDebug().noquote() << "Setting landmarks to: " << sFileName;
 	m_sLandmarksFileName = sFileName;
 	setModified(true);
+	emit landmarksFileChanged(sFileName);
 }
 
 // +-----------------------------------------------------------
 void fsdk::Session::clear()
 {
 	m_sSessionFileName = "";
+
 	m_sPlayerFileName = "";
+	emit playerFileChanged("");
+
 	m_sGameplayFileName = "";
+	emit gameplayFileChanged("");
+
 	m_sLandmarksFileName = "";
+	emit landmarksFileChanged("");
+
 	setModified(false);
 }
 
@@ -258,7 +268,7 @@ bool fsdk::Session::isModified() const
 void fsdk::Session::setModified(const bool bModified)
 {
 	m_bModified = bModified;
-	emit sessionChanged(m_sSessionFileName, m_sPlayerFileName, m_sGameplayFileName, m_sLandmarksFileName);
+	emit sessionChanged();
 }
 
 // +-----------------------------------------------------------

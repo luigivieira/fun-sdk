@@ -39,5 +39,13 @@
 		<file>windows-tile-vertical.png</file>
 		<file>file-add.png</file>
 		<file>file-remove.png</file>
+		<file>play-videos.png</file>
+		<file>pause-videos.png</file>
+		<file>stop-videos.png</file>
+		<file>audio-unavailable.png</file>
+		<file>audio-muted.png</file>
+		<file>audio-max.png</file>
+		<file>audio-med.png</file>
+		<file>audio-min.png</file>
     </qresource>
 </RCC>

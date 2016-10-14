@@ -223,6 +223,22 @@ namespace fsdk
 		QAction *m_pExitAction;
 
 		//-------------------------------
+		// "Playback" menu/toolbar
+		//-------------------------------
+
+		/** Main menu item called "Playback". */
+		QMenu *m_pPlaybackMenu;
+
+		/** Toolbar for the "Playback" menu. */
+		QToolBar *m_pPlaybackToolbar;
+
+		/** Action called "Play/Pause": plays/pauses the session videos. */
+		QAction *m_pTogglePlayPauseAction;
+
+		/** Action called "Stop": stops the session videos. */
+		QAction *m_pStopAction;
+
+		//-------------------------------
 		// "View" menu/toolbar
 		//-------------------------------
 
