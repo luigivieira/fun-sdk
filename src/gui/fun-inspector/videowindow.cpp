@@ -33,11 +33,12 @@ fsdk::VideoWindow::VideoWindow(QWidget *pParent) :
 {
 	m_pParent = pParent;
 	setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint);
-	
+
+	m_pMediaPlayer = new QMediaPlayer(this);
+
 	setupUI();
 	refreshUI();
 
-	m_pMediaPlayer = new QMediaPlayer(this);
 	m_pMediaPlayer->setVideoOutput(m_pFrame->graphicsVideoItem());
 	connect(m_pMediaPlayer, &QMediaPlayer::mediaStatusChanged, this, &VideoWindow::mediaStatusChanged);
 	connect(m_pMediaPlayer, &QMediaPlayer::mediaStatusChanged, m_pFrame, &FrameWidget::mediaStatusChanged);
@@ -65,12 +66,19 @@ void fsdk::VideoWindow::setupUI()
 	m_pToggleViewAction->setIcon(QIcon(":/icons/window-visible.png"));
 	connect(m_pToggleViewAction, &QAction::triggered, this, &VideoWindow::toggleVisible);
 	
-
 	m_pToggleDetachedAction = m_pActionsMenu->addAction("");
 	m_pToggleDetachedAction->setCheckable(true);
 	m_pToggleDetachedAction->setIcon(QIcon(":/icons/window-attached.png"));
 	m_pToolbar->addAction(m_pToggleDetachedAction);
 	connect(m_pToggleDetachedAction, &QAction::triggered, this, &VideoWindow::toggleDetached);
+
+	/***********************************************
+	 * Video actions
+	 ***********************************************/
+	m_pVolumeButton = new VolumeButton(this);
+	m_pVolumeButton->setObjectName("volumeButton");
+	m_pToolbar->addWidget(m_pVolumeButton);
+	connect(m_pVolumeButton, &VolumeButton::volumeChanged, m_pMediaPlayer, &QMediaPlayer::setVolume);
 }
 
 // +-----------------------------------------------------------

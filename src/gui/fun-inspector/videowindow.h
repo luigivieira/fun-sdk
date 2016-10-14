@@ -21,6 +21,7 @@
 #define VIDEOWINDOW_H
 
 #include "framewidget.h"
+#include "volumebutton.h"
 #include <QMdiSubWindow>
 #include <QAction>
 #include <QToolBar>
@@ -144,6 +145,9 @@ namespace fsdk
 		 */
 		void play();
 
+		/**
+		 * Stops the video.
+		 */
 		void stop();
 
 	protected slots:
@@ -190,6 +194,7 @@ namespace fsdk
 		/** Frame currently displayed at the window. */
 		FrameWidget *m_pFrame;
 
+		/** Window toolbar. */
 		QToolBar *m_pToolbar;
 
 		/** Toggle view action for this window. */
@@ -197,6 +202,8 @@ namespace fsdk
 
 		/** Toggle the detachment of this window from the MainWindow. */
 		QAction *m_pToggleDetachedAction;
+
+		VolumeButton *m_pVolumeButton;
 
 		/** Menu with all actions for this window. */
 		QMenu *m_pActionsMenu;
