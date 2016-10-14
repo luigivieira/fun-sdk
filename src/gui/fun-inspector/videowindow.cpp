@@ -225,6 +225,7 @@ QByteArray fsdk::VideoWindow::saveState() const
 	oStream << isDetached();
 	oStream << isVisible();
 	oStream << isMaximized();
+	oStream << m_pVolumeButton->volume();
 
 	return oData;
 }
@@ -262,12 +263,21 @@ bool fsdk::VideoWindow::restoreState(const QByteArray &oData)
 		return false;
 	}
 
+	int iVolume;
+	oStream >> iVolume;
+	if(oStream.status() != QDataStream::Ok)
+	{
+		qWarning().noquote() << "Error restoring window state due to failure in reading value 'volume'";
+		return false;
+	}
+
 	if(bDetached)
 		toggleDetached(true);
 	if(!bVisible)
 		toggleVisible(false);
 	if(bMaximized)
 		setWindowState(Qt::WindowMaximized);
+	m_pVolumeButton->setVolume(iVolume);
 
 	return true;
 }
