@@ -47,9 +47,18 @@ fsdk::MainWindow::MainWindow(QWidget *pParent) :
 	setupUI();
 	refreshUI();
 
+	// Connect to the sub windows so they will load the proper video files
+	connect(m_pSessionData, &Session::playerFileChanged, m_pPlayerWindow, &VideoWindow::setVideoFile);
+	connect(m_pSessionData, &Session::gameplayFileChanged, m_pGameplayWindow, &VideoWindow::setVideoFile);
+
 	// Install activation event filters
 	m_pPlayerWindow->installEventFilter(this);
 	m_pGameplayWindow->installEventFilter(this);
+
+	// Synchronize the playbacks of videos
+	m_pMediaSync = new MediaSynchronizer(this);
+	m_pMediaSync->add(m_pPlayerWindow->mediaPlayer());
+	m_pMediaSync->add(m_pGameplayWindow->mediaPlayer());
 }
 
 // +-----------------------------------------------------------
@@ -559,5 +568,6 @@ void fsdk::MainWindow::help()
 // +-----------------------------------------------------------
 void fsdk::MainWindow::about()
 {
-
+	m_pPlayerWindow->play();
+	m_pGameplayWindow->play();
 }

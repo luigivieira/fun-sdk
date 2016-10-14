@@ -101,6 +101,12 @@ namespace fsdk
 		 */
 		bool isDetached() const;
 
+		/**
+		 * Gets the media player used by this window to play videos.
+		 * @return Instance of QMediaPlayer used by this window.
+		 */
+		QMediaPlayer *mediaPlayer();
+
 	signals:
 
 		/**

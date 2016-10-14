@@ -333,15 +333,26 @@ void fsdk::VideoWindow::mediaPositionChanged(qint64 iPosition)
 // +-----------------------------------------------------------
 void fsdk::VideoWindow::setVideoFile(const QString &sFileName)
 {
-	QUrl oUrl = QUrl::fromLocalFile(sFileName);
-	QMediaContent oMedia = QMediaContent(oUrl);
-	m_pMediaPlayer->setMedia(oMedia);
+	if(!sFileName.isEmpty())
+	{
+		QUrl oUrl = QUrl::fromLocalFile(sFileName);
+		QMediaContent oMedia = QMediaContent(oUrl);
+		m_pMediaPlayer->setMedia(oMedia);
+	}
+	else
+		m_pMediaPlayer->setMedia(QMediaContent());
+}
+
+// +-----------------------------------------------------------
+QMediaPlayer *fsdk::VideoWindow::mediaPlayer()
+{
+	return m_pMediaPlayer;
 }
 
 // +-----------------------------------------------------------
 void fsdk::VideoWindow::play()
 {
-
+	m_pMediaPlayer->play();
 }
 
 // +-----------------------------------------------------------

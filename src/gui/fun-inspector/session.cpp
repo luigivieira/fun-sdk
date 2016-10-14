@@ -94,15 +94,13 @@ void fsdk::Session::clear()
 {
 	m_sSessionFileName = "";
 
-	m_sPlayerFileName = "";
+	setPlayerFileName("");
+	setGameplayFileName("");
+	setLandmarksFileName("");
+
 	emit playerFileChanged("");
-
-	m_sGameplayFileName = "";
 	emit gameplayFileChanged("");
-
-	m_sLandmarksFileName = "";
 	emit landmarksFileChanged("");
-
 	setModified(false);
 }
 
@@ -253,6 +251,10 @@ bool fsdk::Session::load(const QString &sFileName)
 	m_sPlayerFileName = sPlayerFileName;
 	m_sGameplayFileName = sGameplayFileName;
 	m_sLandmarksFileName = sLandmarksFileName;
+
+	emit playerFileChanged(m_sPlayerFileName);
+	emit gameplayFileChanged(m_sGameplayFileName);
+	emit landmarksFileChanged(m_sLandmarksFileName);
 	setModified(false);
 
 	return true;

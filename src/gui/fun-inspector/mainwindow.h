@@ -23,6 +23,7 @@
 #include "videowindow.h"
 #include "sessionexplorer.h"
 #include "session.h"
+#include "mediasynchronizer.h"
 #include <QMainWindow>
 #include <QMenu>
 #include <QAction>
@@ -174,6 +175,9 @@ namespace fsdk
 		void tileVertically();
 
     private:
+
+		/** Synchronizer for the playback of session videos. */
+		MediaSynchronizer *m_pMediaSync;
 
 		/** Allows the access to the session data. */
 		Session *m_pSessionData;
