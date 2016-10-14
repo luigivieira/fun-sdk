@@ -20,6 +20,10 @@
 #include "volumebutton.h"
 #include <QBoxLayout>
 #include <QDebug>
+#include <QMouseEvent>
+#include <QStyle>
+#include <QStylePainter>
+#include <QStyleOptionSlider>
 
 #define SLIDER_STYLE_SHEET "\
 	fsdk--VolumeButton QSlider::groove:horizontal {\
@@ -38,22 +42,76 @@
 		border-radius: 6px;\
 	}"
 
+namespace fsdk
+{
+	/**
+	 * Custom horizontal QSlider used for setting the volume.
+	 */
+	class VolumeSlider : public QSlider
+	{
+	public:
+		/**
+		 * Class constructor.
+		 * @param pParent Instance of a VolumeButton with the parent.
+		 */
+		VolumeSlider(VolumeButton *pParent) : QSlider(Qt::Horizontal, pParent)
+		{
+			setRange(0, 100);
+			setPageStep(10);
+			setStyleSheet(SLIDER_STYLE_SHEET);
+			connect(this, &QAbstractSlider::valueChanged, pParent, &VolumeButton::sliderValueChanged);
+		}
+
+	protected:
+		/**
+		 * Captures the mouse press event, so the slider can be "jumped" to
+		 * the any position clicked by the user on the slider bar.
+		 * @param pEvent Instance of the QMouseEvent with the event data.
+		 */
+		void mousePressEvent(QMouseEvent *pEvent)
+		{
+			QStyleOptionSlider oOpt;
+			initStyleOption(&oOpt);
+			QRect oHandleRect = style()->subControlRect(QStyle::CC_Slider, &oOpt, QStyle::SC_SliderHandle, this);
+
+			if(pEvent->button() == Qt::LeftButton && oHandleRect.contains(pEvent->pos()) == false)
+			{
+				// Implements the "jump click": directly moves the slider handle
+				// to where the user clicked on the slider trail
+				double dHalfHandleWidth = (0.5 * oHandleRect.width()) + 0.5;
+				int iAdaptedPosX = pEvent->x();
+				if(iAdaptedPosX < dHalfHandleWidth)
+					iAdaptedPosX = dHalfHandleWidth;
+				if(iAdaptedPosX > width() - dHalfHandleWidth)
+					iAdaptedPosX = width() - dHalfHandleWidth;
+
+				double dNewWidth = (width() - dHalfHandleWidth) - dHalfHandleWidth;
+				double normalizedPosition = (iAdaptedPosX - dHalfHandleWidth) / dNewWidth;
+
+				int iNewVal = minimum() + ((maximum() - minimum()) * normalizedPosition);
+				if(invertedAppearance() == true)
+					setValue(maximum() - iNewVal);
+				else
+					setValue(iNewVal);
+
+				pEvent->accept();
+				emit actionTriggered(QSlider::SliderMove);
+			}
+			QSlider::mousePressEvent(pEvent);
+		}
+	};
+}
+
 // +-----------------------------------------------------------
 fsdk::VolumeButton::VolumeButton(QWidget *pParent) : QToolButton(pParent)
 {
-	setCursor(Qt::PointingHandCursor);
 	setPopupMode(QToolButton::InstantPopup);
 
 	QWidget *pPopup = new QWidget(this);
 
-	m_pSlider = new QSlider(Qt::Horizontal, pPopup);
-	m_pSlider->setRange(0, 100);
-	m_pSlider->setValue(100);
-	m_pSlider->setCursor(Qt::PointingHandCursor);
-	m_pSlider->setStyleSheet(SLIDER_STYLE_SHEET);
-	connect(m_pSlider, &QAbstractSlider::valueChanged, this, &VolumeButton::onSliderValueChanged);
+	m_pSlider = new VolumeSlider(this);
 
-	m_pLabel = new QLabel(m_pSlider);
+	m_pLabel = new QLabel(this);
 	m_pLabel->setAlignment(Qt::AlignCenter);
 	m_pLabel->setText("100%");
 	m_pLabel->setMinimumWidth(m_pLabel->sizeHint().width());
@@ -68,19 +126,28 @@ fsdk::VolumeButton::VolumeButton(QWidget *pParent) : QToolButton(pParent)
 
 	m_pMenu = new QMenu(this);
 	m_pMenu->addAction(m_pVolumeAction);
-	m_pMenu->setCursor(Qt::PointingHandCursor);
 	setMenu(m_pMenu);
 
-	setIcon(QIcon(":/icons/audio-max.png"));
+	setVolume(100);
 }
 
 // +-----------------------------------------------------------
-void fsdk::VolumeButton::onSliderValueChanged(int iValue)
+void fsdk::VolumeButton::sliderValueChanged(int iValue)
+{
+	setVolume(iValue);
+	emit volumeChanged(iValue);
+}
+
+// +-----------------------------------------------------------
+int fsdk::VolumeButton::volume() const
+{
+	return m_pSlider->value();
+}
+
+// +-----------------------------------------------------------
+void fsdk::VolumeButton::setVolume(int iValue)
 {
 	m_pLabel->setText(QString("%1%").arg(iValue));
-	emit volumeChanged(iValue);
-
-	QString sClass;
 	if(iValue == 0)
 		setIcon(QIcon(":/icons/audio-muted.png"));
 	else if(iValue <= 32)
@@ -89,4 +156,14 @@ void fsdk::VolumeButton::onSliderValueChanged(int iValue)
 		setIcon(QIcon(":/icons/audio-med.png"));
 	else
 		setIcon(QIcon(":/icons/audio-max.png"));
+	m_pSlider->setValue(iValue);
+
+	refreshUI();
+}
+
+// +-----------------------------------------------------------
+void fsdk::VolumeButton::refreshUI()
+{
+	setToolTip(tr("Volume: %1%").arg(volume()));
+	setStatusTip(tr("Sets the audio volume in this video window"));
 }

@@ -25,6 +25,7 @@
 #include <QSlider>
 #include <QMenu>
 #include <QWidgetAction>
+#include <QEvent>
 
 namespace fsdk
 {
@@ -43,13 +44,31 @@ namespace fsdk
          */
 		VolumeButton(QWidget *pParent = NULL);
 
+		/**
+		 * Gets the volume configured in the button.
+		 * @return Integer with the volume configured (in range [0, 100]).
+		 */
+		int volume() const;
+
+		/**
+		 * Refreshes the text in UI elements (so translation changes
+		 * can be applied).
+		 */
+		void refreshUI();
+
 	public slots:
+
+		/**
+		 * Sets the volume in the button.
+		 * @param iValue Integer with the volume to set (in range [0, 100]).
+		 */
+		void setVolume(int iValue);
 
 		/**
 		 * Captures the slider value changed event.
 		 * @iValue Integer with the current value of the slider (position of the handler).
 		 */
-		void onSliderValueChanged(int iValue);
+		void sliderValueChanged(int iValue);
 
 	signals:
 
