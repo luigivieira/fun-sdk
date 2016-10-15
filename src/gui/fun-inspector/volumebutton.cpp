@@ -26,7 +26,7 @@
 #include <QStyleOptionSlider>
 
 #define SLIDER_STYLE_SHEET "\
-	fsdk--VolumeButton QSlider::groove:horizontal {\
+	QSlider::groove:horizontal {\
 		border: 1px solid #999999;\
 		height: 9px;\
 		background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #b1b1b1, stop: 1 #c4c4c4);\
@@ -34,73 +34,13 @@
 		border-radius: 4px;\
 	}\
 	\
-	fsdk--VolumeButton QSlider::handle:horizontal {\
+	QSlider::handle:horizontal {\
 		background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #d96459, stop:1 #8c4646);\
 		border: 1px solid #5c5c5c;\
 		width: 11px;\
 		margin: -2px -2px;\
 		border-radius: 6px;\
 	}"
-
-namespace fsdk
-{
-	/**
-	 * Custom horizontal QSlider used for setting the volume.
-	 */
-	class VolumeSlider : public QSlider
-	{
-	public:
-		/**
-		 * Class constructor.
-		 * @param pParent Instance of a VolumeButton with the parent.
-		 */
-		VolumeSlider(VolumeButton *pParent) : QSlider(Qt::Horizontal, pParent)
-		{
-			setRange(0, 100);
-			setPageStep(10);
-			setStyleSheet(SLIDER_STYLE_SHEET);
-			connect(this, &QAbstractSlider::valueChanged, pParent, &VolumeButton::sliderValueChanged);
-		}
-
-	protected:
-		/**
-		 * Captures the mouse press event, so the slider can be "jumped" to
-		 * the any position clicked by the user on the slider bar.
-		 * @param pEvent Instance of the QMouseEvent with the event data.
-		 */
-		void mousePressEvent(QMouseEvent *pEvent)
-		{
-			QStyleOptionSlider oOpt;
-			initStyleOption(&oOpt);
-			QRect oHandleRect = style()->subControlRect(QStyle::CC_Slider, &oOpt, QStyle::SC_SliderHandle, this);
-
-			if(pEvent->button() == Qt::LeftButton && oHandleRect.contains(pEvent->pos()) == false)
-			{
-				// Implements the "jump click": directly moves the slider handle
-				// to where the user clicked on the slider trail
-				double dHalfHandleWidth = (0.5 * oHandleRect.width()) + 0.5;
-				int iAdaptedPosX = pEvent->x();
-				if(iAdaptedPosX < dHalfHandleWidth)
-					iAdaptedPosX = dHalfHandleWidth;
-				if(iAdaptedPosX > width() - dHalfHandleWidth)
-					iAdaptedPosX = width() - dHalfHandleWidth;
-
-				double dNewWidth = (width() - dHalfHandleWidth) - dHalfHandleWidth;
-				double normalizedPosition = (iAdaptedPosX - dHalfHandleWidth) / dNewWidth;
-
-				int iNewVal = minimum() + ((maximum() - minimum()) * normalizedPosition);
-				if(invertedAppearance() == true)
-					setValue(maximum() - iNewVal);
-				else
-					setValue(iNewVal);
-
-				pEvent->accept();
-				emit actionTriggered(QSlider::SliderMove);
-			}
-			QSlider::mousePressEvent(pEvent);
-		}
-	};
-}
 
 // +-----------------------------------------------------------
 fsdk::VolumeButton::VolumeButton(QWidget *pParent) : QToolButton(pParent)
@@ -109,7 +49,9 @@ fsdk::VolumeButton::VolumeButton(QWidget *pParent) : QToolButton(pParent)
 
 	QWidget *pPopup = new QWidget(this);
 
-	m_pSlider = new VolumeSlider(this);
+	m_pSlider = new CustomSlider(this);
+	m_pSlider->setStyleSheet(SLIDER_STYLE_SHEET);
+	connect(m_pSlider, &QAbstractSlider::valueChanged, this, &VolumeButton::sliderValueChanged);
 
 	m_pLabel = new QLabel(this);
 	m_pLabel->setAlignment(Qt::AlignCenter);

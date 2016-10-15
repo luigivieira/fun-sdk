@@ -20,9 +20,9 @@
 #ifndef VOLUME_BUTTON_H
 #define VOLUME_BUTTON_H
 
+#include "customslider.h"
 #include <QToolButton>
 #include <QLabel>
-#include <QSlider>
 #include <QMenu>
 #include <QWidgetAction>
 #include <QEvent>
@@ -90,7 +90,7 @@ namespace fsdk
 		QLabel *m_pLabel;
 
 		/** Slider used to allow the user to change the volume. */
-		QSlider *m_pSlider;
+		CustomSlider *m_pSlider;
 	};
 }
 

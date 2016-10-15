@@ -27,6 +27,7 @@
 #include <QToolBar>
 #include <QMenu>
 #include <QMediaPlayer>
+#include <QSlider>
 
 namespace fsdk
 {
@@ -199,6 +200,9 @@ namespace fsdk
 
 		/** Video displayed at this window. */
 		VideoWidget *m_pVideoWidget;
+
+		/** Video progress slider. */
+		CustomSlider *m_pProgressSlider;
 
 		/** Window toolbar. */
 		QToolBar *m_pToolbar;

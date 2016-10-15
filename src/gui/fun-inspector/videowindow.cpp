@@ -27,6 +27,43 @@
 #include <QScreen>
 #include <QDebug>
 
+#define SLIDER_STYLE_SHEET "\
+	QSlider::groove:horizontal\
+	{\
+		border: 1px solid #bbb;\
+		background: white;\
+		height: 18px;\
+		border-radius: 4px;\
+	}\
+	\
+	QSlider::sub-page:horizontal\
+	{\
+		background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #f2e394, stop: 1 #f2ae72);\
+		background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1, stop: 0 #f2ae72, stop: 1 #d96459);\
+		border: 1px solid #777;\
+		height: 10px;\
+		border-radius: 4px;\
+	}\
+	\
+	QSlider::add-page:horizontal\
+	{\
+		background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #b1b1b1, stop: 1 #c4c4c4);\
+		border: 1px solid #777;\
+		height: 10px;\
+		border-radius: 4px;\
+	}\
+	\
+	QSlider::handle:horizontal\
+	{\
+		background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #d96459, stop:1 #8c4646);\
+		border: 1px solid #777;\
+		width: 35px;\
+		margin-top: -2px;\
+		margin-bottom: -2px;\
+		border-radius: 8px;\
+	}\
+	"
+
 // +-----------------------------------------------------------
 fsdk::VideoWindow::VideoWindow(QWidget *pParent) :
 	QMdiSubWindow(pParent)
@@ -54,6 +91,10 @@ void fsdk::VideoWindow::setupUI()
 
 	m_pVideoWidget = new VideoWidget(this);
 	layout()->addWidget(m_pVideoWidget);
+
+	m_pProgressSlider = new CustomSlider(this);
+	m_pProgressSlider->setStyleSheet(SLIDER_STYLE_SHEET);
+	layout()->addWidget(m_pProgressSlider);
 
 	/***********************************************
 	 * Toggle actions
