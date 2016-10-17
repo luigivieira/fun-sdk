@@ -32,7 +32,7 @@
 	{\
 		border: 1px solid #bbb;\
 		background: white;\
-		height: 18px;\
+		height: 12px;\
 		border-radius: 4px;\
 	}\
 	\
@@ -57,7 +57,7 @@
 	{\
 		background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #d96459, stop:1 #8c4646);\
 		border: 1px solid #777;\
-		width: 35px;\
+		width: 25px;\
 		margin-top: -2px;\
 		margin-bottom: -2px;\
 		border-radius: 8px;\

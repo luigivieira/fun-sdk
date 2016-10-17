@@ -22,23 +22,146 @@
 // +-----------------------------------------------------------
 fsdk::MediaSynchronizer::MediaSynchronizer(QObject *pParent) : QObject(pParent)
 {
-
+	m_eState = QMediaPlayer::StoppedState;
 }
 
 // +-----------------------------------------------------------
 void fsdk::MediaSynchronizer::add(QMediaPlayer *pMediaPlayer)
 {
-	m_vMedias.push_back(pMediaPlayer);
+	connect(pMediaPlayer, &QMediaPlayer::stateChanged, this, &MediaSynchronizer::onStateChanged);
+	connect(pMediaPlayer, &QMediaPlayer::currentMediaChanged, this, &MediaSynchronizer::onCurrentMediaChanged);
+	connect(pMediaPlayer, &QMediaPlayer::positionChanged, this, &MediaSynchronizer::onPositionChanged);
+	m_lMediaPlayers.push_back(pMediaPlayer);
 }
 
 // +-----------------------------------------------------------
-void fsdk::MediaSynchronizer::remove(QMediaPlayer *pMediaPlayer)
+QMediaPlayer::State fsdk::MediaSynchronizer::state() const
 {
-	m_vMedias.removeOne(pMediaPlayer);
+	return m_eState;
 }
 
 // +-----------------------------------------------------------
-void fsdk::MediaSynchronizer::removeAll()
+void fsdk::MediaSynchronizer::play()
 {
-	m_vMedias.clear();
+	if(m_eState == QMediaPlayer::PlayingState || m_lPendingPlay.count() != 0)
+		return;
+
+	foreach(QMediaPlayer *pMediaPlayer, m_lMediaPlayers)
+	{
+		if(!pMediaPlayer->media().isNull())
+		{
+			pMediaPlayer->play();
+			m_lPendingPlay.push_back(pMediaPlayer);
+		}
+	}
+}
+
+// +-----------------------------------------------------------
+void fsdk::MediaSynchronizer::pause()
+{
+	if(m_eState == QMediaPlayer::PausedState || m_lPendingPause.count() != 0)
+		return;
+
+	foreach(QMediaPlayer *pMediaPlayer, m_lMediaPlayers)
+	{
+		if(!pMediaPlayer->media().isNull())
+		{
+			pMediaPlayer->pause();
+			m_lPendingPause.push_back(pMediaPlayer);
+		}
+	}
+}
+
+// +-----------------------------------------------------------
+void fsdk::MediaSynchronizer::stop()
+{
+	if(m_eState == QMediaPlayer::StoppedState || m_lPendingStop.count() != 0)
+		return;
+
+	foreach(QMediaPlayer *pMediaPlayer, m_lMediaPlayers)
+	{
+		if(!pMediaPlayer->media().isNull())
+		{
+			pMediaPlayer->stop();
+			m_lPendingStop.push_back(pMediaPlayer);
+		}
+	}
+}
+
+// +-----------------------------------------------------------
+void fsdk::MediaSynchronizer::forcefulStop()
+{
+	m_lPendingStop.clear();
+	foreach(QMediaPlayer *pMediaPlayer, m_lMediaPlayers)
+	{
+		if(!pMediaPlayer->media().isNull())
+		{
+			pMediaPlayer->stop();
+			m_lPendingStop.push_back(pMediaPlayer);
+		}
+	}
+}
+
+// +-----------------------------------------------------------
+void fsdk::MediaSynchronizer::onStateChanged(QMediaPlayer::State eState)
+{
+	QMediaPlayer *pMediaPlayer = static_cast<QMediaPlayer*>(sender());
+	qDebug().noquote() << "Media player " << pMediaPlayer << " changed state to: " << eState << " (current synchronizer state is " << m_eState << ")";
+
+	switch(eState)
+	{
+	case QMediaPlayer::PlayingState:
+		if(!m_lPendingPlay.removeOne(pMediaPlayer))
+			qWarning().noquote() << "Something wrong happened. The media player " << pMediaPlayer << " seems to have been played by an external source other than the media synchronizer.";
+		else
+		{
+			if(m_lPendingPlay.count() == 0)
+			{
+				m_eState = QMediaPlayer::PlayingState;
+				emit stateChanged(m_eState);
+			}
+		}
+		break;
+
+	case QMediaPlayer::PausedState:
+		if(!m_lPendingPause.removeOne(pMediaPlayer))
+			qWarning().noquote() << "Something wrong happened. The media player " << pMediaPlayer << " seems to have been paused by an external source other than the media synchronizer.";
+		else
+		{
+			if(m_lPendingPause.count() == 0)
+			{
+				m_eState = QMediaPlayer::PausedState;
+				emit stateChanged(m_eState);
+			}
+		}
+		break;
+
+	case QMediaPlayer::StoppedState:
+		if(!m_lPendingStop.removeOne(pMediaPlayer))
+			qWarning().noquote() << "Something wrong happened. The media player " << pMediaPlayer << " seems to have been stopped by an external source other than the media synchronizer.";
+		else
+		{
+			if(m_lPendingStop.count() == 0)
+			{
+				m_eState = QMediaPlayer::StoppedState;
+				emit stateChanged(m_eState);
+			}
+		}
+		break;
+	}
+}
+
+// +-----------------------------------------------------------
+void fsdk::MediaSynchronizer::onCurrentMediaChanged(const QMediaContent &oMedia)
+{
+	// Simply stop all media if one of them has its contents changed
+	// (it is simply easier for the user to start the playback again
+	// then try to possibly resync that particular media with all existing)
+	forcefulStop();
+}
+
+// +-----------------------------------------------------------
+void fsdk::MediaSynchronizer::onPositionChanged(qint64 iPosition)
+{
+
 }

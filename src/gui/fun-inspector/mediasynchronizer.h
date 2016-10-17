@@ -33,45 +33,91 @@ namespace fsdk
     {
         Q_OBJECT
 
-	public:
-		/**
-		 * Class constructor.
-		 * @param pParent Instance of the parent object.
-		 * The default is NULL.
-		 */
-		MediaSynchronizer(QObject *pParent = 0);
+		public:
+			/**
+			 * Class constructor.
+			 * @param pParent Instance of the parent object.
+			 * The default is NULL.
+			 */
+			MediaSynchronizer(QObject *pParent = 0);
 
-		/** 
-		 * Adds a media player to be synchronized.
-		 * @param pMediaPlayer Instance of the QMediaPlayer to be synchronized.
-		 */
-		void add(QMediaPlayer *pMediaPlayer);
+			/** 
+			 * Adds a media player to be synchronized.
+			 * @param pMediaPlayer Instance of the QMediaPlayer to be synchronized.
+			 */
+			void add(QMediaPlayer *pMediaPlayer);
 
-		/**
-		 * Removes a media player from the synchronization.
-		 * @param pMediaPlayer Instance of the QMediaPlayer to be synchronized.
-		 */
-		void remove(QMediaPlayer *pMediaPlayer);
+			/**
+			 * Queries the playback state of the synchronized media.
+			 * @return Value of the QMediaPlayer::State enum with the playback state.
+			 */
+			QMediaPlayer::State state() const;
 
-		/**
-		 * Removas all current media players from synchronization.
-		 */
-		void removeAll();
+		signals:
 
-	signals:
+			/**
+			 * Signal indicating that the playback for all media has changed.
+			 * @param eState Value of the QMediaPlayer::State enum with the 
+			 * playback state of all media.
+			 */
+			void stateChanged(QMediaPlayer::State eState);
 
+		protected slots :
 
-	public slots:
+			/**
+			 * Captures individual indications of playback changes in each media.
+			 * @param eState Value of the QMediaPlayer::State enum with the
+			 * playback state of of the sender media player.
+			 */
+			void onStateChanged(QMediaPlayer::State eState);
 
+			/**
+			 * Captures individual changes in the contents of a media player.
+			 * @param oMedia QMediaContent with the new content of the sender
+			 * media player.
+			 */
+			void onCurrentMediaChanged(const QMediaContent &oMedia);
 
-	protected:
+			/**
+			 * Captures individual changes in position of a media player.
+			 * @param iPosition Long integer with the position of playback
+			 * in miliseconds for the sender media player.
+			 */
+			void onPositionChanged(qint64 iPosition);
 
+		public slots :
 
-	private:
+			void play();
 
-		/** Vector of all media players kept in sync. */
-		QVector<QMediaPlayer*> m_vMedias;
+			void pause();
 
+			void stop();
+
+		protected:
+
+			/**
+			 * Forcefully stop all media players (due to a new media player
+			 * added while in playback or due to changes in the contents of
+			 * one media player).
+			 */
+			void forcefulStop();
+
+		private:
+
+			/** State of the playback. */
+			QMediaPlayer::State m_eState;
+
+			/** List of all media players kept in sync. */
+			QList<QMediaPlayer*> m_lMediaPlayers;
+
+			/** List of medias pending to move to the PlayingState. */
+			QList<QMediaPlayer*> m_lPendingPlay;
+
+			/** List of medias pending to move to the PausedState. */
+			QList<QMediaPlayer*> m_lPendingPause;
+
+			/** List of medias pending to move to the StoppedState. */
+			QList<QMediaPlayer*> m_lPendingStop;
 	};
 };
 
