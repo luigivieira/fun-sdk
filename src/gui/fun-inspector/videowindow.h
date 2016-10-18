@@ -175,7 +175,7 @@ namespace fsdk
 		 * @param iPosition Long integer with the position expressed
 		 * in milliseconds.
 		 */
-		void mediaPositionChanged(qint64 iPosition);
+		virtual void mediaPositionChanged(qint64 iPosition);
 
 		/**
 		 * Captures indications of changes in the media duration.
@@ -209,13 +209,13 @@ namespace fsdk
 		 */
 		void updateProgressTime();
 
+		/** Video displayed at this window. */
+		VideoWidget *m_pVideoWidget;
+
     private:
 
 		/** The default parent of this window (kept safe for use in detachment/attachment). */
 		QWidget *m_pParent;
-
-		/** Video displayed at this window. */
-		VideoWidget *m_pVideoWidget;
 
 		/** Video progress slider. */
 		CustomSlider *m_pProgressSlider;

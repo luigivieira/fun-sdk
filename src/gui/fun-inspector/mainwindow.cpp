@@ -19,6 +19,7 @@
 
 #include "mainwindow.h"
 #include "application.h"
+#include "csirofacetracker.h"
 #include <QMenuBar>
 #include <QStatusBar>
 #include <QDesktopServices>
@@ -51,8 +52,9 @@ fsdk::MainWindow::MainWindow(QWidget *pParent) :
 	setupUI();
 	refreshUI();
 
-	// Connects to the sub windows so they will load the proper video files
-	connect(m_pSessionData, &Session::playerFileChanged, m_pPlayerWindow, &VideoWindow::setVideoFile);
+	// Connects to the sub windows so they will load their content
+	connect(m_pSessionData, &Session::playerFileChanged, m_pPlayerWindow, &PlayerWindow::setVideoFile);
+	connect(m_pSessionData, &Session::landmarksFileChanged, m_pPlayerWindow, &PlayerWindow::landmarksFileChanged);
 	connect(m_pSessionData, &Session::gameplayFileChanged, m_pGameplayWindow, &VideoWindow::setVideoFile);
 
 	// Installs activation event filters
@@ -64,7 +66,7 @@ fsdk::MainWindow::MainWindow(QWidget *pParent) :
 	m_pMediaSync->add(m_pGameplayWindow->mediaPlayer());
 
 	// Connections to allow the user seeking through the videos
-	connect(m_pPlayerWindow, &VideoWindow::seek, m_pMediaSync, &MediaSynchronizer::seek);
+	connect(m_pPlayerWindow, &PlayerWindow::seek, m_pMediaSync, &MediaSynchronizer::seek);
 	connect(m_pGameplayWindow, &VideoWindow::seek, m_pMediaSync, &MediaSynchronizer::seek);
 }
 
@@ -86,7 +88,7 @@ void fsdk::MainWindow::setupUI()
 	//-------------------------------
 	// Video windows
 	//-------------------------------
-	m_pPlayerWindow = new VideoWindow(this);
+	m_pPlayerWindow = new PlayerWindow(CSIROFaceTracker::landmarksCount(), this);
 	m_pPlayerWindow->setWindowIcon(QIcon(":/icons/player-window.png"));
 	m_pPlayerWindow->setObjectName("playerWindow");
 	static_cast<QMdiArea*>(centralWidget())->addSubWindow(m_pPlayerWindow);

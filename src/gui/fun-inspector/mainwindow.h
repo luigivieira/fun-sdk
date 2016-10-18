@@ -21,6 +21,7 @@
 #define MAINWINDOW_H
 
 #include "videowindow.h"
+#include "playerwindow.h"
 #include "sessionexplorer.h"
 #include "session.h"
 #include "mediasynchronizer.h"
@@ -193,7 +194,7 @@ namespace fsdk
 		QVector<QWidget*> m_vSubWindows;
 
 		/** Window that displays the player's face video. */
-		VideoWindow *m_pPlayerWindow;
+		PlayerWindow *m_pPlayerWindow;
 
 		/** Window that displays the gameplay video. */
 		VideoWindow *m_pGameplayWindow;
