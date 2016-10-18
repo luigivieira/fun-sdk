@@ -115,6 +115,13 @@ namespace fsdk
 		 */
 		void windowActivated();
 
+		/**
+		 * Signal indicating that the user seeked the video to the given position
+		 * in miliseconds.
+		 * @param iValue Long integer with the seeked position in miliseconds.
+		 */
+		void seek(qint64 iValue);
+
 	public slots:
 
 		/**
@@ -187,6 +194,13 @@ namespace fsdk
 		 */
 		void mediaDurationChanged(qint64 iDuration);
 
+		/**
+		 * Captures indications on changes made by the user in the position
+		 * of the progress slider.
+		 * @param iValue Integer with the new position of the progress slider.
+		 */
+		void sliderValueChanged(int iValue);
+
 	protected:
 
 		/**
@@ -200,6 +214,9 @@ namespace fsdk
 		 */
 		bool event(QEvent *pEvent);
 
+		/**
+		 * Updates the labels with the progress time.
+		 */
 		void updateProgressTime();
 
     private:

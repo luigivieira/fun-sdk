@@ -62,6 +62,10 @@ fsdk::MainWindow::MainWindow(QWidget *pParent) :
 	// Adds the video media players to the synchronizer
 	m_pMediaSync->add(m_pPlayerWindow->mediaPlayer());
 	m_pMediaSync->add(m_pGameplayWindow->mediaPlayer());
+
+	// Connections to allow the user seeking through the videos
+	connect(m_pPlayerWindow, &VideoWindow::seek, m_pMediaSync, &MediaSynchronizer::seek);
+	connect(m_pGameplayWindow, &VideoWindow::seek, m_pMediaSync, &MediaSynchronizer::seek);
 }
 
 // +-----------------------------------------------------------

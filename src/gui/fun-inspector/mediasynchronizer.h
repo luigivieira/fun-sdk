@@ -122,6 +122,13 @@ namespace fsdk
 			 */
 			void stop();
 
+			/**
+			 * Captures the signal indicating that the user seeked the video
+			 * to the given position in miliseconds.
+			 * @param iValue Long integer with the seeked position in miliseconds.
+			 */
+			void seek(qint64 iValue);
+
 		protected:
 
 			/**

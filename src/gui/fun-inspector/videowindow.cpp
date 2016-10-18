@@ -27,6 +27,7 @@
 #include <QScreen>
 #include <QDebug>
 #include <QTime>
+#include <QToolbar>
 
 #define SLIDER_STYLE_SHEET "\
 	QSlider::groove:horizontal\
@@ -96,6 +97,7 @@ void fsdk::VideoWindow::setupUI()
 
 	QWidget *pBottom = new QWidget(this);
 	pBottom->setLayout(new QHBoxLayout());
+	pBottom->layout()->setMargin(0);
 	layout()->addWidget(pBottom);
 
 	m_pElapsedTime = new QLabel("00:00", this);
@@ -104,6 +106,7 @@ void fsdk::VideoWindow::setupUI()
 	m_pProgressSlider = new CustomSlider(this);
 	m_pProgressSlider->setStyleSheet(SLIDER_STYLE_SHEET);
 	pBottom->layout()->addWidget(m_pProgressSlider);
+	connect(m_pProgressSlider, &CustomSlider::valueChanged, this, &VideoWindow::sliderValueChanged);
 
 	m_pRemainingTime = new QLabel("00:00", this);
 	pBottom->layout()->addWidget(m_pRemainingTime);
@@ -427,11 +430,19 @@ void fsdk::VideoWindow::stop()
 void fsdk::VideoWindow::updateProgressTime()
 {
 	uint iPos = m_pMediaPlayer->position() / 1000;
+	m_pProgressSlider->blockSignals(true);
 	m_pProgressSlider->setValue(iPos);
+	m_pProgressSlider->blockSignals(false);
 
 	QTime oElapsed = QTime(0, 0, 0).addSecs(iPos);
 	QTime oRemaining = QTime(0, 0, 0).addSecs((m_pMediaPlayer->duration() / 1000) - (iPos));
 
 	m_pElapsedTime->setText(oElapsed.hour() > 0 ? oElapsed.toString("HH:mm:ss") : oElapsed.toString("mm:ss"));
 	m_pRemainingTime->setText(oRemaining.hour() > 0 ? oRemaining.toString("HH:mm:ss") : oRemaining.toString("mm:ss"));
+}
+
+// +-----------------------------------------------------------
+void fsdk::VideoWindow::sliderValueChanged(int iValue)
+{
+	emit seek(iValue * 1000);
 }

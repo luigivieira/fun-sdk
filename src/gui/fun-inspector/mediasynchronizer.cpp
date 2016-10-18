@@ -208,3 +208,11 @@ QAction *fsdk::MediaSynchronizer::stopAction() const
 {
 	return m_pStopAction;
 }
+
+// +-----------------------------------------------------------
+void fsdk::MediaSynchronizer::seek(qint64 iValue)
+{
+	foreach(QMediaPlayer *pMediaPlayer, m_lMediaPlayers)
+		if(!pMediaPlayer->media().isNull())
+			pMediaPlayer->setPosition(iValue);
+}
