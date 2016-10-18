@@ -180,6 +180,13 @@ namespace fsdk
 		 */
 		void mediaPositionChanged(qint64 iPosition);
 
+		/**
+		 * Captures indications of changes in the media duration.
+		 * @param iDuration Long integer with the duration expressed
+		 * in milliseconds.
+		 */
+		void mediaDurationChanged(qint64 iDuration);
+
 	protected:
 
 		/**
@@ -192,6 +199,8 @@ namespace fsdk
 		 * @param pEvent Instance of QEvent with the event data.
 		 */
 		bool event(QEvent *pEvent);
+
+		void updateProgressTime();
 
     private:
 
@@ -223,6 +232,10 @@ namespace fsdk
 
 		/** Original geometry of the window when it is not maximized (so it can be properly saved and restored). */
 		QRect m_oGeometry;
+
+		QLabel *m_pElapsedTime;
+
+		QLabel *m_pRemainingTime;
     };
 }
 

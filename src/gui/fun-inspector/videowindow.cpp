@@ -26,6 +26,7 @@
 #include <QApplication>
 #include <QScreen>
 #include <QDebug>
+#include <QTime>
 
 #define SLIDER_STYLE_SHEET "\
 	QSlider::groove:horizontal\
@@ -81,6 +82,7 @@ fsdk::VideoWindow::VideoWindow(QWidget *pParent) :
 	connect(m_pMediaPlayer, &QMediaPlayer::mediaStatusChanged, m_pVideoWidget, &VideoWidget::mediaStatusChanged);
 	connect(m_pMediaPlayer, &QMediaPlayer::stateChanged, this, &VideoWindow::mediaStateChanged);
 	connect(m_pMediaPlayer, &QMediaPlayer::positionChanged, this, &VideoWindow::mediaPositionChanged);
+	connect(m_pMediaPlayer, &QMediaPlayer::durationChanged, this, &VideoWindow::mediaDurationChanged);
 }
 
 // +-----------------------------------------------------------
@@ -92,9 +94,19 @@ void fsdk::VideoWindow::setupUI()
 	m_pVideoWidget = new VideoWidget(this);
 	layout()->addWidget(m_pVideoWidget);
 
+	QWidget *pBottom = new QWidget(this);
+	pBottom->setLayout(new QHBoxLayout());
+	layout()->addWidget(pBottom);
+
+	m_pElapsedTime = new QLabel("00:00", this);
+	pBottom->layout()->addWidget(m_pElapsedTime);
+
 	m_pProgressSlider = new CustomSlider(this);
 	m_pProgressSlider->setStyleSheet(SLIDER_STYLE_SHEET);
-	layout()->addWidget(m_pProgressSlider);
+	pBottom->layout()->addWidget(m_pProgressSlider);
+
+	m_pRemainingTime = new QLabel("00:00", this);
+	pBottom->layout()->addWidget(m_pRemainingTime);
 
 	/***********************************************
 	 * Toggle actions
@@ -356,6 +368,7 @@ bool fsdk::VideoWindow::restoreGeometry(const QByteArray &oData)
 void fsdk::VideoWindow::mediaStatusChanged(QMediaPlayer::MediaStatus eStatus)
 {
 	qDebug().noquote() << "Media status changed to: " << eStatus;
+	updateProgressTime();
 }
 
 // +-----------------------------------------------------------
@@ -369,7 +382,14 @@ void fsdk::VideoWindow::mediaStateChanged(QMediaPlayer::State eState)
 // +-----------------------------------------------------------
 void fsdk::VideoWindow::mediaPositionChanged(qint64 iPosition)
 {
+	Q_UNUSED(iPosition);
+	updateProgressTime();
+}
 
+// +-----------------------------------------------------------
+void fsdk::VideoWindow::mediaDurationChanged(qint64 iDuration)
+{
+	m_pProgressSlider->setMaximum(iDuration / 1000);
 }
 
 // +-----------------------------------------------------------
@@ -401,4 +421,17 @@ void fsdk::VideoWindow::play()
 void fsdk::VideoWindow::stop()
 {
 
+}
+
+// +-----------------------------------------------------------
+void fsdk::VideoWindow::updateProgressTime()
+{
+	uint iPos = m_pMediaPlayer->position() / 1000;
+	m_pProgressSlider->setValue(iPos);
+
+	QTime oElapsed = QTime(0, 0, 0).addSecs(iPos);
+	QTime oRemaining = QTime(0, 0, 0).addSecs((m_pMediaPlayer->duration() / 1000) - (iPos));
+
+	m_pElapsedTime->setText(oElapsed.hour() > 0 ? oElapsed.toString("HH:mm:ss") : oElapsed.toString("mm:ss"));
+	m_pRemainingTime->setText(oRemaining.hour() > 0 ? oRemaining.toString("HH:mm:ss") : oRemaining.toString("mm:ss"));
 }
