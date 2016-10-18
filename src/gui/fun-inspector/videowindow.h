@@ -154,16 +154,6 @@ namespace fsdk
 		 */
 		void setVideoFile(const QString &sFileName);
 
-		/**
-		 * Plays/pauses the video.
-		 */
-		void play();
-
-		/**
-		 * Stops the video.
-		 */
-		void stop();
-
 	protected slots:
 
 		/**

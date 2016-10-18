@@ -415,18 +415,6 @@ QMediaPlayer *fsdk::VideoWindow::mediaPlayer()
 }
 
 // +-----------------------------------------------------------
-void fsdk::VideoWindow::play()
-{
-	m_pMediaPlayer->play();
-}
-
-// +-----------------------------------------------------------
-void fsdk::VideoWindow::stop()
-{
-
-}
-
-// +-----------------------------------------------------------
 void fsdk::VideoWindow::updateProgressTime()
 {
 	uint iPos = m_pMediaPlayer->position() / 1000;

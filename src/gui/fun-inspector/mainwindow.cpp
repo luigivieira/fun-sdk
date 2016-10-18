@@ -563,6 +563,5 @@ void fsdk::MainWindow::help()
 // +-----------------------------------------------------------
 void fsdk::MainWindow::about()
 {
-	m_pPlayerWindow->play();
-	m_pGameplayWindow->play();
+	
 }
