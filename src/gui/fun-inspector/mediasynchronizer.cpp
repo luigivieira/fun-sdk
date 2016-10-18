@@ -25,11 +25,9 @@ fsdk::MediaSynchronizer::MediaSynchronizer(QObject *pParent) : QObject(pParent)
 	m_eState = QMediaPlayer::StoppedState;
 
 	m_pTooglePlayPauseAction = new QAction(this);
-	m_pTooglePlayPauseAction->setCheckable(true);
-	m_pTooglePlayPauseAction->setChecked(false);
 	m_pTooglePlayPauseAction->setShortcut(QKeySequence(Qt::Key_P));
 	m_pTooglePlayPauseAction->setIcon(QIcon(":/icons/play-videos.png"));
-	connect(m_pTooglePlayPauseAction, &QAction::triggered, this, &MediaSynchronizer::playPause);
+	connect(m_pTooglePlayPauseAction, &QAction::triggered, this, &MediaSynchronizer::tooglePlayPause);
 
 	m_pStopAction = new QAction(this);
 	m_pStopAction->setIcon(QIcon(":/icons/stop-videos.png"));
@@ -84,13 +82,12 @@ void fsdk::MediaSynchronizer::play()
 		return;
 
 	foreach(QMediaPlayer *pMediaPlayer, m_lMediaPlayers)
-	{
 		if(!pMediaPlayer->media().isNull())
-		{
-			pMediaPlayer->play();
 			m_lPendingPlay.push_back(pMediaPlayer);
-		}
-	}
+
+	foreach(QMediaPlayer *pMediaPlayer, m_lMediaPlayers)
+		if(!pMediaPlayer->media().isNull())
+			pMediaPlayer->play();
 }
 
 // +-----------------------------------------------------------
@@ -103,22 +100,28 @@ void fsdk::MediaSynchronizer::pause()
 		return;
 
 	foreach(QMediaPlayer *pMediaPlayer, m_lMediaPlayers)
-	{
 		if(!pMediaPlayer->media().isNull())
-		{
-			pMediaPlayer->pause();
 			m_lPendingPause.push_back(pMediaPlayer);
-		}
-	}
+
+	foreach(QMediaPlayer *pMediaPlayer, m_lMediaPlayers)
+		if(!pMediaPlayer->media().isNull())
+			pMediaPlayer->pause();
 }
 
 // +-----------------------------------------------------------
-void fsdk::MediaSynchronizer::playPause(bool bPlay)
+void fsdk::MediaSynchronizer::tooglePlayPause()
 {
-	if(bPlay)
-		play();
-	else
-		pause();
+	switch(m_eState)
+	{
+		case QMediaPlayer::StoppedState:
+		case QMediaPlayer::PausedState:
+			play();
+			break;
+
+		case QMediaPlayer::PlayingState:
+			pause();
+			break;
+	}
 }
 
 // +-----------------------------------------------------------
@@ -128,62 +131,51 @@ void fsdk::MediaSynchronizer::stop()
 		return;
 
 	foreach(QMediaPlayer *pMediaPlayer, m_lMediaPlayers)
-	{
 		if(!pMediaPlayer->media().isNull())
-		{
-			pMediaPlayer->stop();
 			m_lPendingStop.push_back(pMediaPlayer);
-		}
-	}
+
+	foreach(QMediaPlayer *pMediaPlayer, m_lMediaPlayers)
+		if(!pMediaPlayer->media().isNull())
+			pMediaPlayer->stop();
 }
 
 // +-----------------------------------------------------------
 void fsdk::MediaSynchronizer::onStateChanged(QMediaPlayer::State eState)
 {
 	QMediaPlayer *pMediaPlayer = static_cast<QMediaPlayer*>(sender());
-	qDebug().noquote() << "Media player " << pMediaPlayer << " changed state to: " << eState << " (current synchronizer state is " << m_eState << ")";
 
 	switch(eState)
 	{
 	case QMediaPlayer::PlayingState:
-		if(!m_lPendingPlay.removeOne(pMediaPlayer))
-			qWarning().noquote() << "Something wrong happened. The media player " << pMediaPlayer << " seems to have been played by an external source other than the media synchronizer.";
-		else
+		m_lPendingPlay.removeOne(pMediaPlayer);
+		if(m_lPendingPlay.count() == 0)
 		{
-			if(m_lPendingPlay.count() == 0)
-			{
-				m_eState = QMediaPlayer::PlayingState;
-				emit stateChanged(m_eState);
-				refreshUI();
-			}
+			m_eState = QMediaPlayer::PlayingState;
+			qDebug().noquote() << "Synchronizer state changed from: " << QMediaPlayer::PlayingState << " to: " << m_eState;
+			emit stateChanged(m_eState);
+			refreshUI();
 		}
 		break;
 
 	case QMediaPlayer::PausedState:
-		if(!m_lPendingPause.removeOne(pMediaPlayer))
-			qWarning().noquote() << "Something wrong happened. The media player " << pMediaPlayer << " seems to have been paused by an external source other than the media synchronizer.";
-		else
+		m_lPendingPause.removeOne(pMediaPlayer);
+		if(m_lPendingPause.count() == 0)
 		{
-			if(m_lPendingPause.count() == 0)
-			{
-				m_eState = QMediaPlayer::PausedState;
-				emit stateChanged(m_eState);
-				refreshUI();
-			}
+			m_eState = QMediaPlayer::PausedState;
+			qDebug().noquote() << "Synchronizer state changed from: " << QMediaPlayer::PausedState << " to: " << m_eState;
+			emit stateChanged(m_eState);
+			refreshUI();
 		}
 		break;
 
 	case QMediaPlayer::StoppedState:
-		if(!m_lPendingStop.removeOne(pMediaPlayer))
-			qWarning().noquote() << "Something wrong happened. The media player " << pMediaPlayer << " seems to have been stopped by an external source other than the media synchronizer.";
-		else
+		m_lPendingStop.removeOne(pMediaPlayer);
+		if(m_lPendingStop.count() == 0)
 		{
-			if(m_lPendingStop.count() == 0)
-			{
-				m_eState = QMediaPlayer::StoppedState;
-				emit stateChanged(m_eState);
-				refreshUI();
-			}
+			m_eState = QMediaPlayer::StoppedState;
+			qDebug().noquote() << "Synchronizer state changed from: " << QMediaPlayer::StoppedState << " to: " << m_eState;
+			emit stateChanged(m_eState);
+			refreshUI();
 		}
 		break;
 	}

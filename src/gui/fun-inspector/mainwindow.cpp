@@ -155,11 +155,11 @@ void fsdk::MainWindow::setupUI()
 	m_pPlaybackToolbar->setIconSize(QSize(32, 32));
 
 	// Action "Play/Pause"
-	//m_pTogglePlayPauseAction = m_pPlaybackMenu->addAction("");
+	m_pPlaybackMenu->addAction(m_pMediaSync->tooglePlayPauseAction());
 	m_pPlaybackToolbar->addAction(m_pMediaSync->tooglePlayPauseAction());
 
 	// Action "Stop"
-	//m_pStopAction = m_pPlaybackMenu->addAction("");
+	m_pPlaybackMenu->addAction(m_pMediaSync->stopAction());
 	m_pPlaybackToolbar->addAction(m_pMediaSync->stopAction());
 
 	//-------------------------------

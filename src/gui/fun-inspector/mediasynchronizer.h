@@ -54,8 +54,16 @@ namespace fsdk
 			 */
 			QMediaPlayer::State state() const;
 
+			/**
+			 * Gets the action used to toggle playing/pausing the playback.
+			 * @return Instance of the QAction with that action.
+			 */
 			QAction *tooglePlayPauseAction() const;
 
+			/**
+			 * Gets the action used to stop the playback.
+			 * @return Instance of the QAction with that action.
+			 */
 			QAction *stopAction() const;
 
 		signals:
@@ -105,12 +113,9 @@ namespace fsdk
 			void pause();
 
 			/**
-			 * Plays or pauses the videos of all media players.
-			 * @param bPlay Boolean indicating if the videos should be
-			 * played (true) or paused (false). If the videos are stopped
-			 * when pause is requested, nothing happens.
+			 * Toggles the playback of all media players between play/pause.
 			 */
-			void playPause(bool bPlay);
+			void tooglePlayPause();
 
 			/**
 			 * Stops the videos of all media players.
@@ -142,8 +147,10 @@ namespace fsdk
 			/** List of medias pending to move to the StoppedState. */
 			QList<QMediaPlayer*> m_lPendingStop;
 
+			/** Action used to toggle playing/pausing the playback. */
 			QAction *m_pTooglePlayPauseAction;
 
+			/** Action used to stop the playback. */
 			QAction *m_pStopAction;
 	};
 };

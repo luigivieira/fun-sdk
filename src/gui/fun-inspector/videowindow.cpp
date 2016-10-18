@@ -362,7 +362,8 @@ void fsdk::VideoWindow::mediaStatusChanged(QMediaPlayer::MediaStatus eStatus)
 void fsdk::VideoWindow::mediaStateChanged(QMediaPlayer::State eState)
 {
 	qDebug().noquote() << "Media state changed to: " << eState;
-
+	if(eState == QMediaPlayer::StoppedState)
+		m_pVideoWidget->invalidateScene();
 }
 
 // +-----------------------------------------------------------

@@ -33,16 +33,9 @@
 // +-----------------------------------------------------------
 fsdk::VideoWidget::VideoWidget(QWidget *pParent) : QGraphicsView(pParent)
 {
-	setDragMode(RubberBandDrag);
-
 	m_pScene = new QGraphicsScene(this);
 	m_pScene->setItemIndexMethod(QGraphicsScene::NoIndex);
 	setScene(m_pScene);
-
-	setCacheMode(CacheBackground);
-    setViewportUpdateMode(BoundingRectViewportUpdate);
-    setRenderHint(QPainter::Antialiasing);
-    setTransformationAnchor(AnchorUnderMouse);
 
     scale(1.0, 1.0);
 	m_dZoomLevel = 1.0;
