@@ -23,6 +23,43 @@
 fsdk::MediaSynchronizer::MediaSynchronizer(QObject *pParent) : QObject(pParent)
 {
 	m_eState = QMediaPlayer::StoppedState;
+
+	m_pTooglePlayPauseAction = new QAction(this);
+	m_pTooglePlayPauseAction->setCheckable(true);
+	m_pTooglePlayPauseAction->setChecked(false);
+	m_pTooglePlayPauseAction->setShortcut(QKeySequence(Qt::Key_P));
+	m_pTooglePlayPauseAction->setIcon(QIcon(":/icons/play-videos.png"));
+	connect(m_pTooglePlayPauseAction, &QAction::triggered, this, &MediaSynchronizer::playPause);
+
+	m_pStopAction = new QAction(this);
+	m_pStopAction->setIcon(QIcon(":/icons/stop-videos.png"));
+	m_pStopAction->setShortcut(QKeySequence(Qt::Key_S));
+	connect(m_pStopAction, &QAction::triggered, this, &MediaSynchronizer::stop);
+
+	refreshUI();
+}
+
+// +-----------------------------------------------------------
+void fsdk::MediaSynchronizer::refreshUI()
+{
+	switch(m_eState)
+	{
+		case QMediaPlayer::PausedState:
+		case QMediaPlayer::StoppedState:
+			m_pTooglePlayPauseAction->setIcon(QIcon(":/icons/play-videos.png"));
+			m_pTooglePlayPauseAction->setText(tr("Play"));
+			m_pTooglePlayPauseAction->setStatusTip(tr("Plays the session videos"));
+			break;
+
+		default:
+			m_pTooglePlayPauseAction->setIcon(QIcon(":/icons/pause-videos.png"));
+			m_pTooglePlayPauseAction->setText(tr("Pause"));
+			m_pTooglePlayPauseAction->setStatusTip(tr("Pauses the session videos"));
+			break;
+	}
+	
+	m_pStopAction->setText(tr("Stop"));
+	m_pStopAction->setStatusTip(tr("Stops the session videos"));
 }
 
 // +-----------------------------------------------------------
@@ -62,6 +99,9 @@ void fsdk::MediaSynchronizer::pause()
 	if(m_eState == QMediaPlayer::PausedState || m_lPendingPause.count() != 0)
 		return;
 
+	if(m_eState == QMediaPlayer::StoppedState)
+		return;
+
 	foreach(QMediaPlayer *pMediaPlayer, m_lMediaPlayers)
 	{
 		if(!pMediaPlayer->media().isNull())
@@ -73,25 +113,20 @@ void fsdk::MediaSynchronizer::pause()
 }
 
 // +-----------------------------------------------------------
+void fsdk::MediaSynchronizer::playPause(bool bPlay)
+{
+	if(bPlay)
+		play();
+	else
+		pause();
+}
+
+// +-----------------------------------------------------------
 void fsdk::MediaSynchronizer::stop()
 {
 	if(m_eState == QMediaPlayer::StoppedState || m_lPendingStop.count() != 0)
 		return;
 
-	foreach(QMediaPlayer *pMediaPlayer, m_lMediaPlayers)
-	{
-		if(!pMediaPlayer->media().isNull())
-		{
-			pMediaPlayer->stop();
-			m_lPendingStop.push_back(pMediaPlayer);
-		}
-	}
-}
-
-// +-----------------------------------------------------------
-void fsdk::MediaSynchronizer::forcefulStop()
-{
-	m_lPendingStop.clear();
 	foreach(QMediaPlayer *pMediaPlayer, m_lMediaPlayers)
 	{
 		if(!pMediaPlayer->media().isNull())
@@ -119,6 +154,7 @@ void fsdk::MediaSynchronizer::onStateChanged(QMediaPlayer::State eState)
 			{
 				m_eState = QMediaPlayer::PlayingState;
 				emit stateChanged(m_eState);
+				refreshUI();
 			}
 		}
 		break;
@@ -132,6 +168,7 @@ void fsdk::MediaSynchronizer::onStateChanged(QMediaPlayer::State eState)
 			{
 				m_eState = QMediaPlayer::PausedState;
 				emit stateChanged(m_eState);
+				refreshUI();
 			}
 		}
 		break;
@@ -145,6 +182,7 @@ void fsdk::MediaSynchronizer::onStateChanged(QMediaPlayer::State eState)
 			{
 				m_eState = QMediaPlayer::StoppedState;
 				emit stateChanged(m_eState);
+				refreshUI();
 			}
 		}
 		break;
@@ -157,11 +195,24 @@ void fsdk::MediaSynchronizer::onCurrentMediaChanged(const QMediaContent &oMedia)
 	// Simply stop all media if one of them has its contents changed
 	// (it is simply easier for the user to start the playback again
 	// then try to possibly resync that particular media with all existing)
-	forcefulStop();
+	if(m_eState != QMediaPlayer::StoppedState)
+		stop();
 }
 
 // +-----------------------------------------------------------
 void fsdk::MediaSynchronizer::onPositionChanged(qint64 iPosition)
 {
 
+}
+
+// +-----------------------------------------------------------
+QAction *fsdk::MediaSynchronizer::tooglePlayPauseAction() const
+{
+	return m_pTooglePlayPauseAction;
+}
+
+// +-----------------------------------------------------------
+QAction *fsdk::MediaSynchronizer::stopAction() const
+{
+	return m_pStopAction;
 }

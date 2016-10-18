@@ -44,19 +44,22 @@ fsdk::MainWindow::MainWindow(QWidget *pParent) :
 
 	m_pSessionData = new Session(this);
 
+	// Synchronizer for the playbacks of videos
+	m_pMediaSync = new MediaSynchronizer(this);
+
+	// Setups the UI
 	setupUI();
 	refreshUI();
 
-	// Connect to the sub windows so they will load the proper video files
+	// Connects to the sub windows so they will load the proper video files
 	connect(m_pSessionData, &Session::playerFileChanged, m_pPlayerWindow, &VideoWindow::setVideoFile);
 	connect(m_pSessionData, &Session::gameplayFileChanged, m_pGameplayWindow, &VideoWindow::setVideoFile);
 
-	// Install activation event filters
+	// Installs activation event filters
 	m_pPlayerWindow->installEventFilter(this);
 	m_pGameplayWindow->installEventFilter(this);
 
-	// Synchronize the playbacks of videos
-	m_pMediaSync = new MediaSynchronizer(this);
+	// Adds the video media players to the synchronizer
 	m_pMediaSync->add(m_pPlayerWindow->mediaPlayer());
 	m_pMediaSync->add(m_pGameplayWindow->mediaPlayer());
 }
@@ -152,16 +155,12 @@ void fsdk::MainWindow::setupUI()
 	m_pPlaybackToolbar->setIconSize(QSize(32, 32));
 
 	// Action "Play/Pause"
-	m_pTogglePlayPauseAction = m_pPlaybackMenu->addAction("");
-	m_pPlaybackToolbar->addAction(m_pTogglePlayPauseAction);
-	m_pTogglePlayPauseAction->setIcon(QIcon(":/icons/play-videos.png"));
-	m_pTogglePlayPauseAction->setShortcut(Qt::Key_P);
+	//m_pTogglePlayPauseAction = m_pPlaybackMenu->addAction("");
+	m_pPlaybackToolbar->addAction(m_pMediaSync->tooglePlayPauseAction());
 
 	// Action "Stop"
-	m_pStopAction = m_pPlaybackMenu->addAction("");
-	m_pPlaybackToolbar->addAction(m_pStopAction);
-	m_pStopAction->setIcon(QIcon(":/icons/stop-videos.png"));
-	m_pStopAction->setShortcut(Qt::Key_S);
+	//m_pStopAction = m_pPlaybackMenu->addAction("");
+	m_pPlaybackToolbar->addAction(m_pMediaSync->stopAction());
 
 	//-------------------------------
 	// "View" menu
@@ -262,14 +261,6 @@ void fsdk::MainWindow::refreshUI()
 
 	m_pPlaybackMenu->setTitle(tr("&Playback"));
 	m_pPlaybackToolbar->setWindowTitle(tr("&Playback"));
-
-	// Action "Play/Pause"
-	m_pTogglePlayPauseAction->setText(tr("&Play"));
-	m_pTogglePlayPauseAction->setStatusTip(tr("Plays the videos in the session"));
-
-	// Action "Stop"
-	m_pStopAction->setText(tr("&Stop"));
-	m_pStopAction->setStatusTip(tr("Stops the videos in the session"));
 
 	//-------------------------------
 	// "View" menu

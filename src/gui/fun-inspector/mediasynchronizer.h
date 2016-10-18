@@ -23,6 +23,7 @@
 #include <QObject>
 #include <QVector>
 #include <QMediaPlayer>
+#include <QAction>
 
 namespace fsdk
 {
@@ -52,6 +53,10 @@ namespace fsdk
 			 * @return Value of the QMediaPlayer::State enum with the playback state.
 			 */
 			QMediaPlayer::State state() const;
+
+			QAction *tooglePlayPauseAction() const;
+
+			QAction *stopAction() const;
 
 		signals:
 
@@ -87,20 +92,38 @@ namespace fsdk
 
 		public slots :
 
+			/**
+			 * Plays the videos of all media players.
+			 */
 			void play();
 
+			/**
+			 * Pauses the videos of all media players.
+			 * If the videos are stopped when pause is requested,
+			 * nothing happens.
+			 */
 			void pause();
 
+			/**
+			 * Plays or pauses the videos of all media players.
+			 * @param bPlay Boolean indicating if the videos should be
+			 * played (true) or paused (false). If the videos are stopped
+			 * when pause is requested, nothing happens.
+			 */
+			void playPause(bool bPlay);
+
+			/**
+			 * Stops the videos of all media players.
+			 */
 			void stop();
 
 		protected:
 
 			/**
-			 * Forcefully stop all media players (due to a new media player
-			 * added while in playback or due to changes in the contents of
-			 * one media player).
+			 * Refreshes the text in UI elements (so translation changes
+			 * can be applied).
 			 */
-			void forcefulStop();
+			void refreshUI();
 
 		private:
 
@@ -118,6 +141,10 @@ namespace fsdk
 
 			/** List of medias pending to move to the StoppedState. */
 			QList<QMediaPlayer*> m_lPendingStop;
+
+			QAction *m_pTooglePlayPauseAction;
+
+			QAction *m_pStopAction;
 	};
 };
 
