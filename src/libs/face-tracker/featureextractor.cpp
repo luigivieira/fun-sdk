@@ -117,6 +117,12 @@ void fsdk::FeatureExtractor::run()
 			emit error(m_sVideoFile, CancelRequested);
 			return;
 		}
+
+		// If the tracking quality gets too low, try to reset the
+		// face detection. This makes the whole process much slower,
+		// but yields better results.
+		if(oTracker.getQuality() <= 0.2)
+			oTracker.reset();
 	}
 
 	// Finally save the data produced
