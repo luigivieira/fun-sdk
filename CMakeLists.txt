@@ -60,6 +60,7 @@ find_package(CSIRO REQUIRED clmTracker)
 include_directories("${PROJECT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}/src")
 
 add_subdirectory(src/libs/common)
-add_subdirectory(src/libs/face-tracker)
+add_subdirectory(src/libs/face-tracking)
+add_subdirectory(src/libs/feature-extraction)
 add_subdirectory(src/utils/feature-extractor)
 add_subdirectory(src/gui/fun-inspector)

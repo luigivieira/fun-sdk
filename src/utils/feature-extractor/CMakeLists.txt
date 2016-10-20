@@ -18,8 +18,8 @@
 file(GLOB SRC *.cpp *.h ${PROJECT_SOURCE_DIR}/src/application.cpp ${PROJECT_SOURCE_DIR}/src/application.h)
 add_executable(util-feature-extractor ${SRC})
 
-include_directories("${PROJECT_SOURCE_DIR}/src/libs/common" "${PROJECT_SOURCE_DIR}/src/libs/face-tracker")
-target_link_libraries(util-feature-extractor Qt5::Core lib-common lib-face-tracker)
+include_directories("${PROJECT_SOURCE_DIR}/src/libs/common" "${PROJECT_SOURCE_DIR}/src/libs/feature-extraction")
+target_link_libraries(util-feature-extractor Qt5::Core lib-common lib-feature-extraction)
 
 set_target_properties(util-feature-extractor PROPERTIES OUTPUT_NAME fextractor)
 set_target_properties(util-feature-extractor PROPERTIES OUTPUT_NAME_DEBUG fextractord)

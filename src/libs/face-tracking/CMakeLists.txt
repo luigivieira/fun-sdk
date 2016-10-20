@@ -16,11 +16,11 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 file(GLOB SRC *.cpp *.h)
-add_library(lib-face-tracker SHARED ${SRC})
+add_library(lib-face-tracking SHARED ${SRC})
 
 include_directories("${CSIRO_INCLUDE_DIRS}" "${PROJECT_SOURCE_DIR}/src/libs/common")
-target_link_libraries(lib-face-tracker Qt5::Core ${OpenCV_LIBS} clmTracker lib-common)
+target_link_libraries(lib-face-tracking Qt5::Core ${OpenCV_LIBS} clmTracker lib-common)
 
-set_target_properties(lib-face-tracker PROPERTIES OUTPUT_NAME ftracker)
-set_target_properties(lib-face-tracker PROPERTIES OUTPUT_NAME_DEBUG ftrackerd)
-set_target_properties(lib-face-tracker PROPERTIES DEFINE_SYMBOL "SHARED_LIB")
+set_target_properties(lib-face-tracking PROPERTIES OUTPUT_NAME ftracking)
+set_target_properties(lib-face-tracking PROPERTIES OUTPUT_NAME_DEBUG ftrackingd)
+set_target_properties(lib-face-tracking PROPERTIES DEFINE_SYMBOL "SHARED_LIB")

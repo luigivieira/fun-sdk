@@ -15,18 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-file(GLOB SRC *.cpp *.h ${PROJECT_SOURCE_DIR}/src/application.cpp ${PROJECT_SOURCE_DIR}/src/application.h)
-if(WIN32)
-	set(APP_TYPE WIN32)
-	file(GLOB RSC resources/*.qrc resources/*.rc)
-else()
-	set(APP_TYPE )
-	file(GLOB RSC resources/*.qrc)
-endif()
-add_executable(gui-fun-inspector ${APP_TYPE} ${SRC} ${RSC})
+file(GLOB SRC *.cpp *.h)
+add_library(lib-feature-extraction SHARED ${SRC})
 
-include_directories("${PROJECT_SOURCE_DIR}/src/libs/common" "${PROJECT_SOURCE_DIR}/src/libs/face-tracking")
-target_link_libraries(gui-fun-inspector ${Qt5_LIBS} lib-common lib-face-tracking)
+include_directories("${CSIRO_INCLUDE_DIRS}" "${PROJECT_SOURCE_DIR}/src/libs/face-tracking" "${PROJECT_SOURCE_DIR}/src/libs/common")
+target_link_libraries(lib-feature-extraction Qt5::Core ${OpenCV_LIBS} lib-face-tracking lib-common)
 
-set_target_properties(gui-fun-inspector PROPERTIES OUTPUT_NAME finspector)
-set_target_properties(gui-fun-inspector PROPERTIES OUTPUT_NAME_DEBUG finspectord)
+set_target_properties(lib-feature-extraction PROPERTIES OUTPUT_NAME fextraction)
+set_target_properties(lib-feature-extraction PROPERTIES OUTPUT_NAME_DEBUG fextractiond)
+set_target_properties(lib-feature-extraction PROPERTIES DEFINE_SYMBOL "SHARED_LIB")
