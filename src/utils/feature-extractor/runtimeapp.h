@@ -21,7 +21,7 @@
 #define RUNTIMEAPP_H
 
 #include "application.h"
-#include "featureextractor.h"
+#include "landmarksextractor.h"
 #include <QList>
 
 namespace fsdk
@@ -100,31 +100,34 @@ namespace fsdk
 		 * @param eError Value of the enumeration FeatureExtractor::ExtractionError
 		 * with the error tha happened.
 		 */
-		void onTaskError(QString sVideoFile, FeatureExtractor::ExtractionError eError);
+		void taskError(const QString &sVideoFile, const ExtractionTask::ExtractionError eError);
 
 		/**
 		 * Captures the signal indicating the progress of one of the tasks.
 		 * @param sVideoFile QString with the name of the video file of the task.
 		 * @param iProgress Integer value in range [0, 100] with the progress percent.
 		 */
-		void onTaskProgress(QString sVideoFile, int iProgress);
+		void taskProgress(const QString &sVideoFile, int iProgress);
 
 		/**
 		 * Captures the signal indicating the conclusion of one of the tasks.
 		 * @param sVideoFile QString with the name of the video file of the task.
 		 */
-		void onTaskFinished(QString sVideoFile);
+		void taskFinished(const QString &sVideoFile, const QVariant &vData);
 
 	private:
 
 		/** List of input video files to process. */
-		QStringList m_lInputFiles;
+		QStringList m_lVideoFiles;
 
-		/** Directory where to save the ouptut CSV files created for each input video file. */
-		QString m_sOutputDir;
+		/** Indication if landmarks are to be extracted. */
+		bool m_bExtractLandmarks;
+
+		/** Directory where to save the CSV files created for the landmarks. */
+		QString m_sLandmarksOutputDir;
 
 		/** List of tasks in execution. */
-		QList<FeatureExtractor*> m_lTasks;
+		QList<LandmarksExtractor*> m_lTasks;
 	};
 }
 
