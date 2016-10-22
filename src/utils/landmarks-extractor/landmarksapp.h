@@ -17,17 +17,17 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef RUNTIMEAPP_H
-#define RUNTIMEAPP_H
+#ifndef LANDMARKSAPP_H
+#define LANDMARKSAPP_H
 
 #include "application.h"
-#include "landmarksextractor.h"
-#include <QList>
+#include "landmarksextractiontask.h"
+#include "landmarksdata.h"
 
 namespace fsdk
 {
 	/**
-	 * Implements a custom application to run the face tracker console application.
+	 * Implements a custom application to run the landmarks extractor console application.
 	 * It depends upon the definition of the macro 'CONSOLE' in CMakeLists.txt
 	 * (check source of Application for details).
 	 *
@@ -39,7 +39,7 @@ namespace fsdk
 	 *        corresponding video file: 'ExitCode - 1' is the index of the failed
 	 *        file at the QStringList built from the wildcard mask.
 	 */
-	class RuntimeApp: public Application
+	class LandmarksApp: public Application
 	{
 		Q_OBJECT
 	public:
@@ -56,7 +56,7 @@ namespace fsdk
 		 * or not (in the Operating System's designated local, such as the Registry in Windows).
 		 * The default is false (i.e. not to use settings).
 		 */
-		RuntimeApp(int &argc, char **argv, const QString &sOrgName, const QString &sOrgDomain, const QString &sAppName, const QString &sAppVersion, const bool bUseSettings = false);
+		LandmarksApp(int &argc, char **argv, const QString &sOrgName, const QString &sOrgDomain, const QString &sAppName, const QString &sAppVersion, const bool bUseSettings = false);
 
 		/**
 		 * Enumeration that defines the possible outcomes of the parsing
@@ -83,6 +83,11 @@ namespace fsdk
 		 * how the parsing of the command line proceeded.
 		 */
 		CommandLineParseResult parseCommandLine();
+
+		/**
+		 * Cancel the execution of the task and terminate the application.
+		 */
+		void cancel();
 
 	public slots:
 
@@ -113,22 +118,19 @@ namespace fsdk
 		 * Captures the signal indicating the conclusion of one of the tasks.
 		 * @param sVideoFile QString with the name of the video file of the task.
 		 */
-		void taskFinished(const QString &sVideoFile, const QVariant &vData);
+		void taskFinished(const QString &sVideoFile, const AbstractData &oData);
 
 	private:
 
-		/** List of input video files to process. */
-		QStringList m_lVideoFiles;
+		/** Video file to process. */
+		QString m_sVideoFile;
 
-		/** Indication if landmarks are to be extracted. */
-		bool m_bExtractLandmarks;
+		/** CSV file to create with the landmarks data. */
+		QString m_sCSVFile;
 
-		/** Directory where to save the CSV files created for the landmarks. */
-		QString m_sLandmarksOutputDir;
-
-		/** List of tasks in execution. */
-		QList<LandmarksExtractor*> m_lTasks;
+		/** Task in execution. */
+		LandmarksExtractionTask *m_pTask;
 	};
 }
 
-#endif // RUNTIMEAPP_H
+#endif // LANDMARKSAPP_H

@@ -17,33 +17,27 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "version.h"
-#include "runtimeapp.h"
-#include <QTimer>
+#include "abstractdata.h"
 
-using namespace fsdk;
-
-int main(int argc, char* argv[])
+// +-----------------------------------------------------------
+fsdk::AbstractData::AbstractData()
 {
-	RuntimeApp oApp(argc, argv, "University of Sao Paulo", "Fun SDK", "Feature Extractor", FSDK_VERSION);
+	qRegisterMetaType<fsdk::AbstractData>("fsdk::AbstractData");
+}
 
-	// Parse the command line
-	switch(oApp.parseCommandLine())
-	{
-		case RuntimeApp::CommandLineError:
-			return -1;
+// +-----------------------------------------------------------
+fsdk::AbstractData::AbstractData(const AbstractData& oOther)
+{
+}
 
-		case RuntimeApp::CommandLineVersionRequested:
-		case RuntimeApp::CommandLineHelpRequested:
-			return 0;
+// +-----------------------------------------------------------
+fsdk::AbstractData::~AbstractData()
+{
+}
 
-		case RuntimeApp::CommandLineOk:
-		default:
-			break;
-	}
-
-	// Schedule to run as soon as the event loop starts
-	QTimer::singleShot(0, &oApp, SLOT(run()));
-
-    return oApp.exec();
+// +-----------------------------------------------------------
+QDebug operator<<(QDebug oDbg, const fsdk::AbstractData &oData)
+{
+	oDbg.nospace() << "AbstractData()";
+	return oDbg.maybeSpace();
 }

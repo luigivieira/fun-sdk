@@ -16,12 +16,12 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 file(GLOB SRC *.cpp *.h ${PROJECT_SOURCE_DIR}/src/application.cpp ${PROJECT_SOURCE_DIR}/src/application.h)
-add_executable(util-feature-extractor ${SRC})
+add_executable(util-landmarks-extractor ${SRC})
 
 include_directories("${PROJECT_SOURCE_DIR}/src/libs/common" "${PROJECT_SOURCE_DIR}/src/libs/feature-extraction")
-target_link_libraries(util-feature-extractor Qt5::Core lib-common lib-feature-extraction)
+target_link_libraries(util-landmarks-extractor Qt5::Core lib-common lib-feature-extraction)
 
-set_target_properties(util-feature-extractor PROPERTIES OUTPUT_NAME fextractor)
-set_target_properties(util-feature-extractor PROPERTIES OUTPUT_NAME_DEBUG fextractord)
+set_target_properties(util-landmarks-extractor PROPERTIES OUTPUT_NAME flext)
+set_target_properties(util-landmarks-extractor PROPERTIES OUTPUT_NAME_DEBUG flextd)
 
 add_definitions(-DCONSOLE)
