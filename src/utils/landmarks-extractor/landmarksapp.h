@@ -30,14 +30,6 @@ namespace fsdk
 	 * Implements a custom application to run the landmarks extractor console application.
 	 * It depends upon the definition of the macro 'CONSOLE' in CMakeLists.txt
 	 * (check source of Application for details).
-	 *
-	 * When the application exits, the error level returned indicates the following:
-	 *		- 0 indicates that the application terminated successfully.
-	 *      - -1 Indicates that the application terminated with error in the command
-	 *        line arguments.
-	 *		- 1, 2, 3, ... indicates failure in processing the extraction from the
-	 *        corresponding video file: 'ExitCode - 1' is the index of the failed
-	 *        file at the QStringList built from the wildcard mask.
 	 */
 	class LandmarksApp: public Application
 	{

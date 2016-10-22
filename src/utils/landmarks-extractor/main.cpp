@@ -26,15 +26,29 @@ using namespace fsdk;
 
 LandmarksApp *g_pApp = NULL;
 
-void intrpt(int signum)
+/**
+ * Handles the sigterm signal (ctrl+c) to allow
+ * cancelling the execution of the task.
+ * @param iSignum Integer with the number of the signal captured.
+ */
+void handleSigTerm(int iSignum)
 {
+	Q_UNUSED(iSignum);
 	g_pApp->cancel();
 	(void)signal(SIGINT, SIG_DFL);
 }
 
+/**
+ * Main entry function.
+ * @param argc Integer with the number of arguments
+ * received from the command line.
+ * @param argv Array of strings with the arguments received
+ * from the command line.
+ * @return Integer with the exit level.
+ */
 int main(int argc, char* argv[])
 {
-	(void)signal(SIGINT, intrpt);
+	(void)signal(SIGINT, handleSigTerm);
 
 	g_pApp = new LandmarksApp(argc, argv, "University of Sao Paulo", "Fun SDK", "Feature Extractor", FSDK_VERSION);
 

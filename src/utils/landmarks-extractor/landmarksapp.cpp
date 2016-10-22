@@ -26,7 +26,7 @@
 #include <QThreadPool>
 #include <QRegExp>
 
- // +-----------------------------------------------------------
+// +-----------------------------------------------------------
 fsdk::LandmarksApp::LandmarksApp(int &argc, char **argv, const QString &sOrgName, const QString &sOrgDomain, const QString &sAppName, const QString &sAppVersion, const bool bUseSettings):
 	Application(argc, argv, sOrgName, sOrgDomain, sAppName, sAppVersion, bUseSettings)
 {
