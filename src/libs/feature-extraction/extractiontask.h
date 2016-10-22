@@ -115,6 +115,7 @@ namespace fsdk
 
 		/**
 		 * Indicates if an error happened during the extraction of features.
+		 * @param sVideoFile QString with the name of the video file that was processed.
 		 * @param eError Value of the ExtractionError enumeration indicating
 		 * which error happened.
 		 */
@@ -122,6 +123,7 @@ namespace fsdk
 
 		/**
 		 * Indicates the progress of the feature extraction.
+		 * @param sVideoFile QString with the name of the video file that is being processed.
 		 * @param iPercent Integer value in range [0, 100] indicating
 		 * how much of the extraction has been concluded.
 		 */
@@ -129,8 +131,7 @@ namespace fsdk
 
 		/**
 		 * Indicates that the feature extraction has been concluded.
-		 * @param sVideoFile QString with the name of the video file
-		 * for which the task concluded.
+		 * @param sVideoFile QString with the name of the video file that was processed.
 		 * @param oData AbstractData object with the data of the features
 		 * extracted from the video file. The contents will depend on
 		 * the implementation (inherited from AbstractData) used by the
