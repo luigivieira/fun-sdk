@@ -18,131 +18,201 @@
  */
 
 #include "csvfile.h"
-#include <QTextStream>
+#include <QDebug>
 
 // +-----------------------------------------------------------
-fsdk::CSVFile::CSVFile(const int iColumns, const QChar cSeparator): QFile()
+fsdk::CSVFile::CSVFile(const QString &sFilename, const QString &sFieldSeparator, const QString &sTextDelimiter, QTextCodec *pCodec):
+	QFile()
 {
-	m_cSeparator = cSeparator;
-	m_iColumns = iColumns;
+	if(!sFilename.isEmpty())
+		setFileName(sFilename);
+
+	m_sFieldSeparator = sFieldSeparator;
+	m_sTextDelimiter = sTextDelimiter;
+	m_pCodec = pCodec;
 }
 
 // +-----------------------------------------------------------
-fsdk::CSVFile::CSVFile(const QString &sName, const int iColumns, const QChar cSeparator): QFile(sName)
+QStringList fsdk::CSVFile::readLine(QTextStream &oReader)
 {
-	m_cSeparator = cSeparator;
-	m_iColumns = iColumns;
+	// This is the scope of the current processing in the inner loop
+	enum Scope { InLine, InField };
+	Scope eScope = InLine;
+
+	QStringList lLine;
+	QString sLine, sField;
+	int iPos;
+	
+	while(!oReader.atEnd())
+	{
+		sLine = oReader.readLine();
+		sLine += QString("\n"); // QTextStream strips out the new line, needed in this algorithm
+	
+		while(!sLine.isEmpty())
+		{
+			switch(eScope)
+			{
+				// We are reading fields in the line
+				case InLine:
+
+					// If the next field in line starts with a text delimiter,
+					// handle its reading as a text field
+					if(sLine.startsWith(m_sTextDelimiter))
+					{
+						// Get the position of the second delimiter after the first one
+						iPos = sLine.indexOf(m_sTextDelimiter, m_sTextDelimiter.length());
+
+						// If the second delimiter is not found, it means
+						// that this is a multiline field (i.e. that includes new
+						// line characters). So, save its contents and keep reading
+						// it in next line(s).
+						if(iPos == -1)
+						{
+							eScope = InField;
+							sField = sLine.mid(m_sTextDelimiter.length());
+							sLine = "";
+						}
+					}
+
+					// No field starting with text delimiter in this line,
+					// so process fields normally: that is, split the line
+					// based on the field separator and add it to the
+					// return list.
+					else
+					{
+						lLine.append(sLine.replace("\n", "").split(m_sFieldSeparator));
+						sLine = "";
+					}
+					break;
+
+				// We are reading the contents of a multiline field
+				// (i.e. a field delimited by the configured text delimiter)
+				case InField:
+
+					// Get the position of the second delimiter in the new line
+					iPos = sLine.indexOf(m_sTextDelimiter);
+
+					// If the second delimiter is not found, it means
+					// that the multiline field continues with more new lines.
+					// So, save its contents and keep on reading!
+					if(iPos == -1)
+					{
+						sField += sLine.mid(m_sTextDelimiter.length());
+						sLine = "";
+					}
+
+					// The second delimiter has been found!
+					// Add the field contents to the return list and
+					// go back to the line processing scope to keep processing.
+					else
+					{
+						sField += sLine.mid(0, iPos);
+						sLine = sLine.mid(iPos + 1);
+						lLine.append(sField);
+						sField = "";
+						eScope = InLine;
+					}
+					break;				
+			}
+		}
+
+		// If this point is reached in the InLine scope (sLine empty),
+		// it means that the whole "line" (including multiline fields)
+		// has already been read. So just break the processing and return
+		// the line contents!
+		if(eScope == InLine)
+			break;
+	}
+
+	return lLine;
 }
 
 // +-----------------------------------------------------------
-bool fsdk::CSVFile::load(const bool bHasHeader)
+bool fsdk::CSVFile::read(const bool bHeader)
 {
 	if(!open(QIODevice::ReadOnly | QIODevice::Text))
+	{
+		qDebug().noquote() << QString("Error opening file %1 for reading").arg(fileName());
 		return false;
+	}
 
 	QTextStream oReader(this);
+	oReader.setCodec(m_pCodec);
 
-	int iColumns = -1;
-
-	QString sRow;
-	QStringList lHeader, lRow;
-	QList<QStringList> lRows;
-
-	if(bHasHeader)
-	{
-		sRow = oReader.readLine();
-		lHeader = sRow.split(m_cSeparator);
-		iColumns = lHeader.count();
-	}
+	QStringList lHeader;
+	QList<QStringList> lLines;
 
 	while(!oReader.atEnd())
 	{
-		sRow = oReader.readLine();
-		if(sRow.isEmpty()) // Ignore blank rows
-			continue;
-
-		lRow = sRow.split(m_cSeparator);
-
-		if(iColumns == -1)
-			iColumns = lRow.count();
-		
-		// Guarantee that header and each row have the
-		// exactly same number of elements
-		if(lRow.count() != iColumns)
-		{
-			close();
-			return false;
-		}
-
-		lRows.push_back(lRow);
+		if(bHeader && lHeader.isEmpty())
+			lHeader = readLine(oReader);
+		else
+			lLines.append(readLine(oReader));
 	}
 
 	close();
 
 	m_lHeader = lHeader;
-	m_lRows = lRows;
-	m_iColumns = iColumns;
+	m_lLines = lLines;
 	return true;
 }
 
 // +-----------------------------------------------------------
-bool fsdk::CSVFile::loadFromFile(const QString &sName, const bool bHasHeader)
+bool fsdk::CSVFile::read(const QString &sFilename, const bool bHeader)
 {
-	if(isOpen())
-		close();
-	setFileName(sName);
-	return load(bHasHeader);
+	setFileName(sFilename);
+	return read(bHeader);
 }
 
 // +-----------------------------------------------------------
-bool fsdk::CSVFile::save()
+bool fsdk::CSVFile::write()
 {
 	if(!open(QIODevice::WriteOnly | QIODevice::Text))
+	{
+		qDebug().noquote() << QString("Error opening file %1 for writing").arg(fileName());
 		return false;
+	}
 
 	QTextStream oWriter(this);
 
-	if(m_lHeader.count() > 0)
-		oWriter << m_lHeader.join(m_cSeparator) << endl;
-
-	foreach(QStringList lRow, m_lRows)
-		oWriter << lRow.join(m_cSeparator) << endl;
+	for(int i = 0; i < m_lHeader.count(); i++)
+	{
+		QString sHeaderLabel = m_lHeader[i];
+		if(sHeaderLabel.contains(m_sFieldSeparator) || sHeaderLabel.contains("\n"))
+			oWriter << m_sTextDelimiter << sHeaderLabel << m_sTextDelimiter;
+		else
+			oWriter << sHeaderLabel;
+		if(i < m_lHeader.count() - 1)
+			oWriter << m_sFieldSeparator;
+		else
+			oWriter << endl;
+	}
+	
+	foreach(QStringList lLine, m_lLines)
+	{
+		for(int i = 0; i < lLine.count(); i++)
+		{
+			QString sField = lLine[i];
+			if(sField.contains(m_sFieldSeparator) || sField.contains("\n"))
+				oWriter << m_sTextDelimiter << sField << m_sTextDelimiter;
+			else
+				oWriter << sField;
+			if(i < lLine.count() - 1)
+				oWriter << m_sFieldSeparator;
+			else
+				oWriter << endl;
+		}
+	}
 	
 	close();
 	return true;
 }
 
 // +-----------------------------------------------------------
-bool fsdk::CSVFile::saveToFile(const QString &sName)
+bool fsdk::CSVFile::write(const QString &sFilename)
 {
-	if(isOpen())
-		close();
-	setFileName(sName);
-	return save();
-}
-
-// +-----------------------------------------------------------
-QChar fsdk::CSVFile::separator() const
-{
-	return m_cSeparator;
-}
-
-// +-----------------------------------------------------------
-void fsdk::CSVFile::setSeparator(const QChar cSeparator)
-{
-	m_cSeparator = cSeparator;
-}
-
-// +-----------------------------------------------------------
-int fsdk::CSVFile::columnsCount() const
-{
-	return m_iColumns;
-}
-
-// +-----------------------------------------------------------
-int fsdk::CSVFile::rowsCount() const
-{
-	return m_lRows.count();
+	setFileName(sFilename);
+	return write();
 }
 
 // +-----------------------------------------------------------
@@ -152,87 +222,19 @@ bool fsdk::CSVFile::hasHeader() const
 }
 
 // +-----------------------------------------------------------
-QStringList fsdk::CSVFile::header() const
+QStringList& fsdk::CSVFile::header()
 {
 	return m_lHeader;
 }
 
 // +-----------------------------------------------------------
-bool fsdk::CSVFile::setHeader(const QStringList &lHeader)
+QStringList& fsdk::CSVFile::line(const int iLine)
 {
-	if(lHeader.count() == 0 || lHeader.count() == m_iColumns)
-	{
-		m_lHeader = lHeader;
-		return true;
-	}
-	else
-		return false;
+	return m_lLines[iLine];
 }
 
 // +-----------------------------------------------------------
-QList<QStringList> fsdk::CSVFile::rows() const
+void fsdk::CSVFile::addLine(const QStringList &lLine)
 {
-	return m_lRows;
-}
-
-// +-----------------------------------------------------------
-QStringList fsdk::CSVFile::row(const int iRow) const
-{
-	if(iRow >= 0 && iRow < m_lRows.size())
-		return m_lRows[iRow];
-	else
-		return QStringList();
-}
-
-// +-----------------------------------------------------------
-bool fsdk::CSVFile::setRows(const QList<QStringList> &lRows)
-{
-	int iColumns = -1;
-
-	// Check if all new rows have the same number of columns
-	foreach(QStringList lRow, lRows)
-	{
-		if(iColumns == -1)
-			iColumns = lRow.count();
-
-		if(lRow.count() != iColumns)
-			return false;
-	}
-
-	if(lRows.count() == 0 || iColumns == m_iColumns)
-	{
-		m_lRows = lRows;
-		return true;
-	}
-	else
-		return false;
-}
-
-// +-----------------------------------------------------------
-bool fsdk::CSVFile::setRow(const int iRow, const QStringList &lRow)
-{
-	if(iRow >= 0 && iRow < m_lRows.count())
-	{
-		if(lRow.count() == m_iColumns)
-		{
-			m_lRows[iRow] = lRow;
-			return true;
-		}
-		else
-			return false;
-	}
-	else
-		return false;
-}
-
-// +-----------------------------------------------------------
-bool fsdk::CSVFile::addRow(const QStringList &lRow)
-{
-	if(lRow.count() == m_iColumns)
-	{
-		m_lRows.append(lRow);
-		return true;
-	}
-	else
-		return false;
+	m_lLines.append(lLine);
 }

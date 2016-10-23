@@ -21,7 +21,6 @@
 #define LANDMARKSDATA_H
 
 #include "libexport.h"
-#include "abstractdata.h"
 #include <QMap>
 #include <QList>
 #include <QPoint>
@@ -34,7 +33,7 @@ namespace fsdk
 	 * Represents the data of landmark points and tracker qualities extracted
 	 * from videos with the facial expressions of players.
 	 */
-	class SHARED_LIB_EXPORT LandmarksData: public AbstractData
+	class SHARED_LIB_EXPORT LandmarksData
 	{
 	public:
 
@@ -53,7 +52,7 @@ namespace fsdk
 		/**
 		 * Class destructor.
 		 */
-		virtual ~LandmarksData();
+		~LandmarksData();
 
 		/**
 		 * Queries if the landmarks data is empty.
@@ -115,6 +114,10 @@ namespace fsdk
 		 * Removes all existing frame data.
 		 */
 		void clear();
+
+		bool saveToCSV(const QString &sFilename) const;
+
+		bool readFromCSV(const QString &sFilename);
 
 	private:
 

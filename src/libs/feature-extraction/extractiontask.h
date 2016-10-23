@@ -21,7 +21,6 @@
 #define EXTRACTIONTASK_H
 
 #include "libexport.h"
-#include "abstractdata.h"
 #include <QObject>
 #include <QRunnable>
 #include <opencv2/opencv.hpp>
@@ -131,13 +130,13 @@ namespace fsdk
 
 		/**
 		 * Indicates that the feature extraction has been concluded.
-		 * @param sVideoFile QString with the name of the video file that was processed.
-		 * @param oData AbstractData object with the data of the features
+		 * @param sVideoFile QString with the name of the video file
+		 * that was processed.
+		 * @param vData QVariant object with the data of the features
 		 * extracted from the video file. The contents will depend on
-		 * the implementation (inherited from AbstractData) used by the
-		 * specific extractor (inherited from ExtractionTask).
+		 * the implementation used by the specific extractor.
 		 */
-		void taskFinished(const QString &sVideoFile, const fsdk::AbstractData &oData);
+		void taskFinished(const QString &sVideoFile, const QVariant &vData);
 
 	protected:
 
@@ -179,12 +178,11 @@ namespace fsdk
 		 * when it concludes. The proper signal of conclusion will be emitted
 		 * by this method, hence the method run() can simply terminate after
 		 * calling this method.
-		 * @param oData AbstractData object with the data of the features
+		 * @param vData QVariant object with the data of the features
 		 * extracted from the video file. The contents will depend on
-		 * the implementation (inherited from AbstractData) used by the
-		 * specific extractor (inherited from ExtractionTask).
+		 * the implementation used by the specific extractor.
 		 */
-		void end(const fsdk::AbstractData &oData);
+		void end(const QVariant &vData);
 
 		/**
 		 * Queries the video file assigned to the task.

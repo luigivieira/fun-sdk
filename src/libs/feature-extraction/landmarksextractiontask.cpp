@@ -58,5 +58,5 @@ void fsdk::LandmarksExtractionTask::run()
 	if(isCancelled())
 		end(CancelRequested);
 	else
-		end(oData);
+		end(QVariant::fromValue(oData));
 }

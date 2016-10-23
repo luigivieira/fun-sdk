@@ -109,8 +109,10 @@ namespace fsdk
 		/**
 		 * Captures the signal indicating the conclusion of one of the tasks.
 		 * @param sVideoFile QString with the name of the video file of the task.
+		 * @param vData QVariant object with the LandmarksData extracted from the
+		 * video file.
 		 */
-		void taskFinished(const QString &sVideoFile, const AbstractData &oData);
+		void taskFinished(const QString &sVideoFile, const QVariant &vData);
 
 	private:
 

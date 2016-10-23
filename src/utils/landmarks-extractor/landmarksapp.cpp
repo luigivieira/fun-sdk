@@ -202,11 +202,18 @@ void fsdk::LandmarksApp::taskProgress(const QString &sVideoFile, int iProgress)
 }
 
 // +-----------------------------------------------------------
-void fsdk::LandmarksApp::taskFinished(const QString &sVideoFile, const AbstractData &oData)
+void fsdk::LandmarksApp::taskFinished(const QString &sVideoFile, const QVariant &vData)
 {
-	qInfo().noquote() << tr("file %1 done.").arg(sVideoFile);
-
-	exit(0);
+	if(!vData.value<LandmarksData>().saveToCSV(m_sCSVFile))
+	{
+		qCritical().noquote() << tr("error writing to CSV file %1").arg(m_sCSVFile);
+		exit(-4);
+	}
+	else
+	{
+		qInfo().noquote() << tr("file %1 done.").arg(sVideoFile);
+		exit(0);
+	}
 }
 
 // +-----------------------------------------------------------

@@ -22,97 +22,62 @@
 
 #include "libexport.h"
 #include <QFile>
+#include <QTextCodec>
 #include <QList>
 #include <QStringList>
+#include <QTextStream>
 
 namespace fsdk
 {
 	/**
-	 * Defines the basic face tracking interface.
-	 * Specific implementations must inherit this class
-	 * and implement its pure virtual methods.
+	 * Allows reading and writing CSV files.
 	 */
 	class SHARED_LIB_EXPORT CSVFile: public QFile
 	{
 	public:
 		/**
 		 * Default constructor.
-		 * @param iColumns Integer with the number of columns in
-		 * the CSV loaded. The default is 0 (meaning that values
-		 * can only be added from a file loaded from disk).
-		 * @param cSeparator QChar with the separator used for
-		 * loading/saving the CSV values to/from a file in the
-		 * disk. The default is ';'.
+		 * @param sFilename QString with the name of the CSV file. Optional (default is "").
+		 * @param sFieldSeparator QString with the field separator. Optional (default is ",").
+		 * @param sTextDelimiter QString with the text delimiter. Optional (default is "\"").
+		 * @param pCodec Pointer to a QTextCodec used when reading/writting the CSV contents.
+		 * Optional (default is the UTF-8 codec).
 		 */
-		CSVFile(const int iColumns = 0, const QChar cSeparator = ';');
+		CSVFile(const QString &sFilename = "", const QString &sFieldSeparator = ",", const QString &sTextDelimiter = "\"", QTextCodec *pCodec = QTextCodec::codecForName("UTF-8"));
 
 		/**
-		 * Constructor that accepts the path and name of the CSV file to use.
-		 * @param sName QString with the path and name of the CSV file.
-		 * @param iColumns Integer with the number of columns in
-		 * the CSV loaded. The default is 0 (meaning that values
-		 * can only be added from a file loaded from disk).
-		 * @param cSeparator QChar with the separator used for
-		 * loading/saving the CSV values to/from a file in the
-		 * disk. The default is ';'.		 */
-		CSVFile(const QString &sName, const int iColumns = 0, const QChar cSeparator = ';');
+		 * Reads the contents of the CSV file specified in fileName().
+		 * @param bHeader Boolean indicating if the CSV has a header (true)
+		 * or not (false).
+		 * @return Boolean indicating if the reading was successful (true)
+		 * or not (false).
+		 */
+		bool read(const bool bHeader = true);
 
 		/**
-		 * Loads the CSV file according to the file name currently
-		 * defined in name().
-		 * @param bHasHeader Boolean indicating if the CSV file has
-		 * a header (true, the default value) or not (false).
-		 * @return Boolean indicating if the loading was successful (true)
-		 * or not (false). If the return is false, the reason is described
-		 * in error(). If the return is false and the return of error()
-		 * is NoError, the reason is not due to the access to the file,
-		 * but to internal structural errors (i.e. different number of
-		 * values between header or lines).
+		 * Reads the contents of the given CSV filename.
+		 * @param sFilename QString with the name of the file to read from.
+		 * @param bHeader Boolean indicating if the CSV has a header (true)
+		 * or not (false).
+		 * @return Boolean indicating if the reading was successful (true)
+		 * or not (false).
 		 */
-		bool load(const bool bHasHeader = true);
+		bool read(const QString &sFilename, const bool bHeader = true);
 
 		/**
-		 * Loads the CSV from the given file.
-		 * @param sName QString with the path and name of the file to load.
-		 * @param bHasHeader Boolean indicating if the CSV file has
-		 * a header (true, the default value) or not (false).
-		 * @return Boolean indicating if the loading was successful (true)
-		 * or not (false). If the return is false, the reason is described
-		 * in error(). If the return is false and the return of error()
-		 * is NoError, the reason is not due to the access to the file,
-		 * but to internal structural errors (i.e. different number of
-		 * values between header or lines).
+		 * Writes the contents of the CSV to the file specified in fileName().
+		 * @return Boolean indicating if the writting was successful (true)
+		 * or not (false).
 		 */
-		bool loadFromFile(const QString &sName, const bool bHasHeader = true);
+		bool write();
 
 		/**
-		 * Saves the CSV in the file currently defined in name().
-		 * @return Boolean indicating if the saving was successful (true)
-		 * or not (false). If the return is false, the reason is described
-		 * in error().
+		 * Writes the contents of the CSV to the given filename.
+		 * @param sFilename QString with the name of the file to write to.
+		 * @return Boolean indicating if the writting was successful (true)
+		 * or not (false).
 		 */
-		bool save();
-
-		/**
-		 * Saves the CSV in the given file.
-		 * @param sName QString with the path and name of the file to save.
-		 * @return Boolean indicating if the saving was successful (true)
-		 * or not (false). If the return is false, the reason is described
-		 * in error().
-		 */
-		bool saveToFile(const QString &sName);
-
-		/**
-		 * Gets the separator used by the CSV.
-		 * @return QChar with the separator used.
-		 */
-		QChar separator() const;
-
-		/**
-		 * Sets the separator used by the CSV.
-		 * @param cSeparator QChar with the separator to use.
-		 */
-		void setSeparator(const QChar cSeparator);
+		bool write(const QString &sFilename);
 
 		/**
 		 * Indicates if the CSV has a header.
@@ -122,99 +87,51 @@ namespace fsdk
 		bool hasHeader() const;
 
 		/**
-		 * Gets the number of columns in the CSV.
-		 * @return Integer with the number of columns.
+		 * Gets the header of this CSV.
+		 * @return Modifiable reference to the QStringList with the header.
 		 */
-		int columnsCount() const;
+		QStringList& header();
 
 		/**
-		 * Gets the number of rows in the CSV (not considering
-		 * the header).
-		 * @return Integer with the number of rows.
+		 * Gets the fields on a given line in the CSV.
+		 * @param iLine Integer with the line in range [0, lines()-1].
+		 * The value of this argument MUST be in that range, otherwise
+		 * an access error will ocurr.
+		 * @return modifiable reference to the QStringList with the fields
+		 * in the given line.
 		 */
-		int rowsCount() const;
+		QStringList& line(const int iLine);
+
+		void addLine(const QStringList &lLine);
+
+	protected:
 
 		/**
-		 * Gets the header values in the CSV (if any).
-		 * @return QStringList with the values in the header
-		 * of an empty QStringList if the CSV has no header.
+		 * Reads a record line from the given text stream, automatically
+		 * handling multiline fields (i.e. using the text delimiter).
+		 * @param oReader Reference to the QTextStream used to read the file.
+		 * @return QStringList with the contents of the fields read from the
+		 * file in a "logical" line (that may include multiple real lines
+		 * in the file due to multiline fields).
 		 */
-		QStringList header() const;
-
-		/**
-		 * Sets the values in the header for the CSV.
-		 * @param lHeader QStringList with the new header. It must
-		 * contain the exactly same number of values as returned
-		 * by columnsCount() or no values at all (in case which an
-		 * existing header is completely removed from the CSV).
-		 * @return Boolean indicating if the header has been replaced
-		 * (true) or not (false). False is only returned when a non-
-		 * empty list of header values is provided with a different
-		 * number of values than those in columnsCount().
-		 */
-		bool setHeader(const QStringList &lHeader);
-	
-		/**
-		 * Gets all rows of the CSV.
-		 * @return A QList of rows with QStringLists for the columns
-		 * in the CSV data, or a QList() if the CSV has no data.
-		 */
-		QList<QStringList> rows() const;
-
-		/**
-		 * Gets the values of the given row in CSV.
-		 * @param iRow Integer with the row to query. The row is counted
-		 * from 0 to rowsCount()-1.
-		 * @return A QStringList with all values in the given row, or 
-		 * a QStringList() if the CSV has no data or the given row is out
-		 * of range.
-		 */
-		QStringList row(const int iRow) const;
-
-		/**
-		 * Sets all rows for the CSV.
-		 * @param lRows A QList of QStringLists with the columns of
-		 * data. It can be a QList() to completely clear the CSV data.
-		 * @return A boolean indicating if the update was succesful
-		 * (true) or not (false).
-		 */
-		bool setRows(const QList<QStringList> &lRows);
-
-		/**
-		 * Sets the values for the given row in the CSV.
-		 * @param iRow Integer with the row to update. The row is
-		 * counted from 0 to rowsCount()-1.
-		 * @param lRow A QStringList with the values of the
-		 * rows. It must have the same number of values as in
-		 * columnsCount().
-		 * @return A boolean indicating if the update was succesful
-		 * (true) or not (false).
-		 */
-		bool setRow(const int iRow, const QStringList &lRow);
-
-		/**
-		 * Adds the values for a new row in the CSV.
-		 * @param lRow A QStringList with the values of the
-		 * new row. It must have the same number of values as in
-		 * columnsCount().
-		 * @return A boolean indicating if the update was succesful
-		 * (true) or not (false).
-		 */
-		bool addRow(const QStringList &lRow);
+		QStringList readLine(QTextStream &oReader);
 
 	private:
 		
 		/** Header names in the CSV. */
 		QStringList m_lHeader;
 
-		/** Rows of data in the CSV. */
-		QList<QStringList> m_lRows;
+		/** List of records in the CSV. */
+		QList<QStringList> m_lLines;
 
-		/** Character used for separating values in the CSV file. */
-		QChar m_cSeparator;
+		/** Separator used to differentiate fields in the CSV. */
+		QString m_sFieldSeparator;
 
-		/** Number of columns in the CSV loaded. */
-		int m_iColumns;
+		/** Texte delimiter used to enclose strings in the CSV. */
+		QString m_sTextDelimiter;
+
+		/** Codec used to read/write the contents of the CSV. */
+		QTextCodec *m_pCodec;
 	};
 }
 

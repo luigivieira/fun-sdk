@@ -48,10 +48,10 @@ void fsdk::ExtractionTask::end(const ExtractionTask::ExtractionError &eError)
 }
 
 // +-----------------------------------------------------------
-void fsdk::ExtractionTask::end(const fsdk::AbstractData &oData)
+void fsdk::ExtractionTask::end(const QVariant &vData)
 {
 	m_oCap.release();
-	emit taskFinished(m_sVideoFile, oData);
+	emit taskFinished(m_sVideoFile, vData);
 }
 
 // +-----------------------------------------------------------

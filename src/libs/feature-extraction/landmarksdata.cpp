@@ -18,15 +18,16 @@
  */
 
 #include "landmarksdata.h"
+#include "csvfile.h"
 
 // +-----------------------------------------------------------
-fsdk::LandmarksData::LandmarksData(): AbstractData()
+fsdk::LandmarksData::LandmarksData()
 {
 	qRegisterMetaType<fsdk::LandmarksData>("fsdk::LandmarksData");
 }
 
 // +-----------------------------------------------------------
-fsdk::LandmarksData::LandmarksData(const LandmarksData& oOther): AbstractData(oOther)
+fsdk::LandmarksData::LandmarksData(const LandmarksData& oOther)
 {
 	m_mLandmarks = oOther.m_mLandmarks;
 	m_mQualities = oOther.m_mQualities;
@@ -86,6 +87,42 @@ void fsdk::LandmarksData::clear()
 {
 	m_mLandmarks.clear();
 	m_mQualities.clear();
+}
+
+// +-----------------------------------------------------------
+bool fsdk::LandmarksData::saveToCSV(const QString &sFilename) const
+{
+	CSVFile oData;
+	QStringList lLine;
+
+	// Add a header
+	lLine.append({ "Frame", "Quality" });
+	QString sNum;
+	for(int i = 0; i < m_mLandmarks.count(); i++)
+	{
+		sNum = QString::number(i);
+		lLine.append({ QString("x%1").arg(sNum), QString("y%1").arg(sNum) });
+	}
+	oData.addLine(lLine);
+
+	// Add records
+	QMap<int, QList<QPoint>>::const_iterator it;
+	for(it = m_mLandmarks.cbegin(); it != m_mLandmarks.cend(); ++it)
+	{
+		lLine.clear();
+		lLine.append({ QString::number(it.key()), QString::number(m_mQualities[it.key()]) });
+		foreach(QPoint oPoint, it.value())
+			lLine.append({ QString::number(oPoint.x()), QString::number(oPoint.y()) });
+		oData.addLine(lLine);
+	}
+		
+	return oData.write(sFilename);
+}
+
+// +-----------------------------------------------------------
+bool fsdk::LandmarksData::readFromCSV(const QString &sFilename)
+{
+	return false;
 }
 
 // +-----------------------------------------------------------
