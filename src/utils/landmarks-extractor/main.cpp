@@ -24,6 +24,7 @@
 
 using namespace fsdk;
 
+/* Global variable used to allow indicating the cancelation request to the application. */
 LandmarksApp *g_pApp = NULL;
 
 /**
