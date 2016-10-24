@@ -33,7 +33,7 @@ fsdk::LandmarksApp::LandmarksApp(int &argc, char **argv, const QString &sOrgName
 	// Replace the original message pattern from the parent class Application.
 	// i.e.: - remove the source and line number from trace even in debug;
 	//       - add the progress level instead of the log type;
-	qSetMessagePattern("%{time yyyy.MM.dd h:mm:ss.zzz} [%{if-critical}p1%{endif}%{if-warning}p2%{endif}%{if-info}p3%{endif}%{if-debug}p4%{endif}]: %{message}");
+	qSetMessagePattern("%{time yyyy.MM.dd h:mm:ss.zzz} [%{if-critical}l1%{endif}%{if-warning}l2%{endif}%{if-info}l3%{endif}%{if-debug}l4%{endif}]: %{message}");
 	setLogLevel(Critical);
 }
 
@@ -70,6 +70,12 @@ fsdk::LandmarksApp::CommandLineParseResult fsdk::LandmarksApp::parseCommandLine(
 		), tr("1-4"), "1"
 	);
 	oParser.addOption(oMsgLevelOpt);
+
+	// Automatic confirm overwrite option
+	QCommandLineOption oAutoConfirmOpt(QStringList({ "y", "yes" }),
+		tr("Automatically confirms the overwriting of the <csv file> if it already exists")
+	);
+	oParser.addOption(oAutoConfirmOpt);
 
 	// Help and version options
 	QCommandLineOption oHelpOpt = oParser.addHelpOption();
@@ -142,20 +148,26 @@ fsdk::LandmarksApp::CommandLineParseResult fsdk::LandmarksApp::parseCommandLine(
 
 	if(!QFile::exists(m_sVideoFile))
 	{
-		qCritical().noquote() << tr("video file does not exist: %1").arg(m_sVideoFile) << endl;
-		oParser.showHelp();
+		qCritical().noquote() << tr("video file does not exist: %1").arg(m_sVideoFile);
 		return CommandLineError;
 	}
 
-	if(QFile::exists(m_sCSVFile))
+	if(QFile::exists(m_sCSVFile) && !oParser.isSet(oAutoConfirmOpt))
 	{
 		qCritical().noquote() << tr("CSV file already exists: %1. Do you want to overwrite it [y/n]?").arg(m_sCSVFile);
-
 		QTextStream oInput(stdin);
 		QString sInput = oInput.read(1).toUpper();
 		if(sInput != "Y")
 			return CommandLineError;
 	}
+
+	QFile oTest(m_sCSVFile);
+	if(!oTest.open(QIODevice::ReadWrite | QIODevice::Text))
+	{
+		qCritical().noquote() << tr("CSV file is not writable: %1").arg(m_sCSVFile);
+		return CommandLineError;
+	}
+	oTest.close();
 
 	return CommandLineOk;
 }
@@ -170,12 +182,19 @@ void fsdk::LandmarksApp::run()
 	connect(m_pTask, &LandmarksExtractionTask::taskProgress, this, &LandmarksApp::taskProgress);
 	connect(m_pTask, &LandmarksExtractionTask::taskFinished, this, &LandmarksApp::taskFinished);
 		
+	qInfo().noquote() << tr("extraction of landmards from file %1 started.").arg(m_sVideoFile);
 	QThreadPool::globalInstance()->start(m_pTask);
 }
 
 // +-----------------------------------------------------------
 void fsdk::LandmarksApp::taskError(const QString &sVideoFile, const ExtractionTask::ExtractionError eError)
 {
+	QThreadPool::globalInstance()->waitForDone();
+	disconnect(m_pTask, &LandmarksExtractionTask::taskError, this, &LandmarksApp::taskError);
+	disconnect(m_pTask, &LandmarksExtractionTask::taskProgress, this, &LandmarksApp::taskProgress);
+	disconnect(m_pTask, &LandmarksExtractionTask::taskFinished, this, &LandmarksApp::taskFinished);
+	delete m_pTask;
+
 	QFileInfo oFile;
 	QString sLandmarks;
 
@@ -184,14 +203,17 @@ void fsdk::LandmarksApp::taskError(const QString &sVideoFile, const ExtractionTa
 		case LandmarksExtractionTask::InvalidVideoFile:
 			qCritical().noquote() << tr("error reading input video file %1").arg(sVideoFile);
 			exit(-1);
-
-		case LandmarksExtractionTask::UnknownError:
-			qCritical().noquote() << tr("unknown error while processing input video file %1").arg(sVideoFile);
-			exit(-2);
+			break;
 
 		case LandmarksExtractionTask::CancelRequested:
 			qDebug().noquote() << tr("task for file %1 was cancelled").arg(sVideoFile);
+			exit(-2);
+			break;
+
+		default:
+			qCritical().noquote() << tr("unknown error while processing input video file %1").arg(sVideoFile);
 			exit(-3);
+			break;
 	}
 }
 
@@ -204,6 +226,12 @@ void fsdk::LandmarksApp::taskProgress(const QString &sVideoFile, int iProgress)
 // +-----------------------------------------------------------
 void fsdk::LandmarksApp::taskFinished(const QString &sVideoFile, const QVariant &vData)
 {
+	QThreadPool::globalInstance()->waitForDone();
+	disconnect(m_pTask, &LandmarksExtractionTask::taskError, this, &LandmarksApp::taskError);
+	disconnect(m_pTask, &LandmarksExtractionTask::taskProgress, this, &LandmarksApp::taskProgress);
+	disconnect(m_pTask, &LandmarksExtractionTask::taskFinished, this, &LandmarksApp::taskFinished);
+	delete m_pTask;
+
 	if(!vData.value<LandmarksData>().saveToCSV(m_sCSVFile))
 	{
 		qCritical().noquote() << tr("error writing to CSV file %1").arg(m_sCSVFile);
@@ -211,7 +239,7 @@ void fsdk::LandmarksApp::taskFinished(const QString &sVideoFile, const QVariant 
 	}
 	else
 	{
-		qInfo().noquote() << tr("file %1 done.").arg(sVideoFile);
+		qInfo().noquote() << tr("extraction of landmards from file %1 concluded.").arg(sVideoFile);
 		exit(0);
 	}
 }
