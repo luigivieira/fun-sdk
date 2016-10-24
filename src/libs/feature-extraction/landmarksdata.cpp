@@ -97,15 +97,17 @@ bool fsdk::LandmarksData::saveToCSV(const QString &sFilename) const
 
 	// Add a header
 	lLine.append({ "Frame", "Quality" });
+
+	int iLandmarks = m_mLandmarks.count() > 0 ? m_mLandmarks[0].count() : 0;
 	QString sNum;
-	for(int i = 0; i < m_mLandmarks.count(); i++)
+	for(int i = 0; i < iLandmarks; i++)
 	{
 		sNum = QString::number(i);
 		lLine.append({ QString("x%1").arg(sNum), QString("y%1").arg(sNum) });
 	}
 	oData.addLine(lLine);
 
-	// Add records
+	// Add the data records
 	QMap<int, QList<QPoint>>::const_iterator it;
 	for(it = m_mLandmarks.cbegin(); it != m_mLandmarks.cend(); ++it)
 	{
