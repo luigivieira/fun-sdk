@@ -30,7 +30,8 @@
 namespace fsdk
 {
 	/**
-	 * Allows reading and writing CSV files.
+	 * Allows reading and writing comma-separated-value (CSV) files
+	 * according to the RFC 4180 (https://tools.ietf.org/pdf/rfc4180.pdf).
 	 */
 	class SHARED_LIB_EXPORT CSVFile: public QFile
 	{
@@ -87,21 +88,34 @@ namespace fsdk
 		bool hasHeader() const;
 
 		/**
-		 * Gets the header of this CSV.
+		 * Gets the header line of this CSV.
 		 * @return Modifiable reference to the QStringList with the header.
 		 */
 		QStringList& header();
 
 		/**
-		 * Gets the fields on a given line in the CSV.
+		 * Gets the given line of this CSV.
 		 * @param iLine Integer with the line in range [0, lines()-1].
 		 * The value of this argument MUST be in that range, otherwise
 		 * an access error will ocurr.
-		 * @return modifiable reference to the QStringList with the fields
-		 * in the given line.
+		 * @return Modifiable reference to the QStringList with the data
+		 * in the requested line.
 		 */
 		QStringList& line(const int iLine);
 
+		/**
+		 * Gets all the lines of this CSV (excluding the header, if read
+		 * or created as such).
+		 * @return Modifiable reference to the QList of QStringList's with
+		 * all lines of data.
+		 */
+		QList<QStringList>& lines();
+
+		/**
+		 * Adds a new line of data to the CSV. To add or change the data
+		 * in the header, use the header() method.
+		 * @param lLine QStringList with the data to add to the CSV.
+		 */
 		void addLine(const QStringList &lLine);
 
 	protected:

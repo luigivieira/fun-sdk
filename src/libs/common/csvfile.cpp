@@ -19,6 +19,7 @@
 
 #include "csvfile.h"
 #include <QDebug>
+#include <QRegularExpression>
 
 // +-----------------------------------------------------------
 fsdk::CSVFile::CSVFile(const QString &sFilename, const QString &sFieldSeparator, const QString &sTextDelimiter, QTextCodec *pCodec):
@@ -39,15 +40,27 @@ QStringList fsdk::CSVFile::readLine(QTextStream &oReader)
 	enum Scope { InLine, InField };
 	Scope eScope = InLine;
 
+	// Use a regular expression to consider exactly 1 ocurrence
+	// of the text delimiter, in order to allow double ocurrences
+	// as "escape" ocurrences (for instance, considering the character
+	// '"' as the delimiter, the contents of field "aa""aa" are: [aa""aa]).
+	QRegularExpression oSingleDelimiter(QString("(?<!%1)%2(?!%3)").arg(m_sTextDelimiter, m_sTextDelimiter, m_sTextDelimiter));
+
 	QStringList lLine;
 	QString sLine, sField;
-	int iPos;
+	int iPosDel, iPosSep;
 	
 	while(!oReader.atEnd())
 	{
 		sLine = oReader.readLine();
-		sLine += QString("\n"); // QTextStream strips out the new line, needed in this algorithm
 	
+		// Since the call to oReader.readLine strips all "\n" from the input,
+		// in case the line is empty but we are processing a field, this line
+		// can not be ignored (because it belongs to the contents of the multiline
+		// field!).
+		if(sLine.isEmpty() && eScope == InField)
+			sLine = QString("\n");
+
 		while(!sLine.isEmpty())
 		{
 			switch(eScope)
@@ -59,29 +72,56 @@ QStringList fsdk::CSVFile::readLine(QTextStream &oReader)
 					// handle its reading as a text field
 					if(sLine.startsWith(m_sTextDelimiter))
 					{
-						// Get the position of the second delimiter after the first one
-						iPos = sLine.indexOf(m_sTextDelimiter, m_sTextDelimiter.length());
+						// Get the position of the ending delimiter after the starting one
+						iPosDel = sLine.indexOf(oSingleDelimiter, m_sTextDelimiter.length());
 
-						// If the second delimiter is not found, it means
+						// If the ending delimiter is not found, it means
 						// that this is a multiline field (i.e. that includes new
 						// line characters). So, save its contents and keep reading
 						// it in next line(s).
-						if(iPos == -1)
+						if(iPosDel == -1)
 						{
 							eScope = InField;
-							sField = sLine.mid(m_sTextDelimiter.length());
+							sField = sLine.mid(m_sTextDelimiter.length()) + QString("\n");
 							sLine = "";
+						}
+
+						// Ending delimiter found: process just that field until the next
+						// field separator (observation: any data between the ending delimiter
+						// and the next field separator or end-of-line are simply ignored, since
+						// this is a format error).
+						else
+						{
+							lLine.append(sLine.mid(m_sTextDelimiter.length(), iPosDel - m_sTextDelimiter.length()));
+							iPosSep = sLine.indexOf(m_sFieldSeparator, iPosDel + m_sTextDelimiter.length());
+							if(iPosSep == -1)
+								sLine = "";
+							else
+								sLine = sLine.mid(iPosSep + m_sFieldSeparator.length());
 						}
 					}
 
-					// No field starting with text delimiter in this line,
-					// so process fields normally: that is, split the line
-					// based on the field separator and add it to the
-					// return list.
+					// The next field in line does not start with text delimiter.
+					// So, process the field normally: that is, find the next
+					// field separator, extract it and add to the list
 					else
 					{
-						lLine.append(sLine.replace("\n", "").split(m_sFieldSeparator));
-						sLine = "";
+						// Get the position of the next field separator
+						iPosSep = sLine.indexOf(m_sFieldSeparator);
+
+						// If no next separator, this is the last field in line
+						if(iPosSep == -1)
+						{
+							lLine.append(sLine);
+							sLine = "";
+						}
+
+						// Otherwise, extract just that field
+						else
+						{
+							lLine.append(sLine.mid(0, iPosSep));
+							sLine = sLine.mid(iPosSep + m_sFieldSeparator.length());
+						}
 					}
 					break;
 
@@ -89,27 +129,38 @@ QStringList fsdk::CSVFile::readLine(QTextStream &oReader)
 				// (i.e. a field delimited by the configured text delimiter)
 				case InField:
 
-					// Get the position of the second delimiter in the new line
-					iPos = sLine.indexOf(m_sTextDelimiter);
+					// Get the position of the ending delimiter in the new line
+					iPosDel = sLine.indexOf(oSingleDelimiter);
 
-					// If the second delimiter is not found, it means
+					// If the ending delimiter is not found, it means
 					// that the multiline field continues with more new lines.
 					// So, save its contents and keep on reading!
-					if(iPos == -1)
+					if(iPosDel == -1)
 					{
-						sField += sLine.mid(m_sTextDelimiter.length());
+						sField += sLine;
+						if(sLine != QString("\n"))
+							sField += QString("\n");
 						sLine = "";
 					}
 
-					// The second delimiter has been found!
+					// The ending delimiter has been found!
 					// Add the field contents to the return list and
-					// go back to the line processing scope to keep processing.
+					// go back to the line processing scope. Again,
+					// any content existing between the ending delimiter
+					// and the next field separator or end-of-line is ignored
+					// (format error).
 					else
 					{
-						sField += sLine.mid(0, iPos);
-						sLine = sLine.mid(iPos + 1);
+						sField += sLine.mid(0, iPosDel);
 						lLine.append(sField);
 						sField = "";
+
+						iPosSep = sLine.indexOf(m_sFieldSeparator, iPosDel + m_sTextDelimiter.length());
+						if(iPosSep == -1)
+							sLine = "";
+						else
+							sLine = sLine.mid(iPosSep + m_sFieldSeparator.length());
+
 						eScope = InLine;
 					}
 					break;				
@@ -178,10 +229,14 @@ bool fsdk::CSVFile::write()
 	for(int i = 0; i < m_lHeader.count(); i++)
 	{
 		QString sHeaderLabel = m_lHeader[i];
-		if(sHeaderLabel.contains(m_sFieldSeparator) || sHeaderLabel.contains("\n"))
+
+		// Enclose the header with the text delimiter if it is multiline or
+		// contains the field separator or text delimiter themselves.
+		if(sHeaderLabel.contains("\n") || sHeaderLabel.contains(m_sFieldSeparator) || sHeaderLabel.contains(m_sTextDelimiter))
 			oWriter << m_sTextDelimiter << sHeaderLabel << m_sTextDelimiter;
 		else
 			oWriter << sHeaderLabel;
+
 		if(i < m_lHeader.count() - 1)
 			oWriter << m_sFieldSeparator;
 		else
@@ -193,10 +248,14 @@ bool fsdk::CSVFile::write()
 		for(int i = 0; i < lLine.count(); i++)
 		{
 			QString sField = lLine[i];
-			if(sField.contains(m_sFieldSeparator) || sField.contains("\n"))
+
+			// Enclose the field with the text delimiter if it is multiline or
+			// contains the field separator or text delimiter themselves.
+			if(sField.contains("\n") || sField.contains(m_sFieldSeparator) || sField.contains(m_sTextDelimiter))
 				oWriter << m_sTextDelimiter << sField << m_sTextDelimiter;
 			else
 				oWriter << sField;
+
 			if(i < lLine.count() - 1)
 				oWriter << m_sFieldSeparator;
 			else
@@ -231,6 +290,12 @@ QStringList& fsdk::CSVFile::header()
 QStringList& fsdk::CSVFile::line(const int iLine)
 {
 	return m_lLines[iLine];
+}
+
+// +-----------------------------------------------------------
+QList<QStringList>& fsdk::CSVFile::lines()
+{
+	return m_lLines;
 }
 
 // +-----------------------------------------------------------
