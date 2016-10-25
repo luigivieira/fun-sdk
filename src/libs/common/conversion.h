@@ -27,7 +27,7 @@
 namespace fsdk
 {
 	/**
-	 * Useful conversion methods.
+	 * Useful conversion functions.
 	 */
 	class SHARED_LIB_EXPORT Conversion
 	{
