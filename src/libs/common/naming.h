@@ -38,7 +38,54 @@ namespace fsdk
 
 	public:
 		
-		static bool wildcardListing(const QString &sSourceWildcard, const QString &sTargetWildcard, QMap<QString, QString> &mMatchedListing);
+		enum WildcardListingReturn
+		{
+			/** The source wildcard is invalid. */
+			InvalidSourceWildcard,
+
+			/** The target wildcard is invalid. */
+			InvalidTargetWildcard,
+
+			/** The source and target wildcards are not the same. */
+			DifferentWildcards,
+
+			/** The source wildcard did not result in any existing file. */
+			EmptySourceListing,
+
+			/** The method concluded ok and the listing was produced. */
+			ListingOk
+		};
+
+		/**
+		 * List existing files according to a given source wildcard
+		 * and produce new names according to the given target wildcard.
+		 * The wildcards allowed follow the rules of QRegExp wildcard matching
+		 * (http://doc.qt.io/qt-5/qregexp.html#wildcard-matching):
+		 * 
+		 *     'c' Any character represents itself apart from those
+		 *         mentioned below. Thus c matches the character 'c'.
+         *     '?' Matches any single character. It is the same as '.' in
+		 *         full regexps.
+         *     '*' Matches zero or more of any characters. It is the same
+		 *         as '.*' in full regexps.
+         *     '[...]' Sets of characters can be represented in square brackets,
+		 *       similar to full regexps. Within the character class, like
+		 *       outside, backslash has no special meaning.
+		 *
+		 * @param sSourceWildcard Path and name of the source file, with wildcards
+		 * only in the filename part. This mask will be used to list the existing
+		 * files in disk and collected their names.
+		 * @param sTargetWildcard Path and name of the target file, with wildcards
+		 * only in the filename part. This mask will be used to create the new names
+		 * based on the wildcard mask and the rest. The wildcard mask in this argument
+		 * must match exactly the wildcard mask in the sSourceWildcard argument. All
+		 * other characters can be anything.
+		 * @param mMatchedListing QMap<QString, QString> that maps the names of the
+		 * files listed based on the sSourceWildcard to the names of the files that
+		 * can be created based on the sTargetWildcard.
+		 * @return 
+		 */
+		static WildcardListingReturn wildcardListing(const QString &sSourceWildcard, const QString &sTargetWildcard, QMap<QString, QString> &mMatchedListing);
 
 
 	};
