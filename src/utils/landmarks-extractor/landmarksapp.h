@@ -23,6 +23,8 @@
 #include "application.h"
 #include "landmarksextractiontask.h"
 #include "landmarksdata.h"
+#include <QMap>
+#include <QList>
 
 namespace fsdk
 {
@@ -114,16 +116,22 @@ namespace fsdk
 		 */
 		void taskFinished(const QString &sVideoFile, const QVariant &vData);
 
+	protected:
+
+		bool confirmOverwrite(const QString sCSVFilename, bool &bAutoConfirm);
+
+		bool confirmWritable(const QString sCSVFilename, bool &bAutoIgnore, bool &bCancel);
+
+		fsdk::LandmarksExtractionTask* createTask(const QString sVideoFile);
+		void deleteTask(fsdk::LandmarksExtractionTask* pTask);
+
 	private:
 
-		/** Video file to process. */
-		QString m_sVideoFile;
+		/** Files to be used by the tasks (video to read x csv file to produce). */
+		QMap<QString, QString> m_mTaskFiles;
 
-		/** CSV file to create with the landmarks data. */
-		QString m_sCSVFile;
-
-		/** Task in execution. */
-		LandmarksExtractionTask *m_pTask;
+		/** List of tasks in execution. */
+		QList<LandmarksExtractionTask*> m_lTasks;
 	};
 }
 

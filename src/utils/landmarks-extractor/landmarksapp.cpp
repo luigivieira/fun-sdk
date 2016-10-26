@@ -25,6 +25,15 @@
 #include <QDir>
 #include <QThreadPool>
 #include <QRegExp>
+#include "naming.h"
+#include <QRegularExpression>
+
+// To allow using _getch()/getch() for reading the overwrite confirmation answer
+#ifdef WIN32
+#include <conio.h>
+#else
+#include <curses.h>
+#endif
 
 // +-----------------------------------------------------------
 fsdk::LandmarksApp::LandmarksApp(int &argc, char **argv, const QString &sOrgName, const QString &sOrgDomain, const QString &sAppName, const QString &sAppVersion, const bool bUseSettings):
@@ -50,13 +59,13 @@ fsdk::LandmarksApp::CommandLineParseResult fsdk::LandmarksApp::parseCommandLine(
 
 	// Input video file option
 	oParser.addPositionalArgument("video file",
-		tr("Video file to use for landmark extraction."),
+		tr("Video file (or wildcard mask) to use for landmark extraction."),
 		tr("<video file>")
 	);
 
 	// Ouutput CSV file option
 	oParser.addPositionalArgument("csv file",
-		tr("CSV file to create with the landmarks extracted."),
+		tr("CSV file (or wildcard mask) to create with the landmarks extracted."),
 		tr("<csv file>")
 	);
 
@@ -116,7 +125,7 @@ fsdk::LandmarksApp::CommandLineParseResult fsdk::LandmarksApp::parseCommandLine(
 	}
 	setLogLevel(static_cast<LogLevel>(iLevel));
 
-	// Get the video and CSV files
+	// Get the video and CSV files/wildcards
 	switch(oParser.positionalArguments().count())
 	{
 		case 0:
@@ -143,77 +152,256 @@ fsdk::LandmarksApp::CommandLineParseResult fsdk::LandmarksApp::parseCommandLine(
 		}
 	}
 
-	m_sVideoFile = oParser.positionalArguments().at(0);
-	m_sCSVFile = oParser.positionalArguments().at(1);
+	// Map the video file/wildcard to the CSV file/wildcard
+	QString sVideoFile = oParser.positionalArguments().at(0);;
+	QString sCSVFile = oParser.positionalArguments().at(1);
+	m_mTaskFiles.clear();
+	Naming::WildcardListingReturn eRet = Naming::wildcardListing(sVideoFile, sCSVFile, m_mTaskFiles);
 
-	if(!QFile::exists(m_sVideoFile))
+	switch(eRet)
 	{
-		qCritical().noquote() << tr("video file does not exist: %1").arg(m_sVideoFile);
-		return CommandLineError;
-	}
-
-	if(QFile::exists(m_sCSVFile) && !oParser.isSet(oAutoConfirmOpt))
-	{
-		qCritical().noquote() << tr("CSV file already exists: %1. Do you want to overwrite it [y/n]?").arg(m_sCSVFile);
-		QTextStream oInput(stdin);
-		QString sInput = oInput.read(1).toUpper();
-		if(sInput != "Y")
+		case Naming::InvalidSourceWildcard:
+			qCritical().noquote() << tr("invalid wildcard for the video file: %1").arg(sVideoFile) << endl;
+			oParser.showHelp();
 			return CommandLineError;
+
+		case Naming::InvalidTargetWildcard:
+			qCritical().noquote() << tr("invalid wildcard for the CSV file: %1").arg(sCSVFile) << endl;
+			oParser.showHelp();
+			return CommandLineError;
+
+		case Naming::DifferentWildcards:
+			qCritical().noquote() << tr("the video and CSV wildcards must be the same: %1 != %2").arg(sVideoFile, sCSVFile) << endl;
+			oParser.showHelp();
+			return CommandLineError;
+
+		case Naming::FileNotExist:
+			qCritical().noquote() << tr("video file does not exist: %1").arg(sVideoFile) << endl;
+			oParser.showHelp();
+			return CommandLineError;
+
+		case Naming::EmptySourceListing:
+			qCritical().noquote() << tr("video file wildcard did not return any file: %1").arg(sVideoFile) << endl;
+			oParser.showHelp();
+			return CommandLineError;
+
+		case Naming::ListingOk:
+			break;
 	}
 
-	QFile oTest(m_sCSVFile);
-	if(!oTest.open(QIODevice::ReadWrite | QIODevice::Text))
+	// Check if existing CSV files should be overwriting
+	QStringList lIgnored;
+	bool bAutoConfirm = oParser.isSet(oAutoConfirmOpt);
+	QMap<QString, QString>::const_iterator it;
+	for(it = m_mTaskFiles.cbegin(); it != m_mTaskFiles.cend(); ++it)
 	{
-		qCritical().noquote() << tr("CSV file is not writable: %1").arg(m_sCSVFile);
-		return CommandLineError;
+		QString sVideoFile = it.key();
+		QString sCSVFile = it.value();
+
+		if(!confirmOverwrite(sCSVFile, bAutoConfirm))
+			lIgnored.append(sVideoFile);
 	}
+	// Remove the tasks that would overwrite a CSV file and were denied by the user
+	foreach(QString sIgnored, lIgnored)
+		m_mTaskFiles.remove(sIgnored);
+
+	// Check if remaining target CSV files can be opened with read-write access
+	bAutoConfirm = oParser.isSet(oAutoConfirmOpt);
+	lIgnored.clear();
+	for(it = m_mTaskFiles.cbegin(); it != m_mTaskFiles.cend(); ++it)
+	{
+		QString sVideoFile = it.key();
+		QString sCSVFile = it.value();
+
+		bool bCancel;
+		if(!confirmWritable(sCSVFile, bAutoConfirm, bCancel))
+		{
+			if(bCancel)
+			{
+				qCritical().noquote() << tr("cancelled due to not writable CSV files");
+				return CommandLineError;
+			}
+			else
+				lIgnored.append(sVideoFile);
+		}		
+	}
+	// Remove the tasks with CSV files that can not be opened with read-write access
+	foreach(QString sIgnored, lIgnored)
+	{
+		qDebug().noquote() << tr("Ignoring video file %1 because target CSV %2 is not writable").arg(sIgnored, m_mTaskFiles[sIgnored]);
+		m_mTaskFiles.remove(sIgnored);
+	}
+
+	// If no tasks remain, terminate with error
+	if(m_mTaskFiles.count() == 0)
+		return CommandLineError;
+
+	// Otherwise, go on! :)
+	return CommandLineOk;
+}
+
+// +-----------------------------------------------------------
+bool fsdk::LandmarksApp::confirmOverwrite(const QString sCSVFilename, bool &bAutoConfirm)
+{
+	// If the file does not exist, it certainly can be overwritten! :)
+	if(!QFile::exists(sCSVFilename))
+		return true;
+
+	// If autoconfirm is set, just confirm overwriting the file!
+	if(bAutoConfirm)
+		return true;
+
+	// Otherwise, ask the user
+	QString sNo = tr("(n)o");
+	QString sYes = tr("(y)es");
+	QString sAll = tr("yes to (a)ll");
+
+	qCritical().noquote() << tr("CSV file already exists: %1. Do you want to overwrite it [%2/%3/%4]?").arg(sCSVFilename, sNo, sYes, sAll);
+
+	QRegularExpression oRE("(?<=\\().(?=\\))");
+
+	QChar cNo = oRE.match(sNo).captured(0).at(0).toUpper();
+	QChar cYes = oRE.match(sYes).captured(0).at(0).toUpper();
+	QChar cAll = oRE.match(sAll).captured(0).at(0).toUpper();
+	QChar cAnswer;
+	while(true)
+	{
+#ifdef WIN32
+		cAnswer = QChar(_getch()).toUpper();
+#else
+		cAnswer = QChar(getch()).toUpper();
+#endif
+		if(cAnswer == cNo)
+			return false;
+		else if(cAnswer == cYes)
+			return true;			
+		else if(cAnswer == cAll)
+		{
+			bAutoConfirm = true;
+			return true;
+		}
+		else
+			std::cout << "\a"; // Send a "beep" to the console
+	}
+}
+
+// +-----------------------------------------------------------
+bool fsdk::LandmarksApp::confirmWritable(const QString sCSVFilename, bool &bAutoIgnore, bool &bCancel)
+{
+	bCancel = false;
+
+	QFile oTest(sCSVFilename);
+	bool bWritable = oTest.open(QIODevice::ReadWrite | QIODevice::Text);
 	oTest.close();
 
-	return CommandLineOk;
+	// If the file is writable, nothing to do!
+	if(bWritable)
+		return true;
+
+	// If autoignore is set, ignore the file!
+	if(bAutoIgnore)
+		return false;
+
+	// Otherwise, ask the user what to do
+	QString sCancel = tr("(c)ancel");
+	QString sIgnore = tr("(i)gnore");
+	QString sIgnoreAll = tr("ignore (a)ll");
+
+	qCritical().noquote() << tr("CSV file can not be created or opened for writing: %1. What do you want to do? [%2/%3/%4]?").arg(sCSVFilename, sCancel, sIgnore, sIgnoreAll);
+
+	QRegularExpression oRE("(?<=\\().(?=\\))");
+
+	QChar cCancel = oRE.match(sCancel).captured(0).at(0).toUpper();
+	QChar cIgnore = oRE.match(sIgnore).captured(0).at(0).toUpper();
+	QChar cIgnoreAll = oRE.match(sIgnoreAll).captured(0).at(0).toUpper();
+	QChar cAnswer;
+	while(true)
+	{
+#ifdef WIN32
+		cAnswer = QChar(_getch()).toUpper();
+#else
+		cAnswer = QChar(getch()).toUpper();
+#endif
+		if(cAnswer == cCancel)
+		{
+			bCancel = true;
+			return false;
+		}
+		else if(cAnswer == cIgnore)
+			return false;
+		else if(cAnswer == cIgnoreAll)
+		{
+			bAutoIgnore = true;
+			return false;
+		}
+		else
+			std::cout << "\a"; // Send a "beep" to the console
+	}
+}
+
+// +-----------------------------------------------------------
+fsdk::LandmarksExtractionTask* fsdk::LandmarksApp::createTask(const QString sVideoFile)
+{
+	LandmarksExtractionTask *pTask = new LandmarksExtractionTask(sVideoFile);
+	pTask->setAutoDelete(false);
+	m_lTasks.append(pTask);
+
+	connect(pTask, &LandmarksExtractionTask::taskError, this, &LandmarksApp::taskError);
+	connect(pTask, &LandmarksExtractionTask::taskProgress, this, &LandmarksApp::taskProgress);
+	connect(pTask, &LandmarksExtractionTask::taskFinished, this, &LandmarksApp::taskFinished);
+
+	return pTask;
+}
+
+// +-----------------------------------------------------------
+void fsdk::LandmarksApp::deleteTask(fsdk::LandmarksExtractionTask* pTask)
+{
+	m_lTasks.removeOne(pTask);
+
+	disconnect(pTask, &LandmarksExtractionTask::taskError, this, &LandmarksApp::taskError);
+	disconnect(pTask, &LandmarksExtractionTask::taskProgress, this, &LandmarksApp::taskProgress);
+	disconnect(pTask, &LandmarksExtractionTask::taskFinished, this, &LandmarksApp::taskFinished);
+
+	delete pTask;
 }
 
 // +-----------------------------------------------------------
 void fsdk::LandmarksApp::run()
 {
-	m_pTask = new LandmarksExtractionTask(m_sVideoFile);
-	m_pTask->setAutoDelete(false);
-
-	connect(m_pTask, &LandmarksExtractionTask::taskError, this, &LandmarksApp::taskError);
-	connect(m_pTask, &LandmarksExtractionTask::taskProgress, this, &LandmarksApp::taskProgress);
-	connect(m_pTask, &LandmarksExtractionTask::taskFinished, this, &LandmarksApp::taskFinished);
-		
-	qInfo().noquote() << tr("extraction of landmards from file %1 started.").arg(m_sVideoFile);
-	QThreadPool::globalInstance()->start(m_pTask);
+	QMap<QString, QString>::const_iterator it;
+	for(it = m_mTaskFiles.cbegin(); it != m_mTaskFiles.cend(); ++it)
+	{
+		QString sVideoFile = it.key();
+		LandmarksExtractionTask *pTask = createTask(sVideoFile);
+		QThreadPool::globalInstance()->start(pTask);
+	}
 }
 
 // +-----------------------------------------------------------
 void fsdk::LandmarksApp::taskError(const QString &sVideoFile, const ExtractionTask::ExtractionError eError)
 {
-	QThreadPool::globalInstance()->waitForDone();
-	disconnect(m_pTask, &LandmarksExtractionTask::taskError, this, &LandmarksApp::taskError);
-	disconnect(m_pTask, &LandmarksExtractionTask::taskProgress, this, &LandmarksApp::taskProgress);
-	disconnect(m_pTask, &LandmarksExtractionTask::taskFinished, this, &LandmarksApp::taskFinished);
-	delete m_pTask;
-
-	QFileInfo oFile;
-	QString sLandmarks;
-
 	switch(eError)
 	{
 		case LandmarksExtractionTask::InvalidVideoFile:
 			qCritical().noquote() << tr("error reading input video file %1").arg(sVideoFile);
-			exit(-1);
 			break;
 
 		case LandmarksExtractionTask::CancelRequested:
-			qDebug().noquote() << tr("task for file %1 was cancelled").arg(sVideoFile);
-			exit(-2);
+			qDebug().noquote() << tr("task for file file %1 was cancelled").arg(sVideoFile);
 			break;
 
 		default:
 			qCritical().noquote() << tr("unknown error while processing input video file %1").arg(sVideoFile);
-			exit(-3);
 			break;
+	}
+
+	LandmarksExtractionTask *pTask = static_cast<LandmarksExtractionTask*>(sender());
+	deleteTask(pTask);
+
+	if(m_lTasks.count() == 0)
+	{
+		QThreadPool::globalInstance()->waitForDone();
+		exit(-2);
 	}
 }
 
@@ -226,26 +414,33 @@ void fsdk::LandmarksApp::taskProgress(const QString &sVideoFile, int iProgress)
 // +-----------------------------------------------------------
 void fsdk::LandmarksApp::taskFinished(const QString &sVideoFile, const QVariant &vData)
 {
-	QThreadPool::globalInstance()->waitForDone();
-	disconnect(m_pTask, &LandmarksExtractionTask::taskError, this, &LandmarksApp::taskError);
-	disconnect(m_pTask, &LandmarksExtractionTask::taskProgress, this, &LandmarksApp::taskProgress);
-	disconnect(m_pTask, &LandmarksExtractionTask::taskFinished, this, &LandmarksApp::taskFinished);
-	delete m_pTask;
+	LandmarksExtractionTask *pTask = static_cast<LandmarksExtractionTask*>(sender());
+	deleteTask(pTask);
 
-	if(!vData.value<LandmarksData>().saveToCSV(m_sCSVFile))
+	int iRet;
+	QString sCSVFile = m_mTaskFiles[sVideoFile];
+
+	if(!vData.value<LandmarksData>().saveToCSV(sCSVFile))
 	{
-		qCritical().noquote() << tr("error writing to CSV file %1").arg(m_sCSVFile);
-		exit(-4);
+		qCritical().noquote() << tr("error writing to CSV file %1").arg(sCSVFile);
+		iRet = -3;
 	}
 	else
 	{
 		qInfo().noquote() << tr("extraction of landmards from file %1 concluded.").arg(sVideoFile);
-		exit(0);
+		iRet = 0;
+	}
+
+	if(m_lTasks.count() == 0)
+	{
+		QThreadPool::globalInstance()->waitForDone();
+		exit(iRet);
 	}
 }
 
 // +-----------------------------------------------------------
 void fsdk::LandmarksApp::cancel()
 {
-	m_pTask->cancel();
+	foreach(ExtractionTask *pTask, m_lTasks)
+		pTask->cancel();
 }

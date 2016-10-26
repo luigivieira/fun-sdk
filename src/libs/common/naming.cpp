@@ -18,7 +18,6 @@
  */
 
 #include "naming.h"
-#include <QDebug>
 #include <QRegularExpression>
 #include <QDir>
 #include <QFileInfo>
@@ -42,10 +41,7 @@ fsdk::Naming::WildcardListingReturn fsdk::Naming::wildcardListing(const QString 
 	QString sSourceFilePart = oSource.fileName();
 
 	if(oSourceDir.absolutePath().contains(oWildcardRE))
-	{
-		qDebug().noquote() << "Only the last part (file name) of the source argument can contain a wildcard: " << sSourceWildcard;
 		return InvalidSourceWildcard;
-	}
 
 	// Check if the target wildcard has a wildcard in the proper place
 	QFileInfo oTarget(sTargetWildcard);
@@ -53,25 +49,22 @@ fsdk::Naming::WildcardListingReturn fsdk::Naming::wildcardListing(const QString 
 	QString sTargetFilePart = oTarget.fileName();
 
 	if(oTargetDir.absolutePath().contains(oWildcardRE))
-	{
-		qDebug().noquote() << "Only the last part (file name) of the target argument can contain a wildcard: " << sTargetWildcard;
 		return InvalidTargetWildcard;
-	}
 
 	// Check if the wildcards are the same in both arguments
 	QRegularExpressionMatch oSourceMatch = oWildcardRE.match(sSourceFilePart);
 	QRegularExpressionMatch oTargetMatch = oWildcardRE.match(sTargetFilePart);
 
 	if(oSourceMatch.captured(0) != oTargetMatch.captured(0))
-	{
-		qDebug().noquote() << "The wildcards used in source and target files must be the same: [" << oSourceMatch.captured(0) << "] != [" << oTargetMatch.captured(0) << "]";
 		return DifferentWildcards;
-	}
 
 	// If no wildcard has indeed been provided, just replicate the target
 	// in the final listing and return ok
 	if(oSourceMatch.captured(0).isEmpty())
 	{
+		if(!QFile::exists(sSourceWildcard))
+			return FileNotExist;
+
 		mMatchedListing[sSourceWildcard] = sTargetWildcard;
 		return ListingOk;
 	}
@@ -79,10 +72,7 @@ fsdk::Naming::WildcardListingReturn fsdk::Naming::wildcardListing(const QString 
 	// Otherwise, filter all source files with the given source wildcard
 	oSourceDir.setNameFilters(QStringList(sSourceFilePart));
 	if(oSourceDir.entryInfoList().count() == 0)
-	{
-		qDebug().noquote() << "The source wildcard did not return any existing files: " << sSourceWildcard;
 		return EmptySourceListing;
-	}
 
 	// Process the mapping to the target names according to the parts under
 	// the wildcard in the source names

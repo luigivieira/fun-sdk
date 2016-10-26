@@ -38,6 +38,9 @@ namespace fsdk
 
 	public:
 		
+		/**
+		 * Possible returns of the wildcardListing() method.
+		 */
 		enum WildcardListingReturn
 		{
 			/** The source wildcard is invalid. */
@@ -48,6 +51,9 @@ namespace fsdk
 
 			/** The source and target wildcards are not the same. */
 			DifferentWildcards,
+
+			/** The source file (when no wildcard is used) does not exist. */
+			FileNotExist,
 
 			/** The source wildcard did not result in any existing file. */
 			EmptySourceListing,
@@ -83,11 +89,10 @@ namespace fsdk
 		 * @param mMatchedListing QMap<QString, QString> that maps the names of the
 		 * files listed based on the sSourceWildcard to the names of the files that
 		 * can be created based on the sTargetWildcard.
-		 * @return 
+		 * @return Value of the WildcardListingReturn with the return error or indication
+		 * of success.
 		 */
 		static WildcardListingReturn wildcardListing(const QString &sSourceWildcard, const QString &sTargetWildcard, QMap<QString, QString> &mMatchedListing);
-
-
 	};
 }
 
