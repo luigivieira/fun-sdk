@@ -115,9 +115,30 @@ namespace fsdk
 		 */
 		void clear();
 
+		/**
+		 * Saves the landmarks data to the given CSV file.
+		 * @param sFilename QString with the name of the file
+		 * to save the data to.
+		 * @return Boolean indicating if the saving was succesful
+		 * (true) or not (false).
+		 */
 		bool saveToCSV(const QString &sFilename) const;
 
+		/**
+		 * Reads the landmarks data from the given CSV file.
+		 * @param sFilename QString with the name of the file
+		 * to read the data from.
+		 * @return Boolean indicating if the reading was succesful
+		 * (true) or not (false).
+		 */
 		bool readFromCSV(const QString &sFilename);
+
+		/**
+		 * Gets the maximum number of landmarks stored in this
+		 * object.
+		 * @return Integer with the maximum number of landmarks.
+		 */
+		int landmarksCount() const;
 
 	private:
 
@@ -127,6 +148,9 @@ namespace fsdk
 		/** Mapping between frame number and tracking quality levels. */
 		QMap<int, float> m_mQualities;
 		
+		/** Number of landmarks used by the tracker. */
+		int m_iLandmarksCount;
+
 	};
 }
 

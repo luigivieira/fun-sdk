@@ -24,6 +24,7 @@
 fsdk::LandmarksData::LandmarksData()
 {
 	qRegisterMetaType<fsdk::LandmarksData>("fsdk::LandmarksData");
+	m_iLandmarksCount = 0;
 }
 
 // +-----------------------------------------------------------
@@ -31,6 +32,7 @@ fsdk::LandmarksData::LandmarksData(const LandmarksData& oOther)
 {
 	m_mLandmarks = oOther.m_mLandmarks;
 	m_mQualities = oOther.m_mQualities;
+	m_iLandmarksCount = oOther.m_iLandmarksCount;
 }
 
 // +-----------------------------------------------------------
@@ -73,6 +75,7 @@ void fsdk::LandmarksData::add(const int iFrame, const QList<QPoint> &lPoints, co
 {
 	m_mLandmarks[iFrame] = lPoints;
 	m_mQualities[iFrame] = fQuality;
+	m_iLandmarksCount = qMax(m_iLandmarksCount, lPoints.count());
 }
 
 // +-----------------------------------------------------------
@@ -80,6 +83,11 @@ void fsdk::LandmarksData::remove(const int iFrame)
 {
 	m_mLandmarks.remove(iFrame);
 	m_mQualities.remove(iFrame);
+
+	m_iLandmarksCount = 0;
+	QMap<int, QList<QPoint>>::const_iterator it;
+	for(it = m_mLandmarks.cbegin(); it != m_mLandmarks.cend(); ++it)
+		m_iLandmarksCount = qMax(m_iLandmarksCount, it.value().count());
 }
 
 // +-----------------------------------------------------------
@@ -87,6 +95,7 @@ void fsdk::LandmarksData::clear()
 {
 	m_mLandmarks.clear();
 	m_mQualities.clear();
+	m_iLandmarksCount = 0;
 }
 
 // +-----------------------------------------------------------
@@ -96,16 +105,14 @@ bool fsdk::LandmarksData::saveToCSV(const QString &sFilename) const
 	QStringList lLine;
 
 	// Add a header
-	lLine.append({ "Frame", "Quality" });
+	oData.header().append({ "Frame", "Quality" });
 
-	int iLandmarks = m_mLandmarks.count() > 0 ? m_mLandmarks[0].count() : 0;
 	QString sNum;
-	for(int i = 0; i < iLandmarks; i++)
+	for(int i = 0; i < m_iLandmarksCount; i++)
 	{
 		sNum = QString::number(i);
-		lLine.append({ QString("x%1").arg(sNum), QString("y%1").arg(sNum) });
+		oData.header().append({ QString("x%1").arg(sNum), QString("y%1").arg(sNum) });
 	}
-	oData.addLine(lLine);
 
 	// Add the data records
 	QMap<int, QList<QPoint>>::const_iterator it;
@@ -125,6 +132,12 @@ bool fsdk::LandmarksData::saveToCSV(const QString &sFilename) const
 bool fsdk::LandmarksData::readFromCSV(const QString &sFilename)
 {
 	return false;
+}
+
+// +-----------------------------------------------------------
+int fsdk::LandmarksData::landmarksCount() const
+{
+	return m_iLandmarksCount;
 }
 
 // +-----------------------------------------------------------

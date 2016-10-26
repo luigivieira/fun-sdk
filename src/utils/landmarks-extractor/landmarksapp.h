@@ -118,11 +118,46 @@ namespace fsdk
 
 	protected:
 
+		/**
+		 * Checks if the CSV file exists and, in that case, confirm with the user
+		 * if she wants to have the file overwritten.
+		 * @param sCSVFilename QString with the CSV file name to check.
+		 * @param bAutoConfirm Reference to a boolean indicating if the confirmation
+		 * to overwrite should be automatically accepted. This argument may be updated
+		 * according to the user answering "yes to all".
+		 * @return Boolean indicating if the file, if existing, should be overwritten
+		 * (true) or if the task should be ignored to keep the existing file (false).
+		 */
 		bool confirmOverwrite(const QString sCSVFilename, bool &bAutoConfirm);
 
+		/**
+		 * Checks if the CSV file can be created/updated and, if it can not, confirm
+		 * with the user what to do (cancel or ignore the task related to it).
+		 * @param sCSVFilename QString with the CSV file name to check.
+		 * @param bAutoConfirm Reference to a boolean indicating if the confirmation
+		 * to ignore should be automatically accepted. This argument may be updated
+		 * according to the user answering "ignore all".
+		 * @param bCancel Reference to a boolean that indicates if the user has opted
+		 * to cancel all tasks if one file can not be created/updated.
+		 * @return Boolean indicating if the file can be created/updated (true) or 
+		 * if it can not and should be ignored or all tasks cancelled (false).
+		 */
 		bool confirmWritable(const QString sCSVFilename, bool &bAutoIgnore, bool &bCancel);
 
-		fsdk::LandmarksExtractionTask* createTask(const QString sVideoFile);
+		/**
+		 * Creates a new task to extracts the landmarks from the given video file.
+		 * The task created can then be initiated directly (by invoking task->run())
+		 * or given to the QThreadPool to be executed in a different thread.
+		 * @param sVideoFile QString with the name of the file to process.
+		 * @return Instance of LandmarksExtractionTask with the new task created.
+		 */
+		LandmarksExtractionTask* createTask(const QString sVideoFile);
+
+		/**
+		 * Deletes the given task. The task MUST have been terminated already.
+		 * To cancel a task, use the task->cancel() method.
+		 * @param pTask Instance of LandmarksExtractionTask with the task to delete.
+		 */
 		void deleteTask(fsdk::LandmarksExtractionTask* pTask);
 
 	private:
