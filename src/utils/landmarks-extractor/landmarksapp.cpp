@@ -71,18 +71,26 @@ fsdk::LandmarksApp::CommandLineParseResult fsdk::LandmarksApp::parseCommandLine(
 
 	// Messages level option
 	QCommandLineOption oMsgLevelOpt(QStringList({"l", "level"}),
-		tr("Sets the level of the messages to display in range: \n"
-		   "1: only error messages (default)\n"
-		   "2: error and warning messages\n"
-		   "3: error, warning and info messages\n"
-		   "4: error, warning, info and debug messages\n"
-		), tr("1-4"), "1"
+		tr("Level of the messages to display, in range [1,4]: \n"
+		   "1: only error messages (default).\n"
+		   "2: error and warning messages.\n"
+		   "3: error, warning and info messages.\n"
+		   "4: error, warning, info and progress messages.\n"
+		), tr("value"), "1"
 	);
 	oParser.addOption(oMsgLevelOpt);
 
+	// Miminum quality for reset
+	QCommandLineOption oQualityLevelOpt(QStringList({ "q", "quality" }),
+		tr("Desired minimum tracking quality, in range [0,1] (defalt is 0.2). "
+		   "Higher values may yield better results, but decrease performance."
+		), tr("value"), "0.2"
+	);
+	oParser.addOption(oQualityLevelOpt);
+
 	// Automatic confirm overwrite option
 	QCommandLineOption oAutoConfirmOpt(QStringList({ "y", "yes" }),
-		tr("Automatically confirms the overwriting of the <csv file> if it already exists")
+		tr("Automatically confirms the overwriting of the <csv file> if it already exists.")
 	);
 	oParser.addOption(oAutoConfirmOpt);
 
@@ -116,14 +124,27 @@ fsdk::LandmarksApp::CommandLineParseResult fsdk::LandmarksApp::parseCommandLine(
 	}
 
 	// Get the requested message level
-	int iLevel = oParser.value(oMsgLevelOpt).toInt();
-	if(iLevel < Critical || iLevel > Debug)
+	QRegularExpression oRELevel("^[1-4]$");
+	bool bValid = oRELevel.match(oParser.value(oMsgLevelOpt)).hasMatch();
+	if(!bValid)
 	{
-		qCritical().noquote() << tr("invalid message level: %1").arg(iLevel) << endl;
+		qCritical().noquote() << tr("invalid message level: %1").arg(oParser.value(oMsgLevelOpt)) << endl;
 		oParser.showHelp();
 		return CommandLineError;
 	}
+	int iLevel = oParser.value(oMsgLevelOpt).toInt();
 	setLogLevel(static_cast<LogLevel>(iLevel));
+
+	// Get the quality level
+	QRegularExpression oREQuality("^0(\\.[0-9]+)?$|^1(\\.0)?$");
+	bValid = oREQuality.match(oParser.value(oQualityLevelOpt)).hasMatch();
+	if(!bValid)
+	{
+		qCritical().noquote() << tr("invalid minimum quality: %1").arg(oParser.value(oQualityLevelOpt)) << endl;
+		oParser.showHelp();
+		return CommandLineError;
+	}
+	m_fMinimumQuality = oParser.value(oQualityLevelOpt).toFloat();
 
 	// Get the video and CSV files/wildcards
 	switch(oParser.positionalArguments().count())
@@ -342,7 +363,7 @@ bool fsdk::LandmarksApp::confirmWritable(const QString sCSVFilename, bool &bAuto
 // +-----------------------------------------------------------
 fsdk::LandmarksExtractionTask* fsdk::LandmarksApp::createTask(const QString sVideoFile)
 {
-	LandmarksExtractionTask *pTask = new LandmarksExtractionTask(sVideoFile);
+	LandmarksExtractionTask *pTask = new LandmarksExtractionTask(sVideoFile, m_fMinimumQuality);
 	pTask->setAutoDelete(false);
 	m_lTasks.append(pTask);
 

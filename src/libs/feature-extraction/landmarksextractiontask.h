@@ -40,8 +40,12 @@ namespace fsdk
 		 * Class constructor.
 		 * @param sVideoFile QString with the path and name of the video
 		 * file to process.
+		 * @param fResetQuality Float with the minimum quality that the tracker
+		 * shall attempt to achieve, in range [0, 1]. During the tracking,
+		 * the tracker will automatically reset (i.e. redetect the face) if
+		 * the quality gets lower than this value. The default is 0.2 (20%).
 		 */
-		LandmarksExtractionTask(QString sVideoFile);
+		LandmarksExtractionTask(QString sVideoFile, float fResetQuality = 0.2f);
 
 	public slots:
 
@@ -51,6 +55,14 @@ namespace fsdk
 		 * executed directly if no multithreading is intended.
 		 */
 		void run();
+
+	private:
+
+		/**
+		 * Minimum ideal quality (i.e. the tracker will be reset whenever the
+		 * quality gets lower than this value).
+		 */
+		float m_fResetQuality;
 	};
 }
 

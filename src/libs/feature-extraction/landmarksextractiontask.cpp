@@ -22,8 +22,10 @@
 #include "csirofacetracker.h"
 
 // +-----------------------------------------------------------
-fsdk::LandmarksExtractionTask::LandmarksExtractionTask(QString sVideoFile): ExtractionTask(sVideoFile)
+fsdk::LandmarksExtractionTask::LandmarksExtractionTask(QString sVideoFile, float fResetQuality):
+	ExtractionTask(sVideoFile)
 {
+	m_fResetQuality = qMax(qMin(fResetQuality, 1.0f), 0.0f);	
 }
 
 // +-----------------------------------------------------------
@@ -45,9 +47,9 @@ void fsdk::LandmarksExtractionTask::run()
 		// Store the landmarks obtained in the map
 		oData.add(frameIndex(), oTracker.getLandmarks(), oTracker.getQuality());
 
-		// Reset the tracking quality if it is too low
+		// Reset the tracker if its quality gets lower than the configured value
 		// (it makes the whole process much slower, but yields better results)
-		if(oTracker.getQuality() <= 0.2)
+		if(oTracker.getQuality() < m_fResetQuality)
 			oTracker.reset();
 
 		// Indicate progress

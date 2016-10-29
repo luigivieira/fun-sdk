@@ -167,6 +167,9 @@ namespace fsdk
 
 		/** List of tasks in execution. */
 		QList<LandmarksExtractionTask*> m_lTasks;
+
+		/** Minimum ideal quality for the tracker. */
+		float m_fMinimumQuality;
 	};
 }
 
