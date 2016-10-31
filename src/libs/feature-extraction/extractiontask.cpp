@@ -30,23 +30,24 @@ fsdk::ExtractionTask::ExtractionTask(QString sInputFile)
 // +-----------------------------------------------------------
 bool fsdk::ExtractionTask::start()
 {
-	// Try to open the file as a video
-	if(!m_oCap.open(m_sInputFile.toStdString()))
+	// Try to open the file as an image
+	m_oImage = cv::imread(m_sInputFile.toStdString(), CV_LOAD_IMAGE_COLOR);
+	if(m_oImage.empty())
 	{
-		// If failed, try to open it as an image
-		m_oImage = cv::imread(m_sInputFile.toStdString(), CV_LOAD_IMAGE_COLOR);
-		if(m_oImage.empty())
+		// If failed, then try to open the file as a video
+		if(!m_oCap.open(m_sInputFile.toStdString()))
 		{
 			emit taskError(m_sInputFile, InvalidInputFile);
 			return false;
 		}
 		else
-			m_eInputFileType = ImageFile;
+			m_eInputFileType = VideoFile;
 	}
 	else
-		m_eInputFileType = VideoFile;
+		m_eInputFileType = ImageFile;
+		
 	m_iCurrentFrame = -1;
-	setProgress(0);
+	m_iProgress = 0;
 	return true;
 }
 
