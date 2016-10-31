@@ -67,23 +67,22 @@ void fsdk::PlayerWindow::landmarksFileChanged(const QString sFileName)
 	else
 	{
 		CSVFile oFile(sFileName);
-		if(!oFile.load())
+		if(!oFile.read())
 		{
 			qWarning().noquote() << "Could not load the landmarks CSV file: " << sFileName;
 			return;
 		}
 
-		QList<QStringList> lRows = oFile.rows();
-		oFile.close();
+		QList<QStringList> lLines = oFile.lines();
 
 		QMap<qint64, QList<QPoint>> mData;
-		foreach(QStringList lRow, lRows)
+		foreach(QStringList lLine, lLines)
 		{
-			int iFrame = lRow[0].toInt();
+			int iFrame = lLine[0].toInt();
 			QList<QPoint> lData;
-			for(int i = 2; i < lRow.count() - 1; i += 2)
+			for(int i = 2; i < lLine.count() - 1; i += 2)
 			{
-				QPoint oMark(lRow[i].toInt(), lRow[i + 1].toInt());
+				QPoint oMark(lLine[i].toInt(), lLine[i + 1].toInt());
 				lData.push_back(oMark);
 			}
 			mData[iFrame] = lData;
