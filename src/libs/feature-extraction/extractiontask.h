@@ -30,7 +30,7 @@ using namespace cv;
 namespace fsdk
 {
 	/**
-	 * Runnable object to allow performing feature extraction tasks from video
+	 * Runnable object to allow performing feature extraction tasks from image/video
 	 * files in a multithreaded fashion. This is the abstract base class, to be
 	 * inherited by specific implementations of different feature extractors.
 	 */
@@ -40,10 +40,10 @@ namespace fsdk
 	public:
 		/**
 		 * Class constructor.
-		 * @param sVideoFile QString with the path and name of the video
+		 * @param sInputFile QString with the path and name of the image/video
 		 * file to process.
 		 */
-		ExtractionTask(QString sVideoFile);
+		ExtractionTask(QString sInputFile);
 
 		/**
 		 * Enumeration values indicating the different extraction errors
@@ -51,8 +51,8 @@ namespace fsdk
 		 */
 		enum ExtractionError
 		{
-			/** Indicates that the video file could not be read. */
-			InvalidVideoFile,
+			/** Indicates that the input file could not be read. */
+			InvalidInputFile,
 
 			/** Indicates that a cancellation was requested. */
 			CancelRequested,
@@ -63,13 +63,16 @@ namespace fsdk
 		Q_ENUM(ExtractionError)
 
 		/**
-		 * Gets the number of frames in the video being processed.
+		 * Gets the number of frames in the input file being processed.
+		 * This function always return 1 for image files (since they have
+		 * only one "frame").
 		 */
 		int frameCount() const;
 
 		/**
-		 * Gets the index of the current frame in processing.
-		 * @return Integer with the index of the current frame in the video
+		 * Gets the index of the current frame in processing. This funciton
+		 * always return 0 for image files (since they have only one "frame").
+		 * @return Integer with the index of the current frame in a video
 		 * in range [0, frameCount()], or -1 if the video is not opened, no
 		 * frame has been grabbed (i.e. nextFrame() has not been called yet)
 		 * or if the processing reached the video's end.
@@ -86,7 +89,7 @@ namespace fsdk
 		Mat& frame();
 
 		/**
-		 * Grabs the next frame from the video to process.
+		 * Grabs the next frame from the input file to process.
 		 * @return OpenCV's Mat with the frame data. It can be an empty
 		 * Mat if there is no frame available (see the documentation for
 		 * the method frameIndex()). To check if it is an empty Mat, use
@@ -114,29 +117,29 @@ namespace fsdk
 
 		/**
 		 * Indicates if an error happened during the extraction of features.
-		 * @param sVideoFile QString with the name of the video file that was processed.
+		 * @param sInputFile QString with the name of the image/video file that was processed.
 		 * @param eError Value of the ExtractionError enumeration indicating
 		 * which error happened.
 		 */
-		void taskError(const QString &sVideoFile, const ExtractionTask::ExtractionError eError);
+		void taskError(const QString &sInputFile, const ExtractionTask::ExtractionError eError);
 
 		/**
 		 * Indicates the progress of the feature extraction.
-		 * @param sVideoFile QString with the name of the video file that is being processed.
+		 * @param sInputFile QString with the name of the image/video file that is being processed.
 		 * @param iPercent Integer value in range [0, 100] indicating
 		 * how much of the extraction has been concluded.
 		 */
-		void taskProgress(const QString &sVideoFile, const int iProgress);
+		void taskProgress(const QString &sInputFile, const int iProgress);
 
 		/**
 		 * Indicates that the feature extraction has been concluded.
-		 * @param sVideoFile QString with the name of the video file
+		 * @param sInputFile QString with the name of the image/video file
 		 * that was processed.
 		 * @param vData QVariant object with the data of the features
 		 * extracted from the video file. The contents will depend on
 		 * the implementation used by the specific extractor.
 		 */
-		void taskFinished(const QString &sVideoFile, const QVariant &vData);
+		void taskFinished(const QString &sInputFile, const QVariant &vData);
 
 	protected:
 
@@ -179,16 +182,16 @@ namespace fsdk
 		 * by this method, hence the method run() can simply terminate after
 		 * calling this method.
 		 * @param vData QVariant object with the data of the features
-		 * extracted from the video file. The contents will depend on
+		 * extracted from the input file. The contents will depend on
 		 * the implementation used by the specific extractor.
 		 */
 		void end(const QVariant &vData);
 
 		/**
-		 * Queries the video file assigned to the task.
-		 * @return QString with the name of the video file.
+		 * Queries the name of the input file assigned to the task.
+		 * @return QString with the name of the input file.
 		 */
-		QString videoFile() const;
+		QString inputFile() const;
 
 		/**
 		 * Gets the progress of the task.
@@ -204,11 +207,27 @@ namespace fsdk
 
 	private:
 
-		/** OpenCV's object used to read the video files. */
+		/** Define the possible types of the input file. */
+		enum InputFileType
+		{
+			/** The input file is an image file. */
+			ImageFile,
+
+			/** The input file is a video file. */
+			VideoFile
+		};
+
+		/** Type of the input file. */
+		InputFileType m_eInputFileType;
+
+		/** OpenCV's object used to read video files. */
 		VideoCapture m_oCap;
 
-		/** Name of the video file to process. */
-		QString m_sVideoFile;
+		/** OpenCV's object used to read image files. */
+		Mat m_oImage;
+
+		/** Name of the input file to process. */
+		QString m_sInputFile;
 
 		/** Atomic integer to control the cancel request in a thread-safe way. */
 		QAtomicInt m_oCancelRequested;
@@ -216,10 +235,10 @@ namespace fsdk
 		/** Current progress in range [0, 100]. */
 		int m_iProgress;
 
-		/** Data of the current frame being processed in the video. */
+		/** Data of the current frame being processed in the input file. */
 		Mat m_oCurrentFrame;
 
-		/** Index of the current frame being processed in the video. */
+		/** Index of the current frame being processed in the input file. */
 		int m_iCurrentFrame;
 	};
 }

@@ -95,26 +95,26 @@ namespace fsdk
 
 		/**
 		 * Captures the signal indicating an error in one of the tasks.
-		 * @param sVideoFile QString with the name of the video file of the task.
+		 * @param sInputFile QString with the name of the image/video file of the task.
 		 * @param eError Value of the enumeration FeatureExtractor::ExtractionError
 		 * with the error tha happened.
 		 */
-		void taskError(const QString &sVideoFile, const ExtractionTask::ExtractionError eError);
+		void taskError(const QString &sInputFile, const ExtractionTask::ExtractionError eError);
 
 		/**
 		 * Captures the signal indicating the progress of one of the tasks.
-		 * @param sVideoFile QString with the name of the video file of the task.
+		 * @param sInputFile QString with the name of the image/video file of the task.
 		 * @param iProgress Integer value in range [0, 100] with the progress percent.
 		 */
-		void taskProgress(const QString &sVideoFile, int iProgress);
+		void taskProgress(const QString &sInputFile, int iProgress);
 
 		/**
 		 * Captures the signal indicating the conclusion of one of the tasks.
-		 * @param sVideoFile QString with the name of the video file of the task.
+		 * @param sInputFile QString with the name of the image/video file of the task.
 		 * @param vData QVariant object with the LandmarksData extracted from the
-		 * video file.
+		 * input file.
 		 */
-		void taskFinished(const QString &sVideoFile, const QVariant &vData);
+		void taskFinished(const QString &sInputFile, const QVariant &vData);
 
 	protected:
 
@@ -145,13 +145,13 @@ namespace fsdk
 		bool confirmWritable(const QString sCSVFilename, bool &bAutoIgnore, bool &bCancel);
 
 		/**
-		 * Creates a new task to extracts the landmarks from the given video file.
+		 * Creates a new task to extracts the landmarks from the given input file.
 		 * The task created can then be initiated directly (by invoking task->run())
 		 * or given to the QThreadPool to be executed in a different thread.
-		 * @param sVideoFile QString with the name of the file to process.
+		 * @param sInputFile QString with the name of the file to process.
 		 * @return Instance of LandmarksExtractionTask with the new task created.
 		 */
-		LandmarksExtractionTask* createTask(const QString sVideoFile);
+		LandmarksExtractionTask* createTask(const QString sInputFile);
 
 		/**
 		 * Deletes the given task. The task MUST have been terminated already.
@@ -162,7 +162,7 @@ namespace fsdk
 
 	private:
 
-		/** Files to be used by the tasks (video to read x csv file to produce). */
+		/** Files to be used by the tasks (input file to read x csv file to produce). */
 		QMap<QString, QString> m_mTaskFiles;
 
 		/** List of tasks in execution. */

@@ -22,8 +22,8 @@
 #include "csirofacetracker.h"
 
 // +-----------------------------------------------------------
-fsdk::LandmarksExtractionTask::LandmarksExtractionTask(QString sVideoFile, float fResetQuality):
-	ExtractionTask(sVideoFile)
+fsdk::LandmarksExtractionTask::LandmarksExtractionTask(QString sInputFile, float fResetQuality):
+	ExtractionTask(sInputFile)
 {
 	m_fResetQuality = qMax(qMin(fResetQuality, 1.0f), 0.0f);	
 }
@@ -35,13 +35,14 @@ void fsdk::LandmarksExtractionTask::run()
 	Mat oFrame;
 	LandmarksData oData;
 
-	// Start the task
-	start();
+	// Start the task (if start fails, it will emit taskError())
+	if(!start())
+		return;
 	
 	// Process while not cancelled and there are frames
 	while(!isCancelled() && !nextFrame().empty())
 	{
-		// Track the face in current video frame
+		// Track the face in current image/video frame
 		oTracker.track(frame());
 
 		// Store the landmarks obtained in the map

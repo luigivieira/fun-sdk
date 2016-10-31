@@ -21,20 +21,30 @@
 #include <QDebug>
 
 // +-----------------------------------------------------------
-fsdk::ExtractionTask::ExtractionTask(QString sVideoFile)
+fsdk::ExtractionTask::ExtractionTask(QString sInputFile)
 {
 	qRegisterMetaType<ExtractionTask::ExtractionError>("ExtractionTask::ExtractionError");
-	m_sVideoFile = sVideoFile;
+	m_sInputFile = sInputFile;
 }
 
 // +-----------------------------------------------------------
 bool fsdk::ExtractionTask::start()
 {
-	if(!m_oCap.open(m_sVideoFile.toStdString()))
+	// Try to open the file as a video
+	if(!m_oCap.open(m_sInputFile.toStdString()))
 	{
-		emit taskError(m_sVideoFile, InvalidVideoFile);
-		return false;
+		// If failed, try to open it as an image
+		m_oImage = cv::imread(m_sInputFile.toStdString(), CV_LOAD_IMAGE_COLOR);
+		if(m_oImage.empty())
+		{
+			emit taskError(m_sInputFile, InvalidInputFile);
+			return false;
+		}
+		else
+			m_eInputFileType = ImageFile;
 	}
+	else
+		m_eInputFileType = VideoFile;
 	m_iCurrentFrame = -1;
 	setProgress(0);
 	return true;
@@ -44,14 +54,15 @@ bool fsdk::ExtractionTask::start()
 void fsdk::ExtractionTask::end(const ExtractionTask::ExtractionError &eError)
 {
 	m_oCap.release();
-	emit taskError(m_sVideoFile, eError);
+	emit taskError(m_sInputFile, eError);
 }
 
 // +-----------------------------------------------------------
 void fsdk::ExtractionTask::end(const QVariant &vData)
 {
+	setProgress(100);
 	m_oCap.release();
-	emit taskFinished(m_sVideoFile, vData);
+	emit taskFinished(m_sInputFile, vData);
 }
 
 // +-----------------------------------------------------------
@@ -67,9 +78,9 @@ bool fsdk::ExtractionTask::isCancelled()
 }
 
 // +-----------------------------------------------------------
-QString fsdk::ExtractionTask::videoFile() const
+QString fsdk::ExtractionTask::inputFile() const
 {
-	return m_sVideoFile;
+	return m_sInputFile;
 }
 
 // +-----------------------------------------------------------
@@ -84,14 +95,17 @@ void fsdk::ExtractionTask::setProgress(int iProgress)
 	if(iProgress != m_iProgress)
 	{
 		m_iProgress = qMin(qMax(iProgress, 0), 100);
-		emit taskProgress(m_sVideoFile, iProgress);
+		emit taskProgress(m_sInputFile, iProgress);
 	}
 }
 
 // +-----------------------------------------------------------
 int fsdk::ExtractionTask::frameCount() const
 {
-	return static_cast<const VideoCapture>(m_oCap).get(CV_CAP_PROP_FRAME_COUNT);
+	if(m_eInputFileType == VideoFile)
+		return static_cast<const VideoCapture>(m_oCap).get(CV_CAP_PROP_FRAME_COUNT);
+	else
+		return 1;
 }
 
 // +-----------------------------------------------------------
@@ -109,10 +123,30 @@ Mat& fsdk::ExtractionTask::frame()
 // +-----------------------------------------------------------
 Mat& fsdk::ExtractionTask::nextFrame()
 {
-	m_oCap >> m_oCurrentFrame;
-	if(!m_oCurrentFrame.empty())
-		m_iCurrentFrame++;
+	if(m_eInputFileType == VideoFile)
+	{
+		m_oCap >> m_oCurrentFrame;
+		if(!m_oCurrentFrame.empty())
+			m_iCurrentFrame++;
+		else
+			m_iCurrentFrame = -1;
+	}
 	else
-		m_iCurrentFrame = -1;
+	{
+		// Simulate reading from the image frame by frame
+		// (to allow using the same interface for reading both video and image files
+		// in the task classes)
+		if(m_iCurrentFrame == -1)
+		{
+			m_oCurrentFrame = m_oImage;
+			m_iCurrentFrame = 0;
+		}
+		else
+		{
+			m_oCurrentFrame = Mat();
+			m_iCurrentFrame = -1;
+		}
+	}
+
 	return m_oCurrentFrame;
 }
