@@ -103,7 +103,7 @@ void fsdk::GaborKernel::rebuildKernel()
 			m_oRealComp.at<float>(y + iHalfSize, x + iHalfSize) = (float)(dGauss * dRealSignal);
 			m_oImaginaryComp.at<float>(y + iHalfSize, x + iHalfSize) = (float)(dGauss * dImagSignal);
 		}
-	}
+	}	
 }
 
 // +-----------------------------------------------------------
@@ -116,13 +116,13 @@ Mat fsdk::GaborKernel::data(const KernelComponent eComp)
 }
 
 // +-----------------------------------------------------------
-Mat fsdk::GaborKernel::buildThumbnail(const int iSize, const KernelComponent eComp) const
+Mat fsdk::GaborKernel::buildThumbnail(const int iSize, const KernelComponent eComp, const cv::Scalar oBkgColor) const
 {
 	// Get a clonned image of the kernel
 	Mat oPart = (eComp == RealComp ? m_oRealComp : m_oImaginaryComp).clone();
 
 	// "Normalize" the kernel image so -1 becomes 0 (black), 0 becomes 128 (gray)
-	// and 1 becomes 255 (white) 
+	// and 1 becomes 255 (white) - needed to make the kernel image more visible
 	oPart += 1.0;
 	oPart *= 128.0;
 
@@ -131,6 +131,7 @@ Mat fsdk::GaborKernel::buildThumbnail(const int iSize, const KernelComponent eCo
 	{
 		Mat oRet;
 		oPart.convertTo(oRet, CV_8UC1);
+		rectangle(oRet, Rect(0, 0, iSize, iSize), Scalar(0));
 		return oRet;
 	}
 
@@ -144,8 +145,8 @@ Mat fsdk::GaborKernel::buildThumbnail(const int iSize, const KernelComponent eCo
 		// center the kernel image on the return image
 		if(iSize > oPart.size().width)
 		{
-			// Set with a gray background
-			oRet = cv::Scalar(128);
+			// Set the background color
+			oRet = oBkgColor;
 
 			// Copy the kernel image to the center of the return image
 			Rect oTgtArea = Rect(iSize / 2 - oPart.size().width / 2, iSize / 2 - oPart.size().height / 2, oPart.size().width, oPart.size().height);
@@ -158,6 +159,7 @@ Mat fsdk::GaborKernel::buildThumbnail(const int iSize, const KernelComponent eCo
 			oPart(oSrcArea).copyTo(oRet);
 		}
 
+		rectangle(oRet, Rect(0, 0, iSize, iSize), Scalar(0));
 		return oRet;
 	}
 }

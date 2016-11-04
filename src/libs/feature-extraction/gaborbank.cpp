@@ -72,7 +72,7 @@ fsdk::GaborBank& fsdk::GaborBank::operator=(const GaborBank &oOther)
 }
 
 // +-----------------------------------------------------------
-Mat fsdk::GaborBank::buildThumbnail(const int iThumbSize, const GaborKernel::KernelComponent eComp) const
+Mat fsdk::GaborBank::buildThumbnail(const int iThumbSize, const GaborKernel::KernelComponent eComp, const cv::Scalar oBkgColor) const
 {
 	Mat oRet, oThumb;
 	Size oSize(iThumbSize * m_lOrientations.count(), iThumbSize * m_lWavelengths.count());
@@ -87,7 +87,7 @@ Mat fsdk::GaborBank::buildThumbnail(const int iThumbSize, const GaborKernel::Ker
 		foreach(double dTheta, m_lOrientations)
 		{
 			GaborKernel oKernel = m_mKernels[KernelParameters(dLambda, dTheta)];
-			oThumb = oKernel.buildThumbnail(iThumbSize, eComp);
+			oThumb = oKernel.buildThumbnail(iThumbSize, eComp, oBkgColor);
 			oRoi = Rect(iCol * iThumbSize, iRow * iThumbSize, iThumbSize, iThumbSize);
 			oThumb.copyTo(oRet(oRoi));
 			iCol++;

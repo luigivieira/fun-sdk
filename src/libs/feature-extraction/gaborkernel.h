@@ -189,10 +189,14 @@ namespace fsdk
 		 * the thumbnail.
 		 * @param eComp Value of the KernelComponent enumeration with the component to
 		 * create the thumbnail for. The default is RealComp (i.e. the real component).
+		 * @param oBkgColor OpenCV's Scalar with the color to use for the background of the
+		 * kernel image (in case the requested size is bigger than the kernel size). The
+		 * default is Scalar(128), which is the gray color that represents 0 in the
+		 * normalized kernel thumbnail image.
 		 * @return OpenCV's Mat with the thumbnail image of the kernel values for the
 		 * requested component.
 		 */
-		cv::Mat buildThumbnail(const int iSize, const KernelComponent eComp = RealComp) const;
+		cv::Mat buildThumbnail(const int iSize, const KernelComponent eComp = RealComp, const cv::Scalar oBkgColor = cv::Scalar(128)) const;
 
 	protected:
 

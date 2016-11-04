@@ -81,12 +81,16 @@ namespace fsdk
 		 * @param eComp Value of the GaborKernel::KernelComponent enumeration with the
 		 * component to create the thumbnail for. The default is GaborKernel::RealComp
 		 * (i.e. the real component).
+		 * @param oBkgColor OpenCV's Scalar with the color to use for the background of the
+		 * kernel images (in case the requested size is bigger than the kernel size). The
+		 * default is Scalar(128), which is the gray color that represents 0 in the
+		 * normalized kernel thumbnail image.
 		 * @return OpenCV's Mat with the thumbnail image of the values of all kernels
 		 * in the bank, for the requested component. The image is created so the thumbnails
 		 * of the kernels in the bank are arranged in columns for each orientation, and rows
 		 * for each wavelength.
 		 */
-		cv::Mat buildThumbnail(const int iThumbSize, const GaborKernel::KernelComponent eComp = GaborKernel::RealComp) const;
+		cv::Mat buildThumbnail(const int iThumbSize, const GaborKernel::KernelComponent eComp = GaborKernel::RealComp, const cv::Scalar oBkgColor = cv::Scalar(128)) const;
 
 	private:
 

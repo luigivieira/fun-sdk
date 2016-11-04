@@ -64,8 +64,8 @@ int main(int argc, char* argv[])
 
 	Mat oReal, oImag;
 	GaborBank oBank;
-	oReal = oBank.buildThumbnail(128, GaborKernel::RealComp);
-	oImag = oBank.buildThumbnail(128, GaborKernel::RealComp);
+	oReal = oBank.buildThumbnail(100, GaborKernel::RealComp);
+	oImag = oBank.buildThumbnail(100, GaborKernel::ImaginaryComp);
 
 	namedWindow("Real", WINDOW_AUTOSIZE);
 	namedWindow("Imaginary", WINDOW_AUTOSIZE);
