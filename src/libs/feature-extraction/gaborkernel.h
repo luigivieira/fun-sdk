@@ -198,6 +198,16 @@ namespace fsdk
 		 */
 		cv::Mat buildThumbnail(const int iSize, const KernelComponent eComp = RealComp, const cv::Scalar oBkgColor = cv::Scalar(128)) const;
 
+		/**
+		 * Filters the given image with the kernel and get the responses (that is,
+		 * convolve the image with both the real and imaginary components and calculate
+		 * the magnitude/energy between their responses).
+		 * @param oImage OpenCV's Mat with the image in which to apply the filter.
+		 * @return OpenCV's Mat with the same size of the original image and with the
+		 * filter responses in each pixel.
+		 */
+		cv::Mat filter(const cv::Mat &oImage);
+
 	protected:
 
 		/**

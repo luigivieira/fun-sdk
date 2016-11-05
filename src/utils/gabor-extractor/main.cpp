@@ -52,26 +52,34 @@ void handleSigTerm(int iSignum)
  */
 int main(int argc, char* argv[])
 {
-	/*GaborKernel oKernel(CV_PI/4, 40);
-	namedWindow("Minha", WINDOW_AUTOSIZE);
-	imshow("Minha", oKernel.buildThumbnail(147));
+	GaborKernel oKernel(CV_PI/4, 3);
+	namedWindow("Kernel", WINDOW_AUTOSIZE);
+	imshow("Kernel", oKernel.buildThumbnail(200));
 
 	std::cout << "Size: " << std::setprecision(2) << oKernel.size() << std::endl;
 	std::cout << "Sigma: " << std::setprecision(2) << oKernel.sigma() << std::endl;
 	std::cout << "Lambda: " << std::setprecision(2) << oKernel.lambda() << std::endl;
 	std::cout << "Theta: " << std::setprecision(2) << oKernel.theta() << std::endl;
-	std::cout << "Psi: " << std::setprecision(2) << oKernel.psi() << std::endl;*/
+	std::cout << "Psi: " << std::setprecision(2) << oKernel.psi() << std::endl;
 
-	Mat oReal, oImag;
+	Mat oTeste = imread("C:/temp/teste/teste3.png", 0);
+	oTeste = oKernel.filter(oTeste);
+	
+	normalize(oTeste, oTeste, 0, 255, NORM_MINMAX, CV_8UC1);
+	//oTeste.convertTo(oTeste, CV_8UC1);
+	namedWindow("Imagem", WINDOW_AUTOSIZE);
+	imshow("Imagem", oTeste);
+
+	/*Mat oReal, oImag;
 	GaborBank oBank;
-	oReal = oBank.buildThumbnail(100, GaborKernel::RealComp);
-	oImag = oBank.buildThumbnail(100, GaborKernel::ImaginaryComp);
+	oReal = oBank.buildThumbnail(64, GaborKernel::RealComp);
+	oImag = oBank.buildThumbnail(64, GaborKernel::ImaginaryComp);
 
 	namedWindow("Real", WINDOW_AUTOSIZE);
 	namedWindow("Imaginary", WINDOW_AUTOSIZE);
 
 	imshow("Real", oReal);
-	imshow("Imaginary", oImag);
+	imshow("Imaginary", oImag);*/
 
 	waitKey(0);
 

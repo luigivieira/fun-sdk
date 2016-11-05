@@ -222,3 +222,32 @@ double fsdk::GaborKernel::bandWidth() const
 	double dRoot = std::sqrt(std::log(2) / 2);
 	return std::log((dRatio + dRoot) / (dRatio - dRoot)) / std::log(2);
 }
+
+// +-----------------------------------------------------------
+Mat fsdk::GaborKernel::filter(const Mat &oImage)
+{
+	// Convolve the image with the two components
+	Mat oReal, oImag;
+	filter2D(oImage, oReal, CV_32F, m_oRealComp);
+	filter2D(oImage, oImag, CV_32F, m_oImaginaryComp);
+
+	// Calculate the response (the magnitude/energy)
+	/*Mat oRet;
+	magnitude(oReal, oImag, oRet);*/
+
+	double dReal, dImag, dMag;
+	Mat oRet;
+	oRet.create(oImage.size(), CV_32F);
+	for(int iRow = 0; iRow < oImage.rows; iRow++)
+	{
+		for(int iCol = 0; iCol < oImage.cols; iCol++)
+		{
+			dReal = oReal.at<float>(iRow, iCol);
+			dImag = oImag.at<float>(iRow, iCol);
+			dMag = std::sqrt(std::pow(dReal, 2) + std::pow(dImag, 2));
+			oRet.at<float>(iRow, iCol) = dMag;
+		}
+	}
+
+	return oRet;
+}
