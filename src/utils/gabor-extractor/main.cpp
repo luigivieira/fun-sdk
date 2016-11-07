@@ -24,6 +24,7 @@
 
 #include "gaborbank.h"
 #include <iomanip>
+#include "imageman.h"
 
 using namespace fsdk;
 
@@ -52,7 +53,22 @@ void handleSigTerm(int iSignum)
  */
 int main(int argc, char* argv[])
 {
-	GaborKernel oKernel(CV_PI/4, 3);
+	Mat teste = imread("c:/temp/teste/teste.png", 0);
+	Mat teste2 = imread("c:/temp/teste/teste2.png", 0);
+	Mat teste3 = imread("c:/temp/teste/teste3.png", 0);
+	Mat teste4 = imread("c:/temp/teste/teste4.png", 0);
+	Mat teste5 = imread("c:/temp/teste/teste5.png", 0);
+	Mat teste6 = imread("c:/temp/teste/teste6.png", 0);
+	Mat teste7 = imread("c:/temp/teste/teste7.png", 0);
+
+	QList<Mat> lMats = { teste, teste2, teste3, teste4, teste5, teste6, teste7 };
+	//QList<Mat> lMats = { teste2 };
+
+	Mat oTeste = ImageMan::collateMats(lMats, Size(256, 256), 2, 4, false, Scalar(80), 3, Scalar(255), Scalar(0));
+	namedWindow("Colagem", WINDOW_AUTOSIZE);
+	imshow("Colagem", oTeste);
+
+	/*GaborKernel oKernel(CV_PI/4, 3);
 	namedWindow("Kernel", WINDOW_AUTOSIZE);
 	imshow("Kernel", oKernel.buildThumbnail(200));
 
@@ -68,7 +84,7 @@ int main(int argc, char* argv[])
 	normalize(oTeste, oTeste, 0, 255, NORM_MINMAX, CV_8UC1);
 	//oTeste.convertTo(oTeste, CV_8UC1);
 	namedWindow("Imagem", WINDOW_AUTOSIZE);
-	imshow("Imagem", oTeste);
+	imshow("Imagem", oTeste);*/
 
 	/*Mat oReal, oImag;
 	GaborBank oBank;
