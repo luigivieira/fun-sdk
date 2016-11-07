@@ -105,7 +105,7 @@ Mat fsdk::ImageMan::Pixmap2Mat(const QPixmap &oPixmap)
 }
 
 // +-----------------------------------------------------------
-Mat fsdk::ImageMan::collateMats(const QList<Mat> &lMats, Size &oMatSize, uint iRows, uint iCols, bool bMatResize, Scalar &oMatBkgColor, uint iMatBorderWidth, Scalar &oMatBorderColor, Scalar &oImgBkgColor, int iImgType)
+Mat fsdk::ImageMan::collateMats(const QList<Mat> &lMats, const Size &oMatSize, uint iRows, uint iCols, bool bMatResize, Scalar &oMatBkgColor, uint iMatBorderWidth, Scalar &oMatBorderColor, Scalar &oImgBkgColor, int iImgType)
 {
 	iMatBorderWidth = qMin((int) iMatBorderWidth, 3);
 

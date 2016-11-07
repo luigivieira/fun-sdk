@@ -103,7 +103,7 @@ namespace fsdk
 		 * CV_8UC1 (unsigned 8 bits and 1 channel).
 		 * @return OpenCV Mat with the collated image created.
 		 */
-		static cv::Mat collateMats(const QList<cv::Mat> &lMats, cv::Size &oMatSize, uint iRows, uint iCols, bool bMatResize = true, cv::Scalar &oMatBkgColor = cv::Scalar(128), uint iMatBorderWidth = 0, cv::Scalar &oMatBorderColor = cv::Scalar(0), cv::Scalar &oImgBkgColor = cv::Scalar(255), int iImgType = CV_8UC1);
+		static cv::Mat collateMats(const QList<cv::Mat> &lMats, const cv::Size &oMatSize, uint iRows, uint iCols, bool bMatResize = true, cv::Scalar &oMatBkgColor = cv::Scalar(128), uint iMatBorderWidth = 0, cv::Scalar &oMatBorderColor = cv::Scalar(0), cv::Scalar &oImgBkgColor = cv::Scalar(255), int iImgType = CV_8UC1);
 	};
 }
 

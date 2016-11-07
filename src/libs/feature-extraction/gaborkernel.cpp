@@ -116,7 +116,7 @@ Mat fsdk::GaborKernel::data(const KernelComponent eComp)
 }
 
 // +-----------------------------------------------------------
-Mat fsdk::GaborKernel::buildThumbnail(const int iSize, const KernelComponent eComp, const cv::Scalar oBkgColor) const
+Mat fsdk::GaborKernel::getThumbnail(const KernelComponent eComp, const Size oSize, const bool bResize) const
 {
 	// Get a clonned image of the kernel
 	Mat oPart = (eComp == RealComp ? m_oRealComp : m_oImaginaryComp).clone();
@@ -125,43 +125,47 @@ Mat fsdk::GaborKernel::buildThumbnail(const int iSize, const KernelComponent eCo
 	// and 1 becomes 255 (white) - needed to make the kernel image more visible
 	oPart += 1.0;
 	oPart *= 128.0;
+	oPart.convertTo(oPart, CV_8UC1);
 
 	// If the kernel has the same size as it was requested, just return it
-	if(iSize == oPart.size().width)
+	if(oSize.width == oPart.size().width && oSize.height == oPart.size().height)
+		return oPart;
+
+	// If not the same size but the resize has been request, just do it! :)
+	if(bResize)
 	{
-		Mat oRet;
-		oPart.convertTo(oRet, CV_8UC1);
-		rectangle(oRet, Rect(0, 0, iSize, iSize), Scalar(0));
-		return oRet;
+		resize(oPart, oPart, oSize);
+		return oPart;
 	}
 
-	// Otherwise, build the return accordingly to the requested size
-	else
-	{
-		Mat oRet;
-		oRet.create(Size(iSize, iSize), CV_8UC1);
+	// Otherwise, build the return accordingly to the requested size, cropping the image
+	// as needed
+	Mat oRet;
+	oRet.create(oSize, CV_8UC1);
+	oRet = Scalar(128); // The value 0 after the normalization above is the background color
 		
-		// If the requested size is bigger than the kernel size,
-		// center the kernel image on the return image
-		if(iSize > oPart.size().width)
-		{
-			// Set the background color
-			oRet = oBkgColor;
-
-			// Copy the kernel image to the center of the return image
-			Rect oTgtArea = Rect(iSize / 2 - oPart.size().width / 2, iSize / 2 - oPart.size().height / 2, oPart.size().width, oPart.size().height);
-			oPart.copyTo(oRet(oTgtArea));
-		}
-		else
-		{
-			// Copy the center of the kernel image to the return image
-			Rect oSrcArea = Rect(oPart.size().width / 2 - iSize / 2, oPart.size().height / 2 - iSize / 2, iSize, iSize);
-			oPart(oSrcArea).copyTo(oRet);
-		}
-
-		rectangle(oRet, Rect(0, 0, iSize, iSize), Scalar(0));
-		return oRet;
+	// Crop the thumbnail horizontally and vertically if needed
+	Rect oClip(0, 0, oPart.size().width, oPart.size().height);
+	if(oPart.size().width > oSize.width)
+	{
+		int iDiff = oPart.size().width - oSize.width;
+		oClip.x += iDiff / 2;
+		oClip.width -= iDiff;
 	}
+	if(oPart.size().height > oSize.height)
+	{
+		int iDiff = oPart.size().height - oSize.height;
+		oClip.y += iDiff / 2;
+		oClip.height -= iDiff;
+	}
+	if(oClip.x != 0 || oClip.y != 0)
+		oPart = oPart(oClip);
+
+	// Copy the thumbnail image to the center of the return image
+	Rect oTgtArea = Rect(oSize.width / 2 - oPart.size().width / 2, oSize.height / 2 - oPart.size().height / 2, oPart.size().width, oPart.size().height);
+	oPart.copyTo(oRet(oTgtArea));
+
+	return oRet;
 }
 
 // +-----------------------------------------------------------

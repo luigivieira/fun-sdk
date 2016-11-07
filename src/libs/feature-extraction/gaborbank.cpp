@@ -18,6 +18,7 @@
  */
 
 #include "gaborbank.h"
+#include "imageman.h"
 
 using namespace cv;
 
@@ -72,28 +73,18 @@ fsdk::GaborBank& fsdk::GaborBank::operator=(const GaborBank &oOther)
 }
 
 // +-----------------------------------------------------------
-Mat fsdk::GaborBank::buildThumbnail(const int iThumbSize, const GaborKernel::KernelComponent eComp, const cv::Scalar oBkgColor) const
+Mat fsdk::GaborBank::getThumbnails(const GaborKernel::KernelComponent eComp, const Size oSize, const bool bResize) const
 {
-	Mat oRet, oThumb;
-	Size oSize(iThumbSize * m_lOrientations.count(), iThumbSize * m_lWavelengths.count());
+	QList<Mat> lThumbs;
 
-	oRet.create(oSize, CV_8UC1);
-
-	Rect oRoi;
-	int iRow = 0;
 	foreach(double dLambda, m_lWavelengths)
 	{
-		int iCol = 0;
 		foreach(double dTheta, m_lOrientations)
 		{
 			GaborKernel oKernel = m_mKernels[KernelParameters(dLambda, dTheta)];
-			oThumb = oKernel.buildThumbnail(iThumbSize, eComp, oBkgColor);
-			oRoi = Rect(iCol * iThumbSize, iRow * iThumbSize, iThumbSize, iThumbSize);
-			oThumb.copyTo(oRet(oRoi));
-			iCol++;
+			lThumbs.append(oKernel.getThumbnail(eComp, oSize, bResize));
 		}
-		iRow++;
 	}
 
-	return oRet;
+	return ImageMan::collateMats(lThumbs, oSize, m_lWavelengths.count(), m_lOrientations.count(), bResize, Scalar(128), 2, Scalar(255));
 }

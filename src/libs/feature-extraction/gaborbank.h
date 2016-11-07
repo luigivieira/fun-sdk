@@ -73,24 +73,21 @@ namespace fsdk
 		GaborBank& operator=(const GaborBank &oOther);
 
 		/**
-		 * Builds a thumbnail of the Gabor bank, with each kernel in the given size.
-		 * The thumbnail is normalized to gray scale, so it can be useful
-		 * for visual inspection of the values of all kernels.
-		 * @param iThumbSize Integer with the size to create each kernel thumbnail (same
-		 * value for the width and height).
+		 * Builds a thumbnail collation of the Gabor bank, with each kernel in the given
+		 * size. The thumbnail is normalized to gray scale, so it can be used for visual
+		 * inspection of the values of all kernels.
 		 * @param eComp Value of the GaborKernel::KernelComponent enumeration with the
-		 * component to create the thumbnail for. The default is GaborKernel::RealComp
-		 * (i.e. the real component).
-		 * @param oBkgColor OpenCV's Scalar with the color to use for the background of the
-		 * kernel images (in case the requested size is bigger than the kernel size). The
-		 * default is Scalar(128), which is the gray color that represents 0 in the
-		 * normalized kernel thumbnail image.
-		 * @return OpenCV's Mat with the thumbnail image of the values of all kernels
-		 * in the bank, for the requested component. The image is created so the thumbnails
-		 * of the kernels in the bank are arranged in columns for each orientation, and rows
-		 * for each wavelength.
+		 * component to create the thumbnail collation for. The default is GaborKernel::RealComp
+		 * (i.e. thumbnails from the real components of the kernels in the bank).
+		 * @param oThumbSize OpenCV Size with the size to create each kernel thumbnail.
+		 * The default is Size(64, 64).
+		 * @param bThumResize Boolean indicating if each thumbnail should be resized to
+		 * oThumSize or not. If the thumbnails are not resized, they will be cropped and
+		 * centered at oThumbSize as needed. The default is true.
+		 * @return OpenCV's Mat with the image of the thumbnails of all kernels in the bank,
+		 * collated together in rows and columns for each wavelength and orientation.
 		 */
-		cv::Mat buildThumbnail(const int iThumbSize, const GaborKernel::KernelComponent eComp = GaborKernel::RealComp, const cv::Scalar oBkgColor = cv::Scalar(128)) const;
+		cv::Mat getThumbnails(const GaborKernel::KernelComponent eComp = GaborKernel::RealComp, const cv::Size oThumbSize = cv::Size(64, 64), const bool bThumbResize = true) const;
 
 	private:
 

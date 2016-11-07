@@ -182,21 +182,19 @@ namespace fsdk
 		cv::Mat data(const KernelComponent eComp = RealComp);
 
 		/**
-		 * Builds a thumbnail of the Gabor kernel, with the given size and for the given
-		 * component. The thumbnail is normalized to gray scale, so it can be useful
-		 * for visual inspection of the kernel values.
-		 * @param iSize Integer with the size (width and height are the same) to create
-		 * the thumbnail.
+		 * Gets the thumbnail of the Gabor kernel, normalized to gray scale so it can be
+		 * used for visual inspection of the kernel values.
 		 * @param eComp Value of the KernelComponent enumeration with the component to
 		 * create the thumbnail for. The default is RealComp (i.e. the real component).
-		 * @param oBkgColor OpenCV's Scalar with the color to use for the background of the
-		 * kernel image (in case the requested size is bigger than the kernel size). The
-		 * default is Scalar(128), which is the gray color that represents 0 in the
-		 * normalized kernel thumbnail image.
+		 * @param oSize OpenCV Size struct with the size to create the thumbnail. The
+		 * default is Size(64, 64).
+		 * @param bResize Boolean indicating if the thumbnail should be resized to oSize
+		 * or not. If the thumbnail is not resized, it will be cropped and centered at
+		 * oSize as needed. The default is true.
 		 * @return OpenCV's Mat with the thumbnail image of the kernel values for the
 		 * requested component.
 		 */
-		cv::Mat buildThumbnail(const int iSize, const KernelComponent eComp = RealComp, const cv::Scalar oBkgColor = cv::Scalar(128)) const;
+		cv::Mat getThumbnail(const KernelComponent eComp = RealComp, const cv::Size oSize = cv::Size(64,64), const bool bResize = true) const;
 
 		/**
 		 * Filters the given image with the kernel and get the responses (that is,
