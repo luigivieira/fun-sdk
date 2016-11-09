@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
 {
 	(void)signal(SIGINT, handleSigTerm);
 
-	g_pApp = new LandmarksApp(argc, argv, "University of Sao Paulo", "Fun SDK", "Feature Extractor", FSDK_VERSION);
+	g_pApp = new LandmarksApp(argc, argv, "University of Sao Paulo", "Fun SDK", "Landmarks Extractor", FSDK_VERSION);
 
 	// Parse the command line
 	switch(g_pApp->parseCommandLine())
