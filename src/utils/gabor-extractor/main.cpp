@@ -22,10 +22,6 @@
 #include <QTimer>
 #include <signal.h>
 
-#include "gaborbank.h"
-#include <iomanip>
-#include "imageman.h"
-
 using namespace fsdk;
 
 /* Global variable used to allow indicating the cancelation request to the application. */
@@ -53,39 +49,9 @@ void handleSigTerm(int iSignum)
  */
 int main(int argc, char* argv[])
 {
-	//Mat oTeste = ImageMan::collateMats(lMats, Size(256, 256), 2, 4, false, Scalar(80), 3, Scalar(255), Scalar(0));
-	
-	/*GaborKernel oKernel(CV_PI/4, 3);
-	namedWindow("Kernel", WINDOW_AUTOSIZE);
-	imshow("Kernel", oKernel.buildThumbnail(200));
-
-	std::cout << "Size: " << std::setprecision(2) << oKernel.size() << std::endl;
-	std::cout << "Sigma: " << std::setprecision(2) << oKernel.sigma() << std::endl;
-	std::cout << "Lambda: " << std::setprecision(2) << oKernel.lambda() << std::endl;
-	std::cout << "Theta: " << std::setprecision(2) << oKernel.theta() << std::endl;
-	std::cout << "Psi: " << std::setprecision(2) << oKernel.psi() << std::endl;
-
-	Mat oTeste = imread("C:/temp/teste/teste3.png", 0);
-	oTeste = oKernel.filter(oTeste);
-	
-	normalize(oTeste, oTeste, 0, 255, NORM_MINMAX, CV_8UC1);
-	//oTeste.convertTo(oTeste, CV_8UC1);
-	namedWindow("Imagem", WINDOW_AUTOSIZE);
-	imshow("Imagem", oTeste);*/
-
-	Mat oReal, oImag;
-	GaborBank oBank;
-	oReal = oBank.getThumbnails(GaborKernel::RealComp, Size(70, 70), false);
-	namedWindow("Real", WINDOW_AUTOSIZE);
-	imshow("Real", oReal);
-
-	waitKey(0);
-
-	return 0;
-
 	(void)signal(SIGINT, handleSigTerm);
 
-	g_pApp = new GaborApp(argc, argv, "University of Sao Paulo", "Fun SDK", "Feature Extractor", FSDK_VERSION);
+	g_pApp = new GaborApp(argc, argv, "University of Sao Paulo", "Fun SDK", "Gabor Responses Extractor", FSDK_VERSION);
 
 	// Parse the command line
 	switch(g_pApp->parseCommandLine())
@@ -95,6 +61,7 @@ int main(int argc, char* argv[])
 
 		case GaborApp::CommandLineVersionRequested:
 		case GaborApp::CommandLineHelpRequested:
+		case GaborApp::DataExportRequested:
 			return 0;
 
 		case GaborApp::CommandLineOk:

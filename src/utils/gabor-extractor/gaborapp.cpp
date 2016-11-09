@@ -26,6 +26,7 @@
 #include <QRegExp>
 #include "naming.h"
 #include <QRegularExpression>
+#include "gaborbank.h"
 
 // To allow using _getch()/getch() for reading the overwrite confirmation answer
 #ifdef WIN32
@@ -56,16 +57,22 @@ fsdk::GaborApp::CommandLineParseResult fsdk::GaborApp::parseCommandLine()
 	oParser.setApplicationDescription(tr("Extracts Gabor responses from image or video files of facial expressions."));
 	oParser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
 
-	// Input image/video file option
+	// Input file option
 	oParser.addPositionalArgument("input file",
 		tr("Image or video file (wildcard masks can be used) to use for the landmark extraction."),
 		tr("<input file>")
 	);
 
-	// Ouutput CSV file option
-	oParser.addPositionalArgument("csv file",
-		tr("CSV file (or wildcard mask) to create with the landmarks extracted."),
-		tr("<csv file>")
+	// Landmarks file option
+	oParser.addPositionalArgument("landmarks file",
+		tr("CSV file (wildcard masks can be used) with the facial landmarks in the input file."),
+		tr("<landmarks file>")
+	);
+
+	// Output file option
+	oParser.addPositionalArgument("output file",
+		tr("CSV file (or wildcard mask) to create with the Gabor responses extracted."),
+		tr("<output file>")
 	);
 
 	// Messages level option
@@ -79,13 +86,14 @@ fsdk::GaborApp::CommandLineParseResult fsdk::GaborApp::parseCommandLine()
 	);
 	oParser.addOption(oMsgLevelOpt);
 
-	// Miminum quality for reset
-	QCommandLineOption oQualityLevelOpt(QStringList({ "q", "quality" }),
-		tr("Desired minimum tracking quality, in range [0,1] (defalt is 0.2). "
-		   "Higher values may yield better results, but decrease performance."
-		), tr("value"), "0.2"
+	// Export kernel images option
+	QCommandLineOption oKernelsExpOpt(QStringList({ "k", "kernels" }),
+		tr("Exports the bank of Gabor kernels used by this application, saving it "
+			"as a collated image to the given file (the formats supported are BMP, "
+			"PNG, JPEG and TIFF, automatically detected from the file extension)."),
+		tr("filename")
 	);
-	oParser.addOption(oQualityLevelOpt);
+	oParser.addOption(oKernelsExpOpt);
 
 	// Automatic confirm overwrite option
 	QCommandLineOption oAutoConfirmOpt(QStringList({ "y", "yes" }),
@@ -122,6 +130,18 @@ fsdk::GaborApp::CommandLineParseResult fsdk::GaborApp::parseCommandLine()
 		return CommandLineVersionRequested;
 	}
 
+	// Check if kernel images exporting was requested
+	if(oParser.isSet(oKernelsExpOpt))
+	{
+		QString sFilename = oParser.value(oKernelsExpOpt);
+		if(!exportGaborBank(sFilename))
+		{
+			qCritical().noquote() << tr("it was not possible to write to file %1").arg(sFilename) << endl;
+			return CommandLineError;
+		}
+		return DataExportRequested;
+	}
+
 	// Get the requested message level
 	QRegularExpression oRELevel("^[1-4]$");
 	bool bValid = oRELevel.match(oParser.value(oMsgLevelOpt)).hasMatch();
@@ -133,17 +153,6 @@ fsdk::GaborApp::CommandLineParseResult fsdk::GaborApp::parseCommandLine()
 	}
 	int iLevel = oParser.value(oMsgLevelOpt).toInt();
 	setLogLevel(static_cast<LogLevel>(iLevel));
-
-	// Get the quality level
-	QRegularExpression oREQuality("^0(\\.[0-9]+)?$|^1(\\.0)?$");
-	bValid = oREQuality.match(oParser.value(oQualityLevelOpt)).hasMatch();
-	if(!bValid)
-	{
-		qCritical().noquote() << tr("invalid minimum quality: %1").arg(oParser.value(oQualityLevelOpt)) << endl;
-		oParser.showHelp();
-		return CommandLineError;
-	}
-	m_fMinimumQuality = oParser.value(oQualityLevelOpt).toFloat();
 
 	// Check the input file and CSV files (or wildcards) arguments
 	switch(oParser.positionalArguments().count())
@@ -465,4 +474,11 @@ void fsdk::GaborApp::cancel()
 {
 	foreach(ExtractionTask *pTask, m_lTasks)
 		pTask->cancel();
+}
+
+// +-----------------------------------------------------------
+bool fsdk::GaborApp::exportGaborBank(QString sFilename) const
+{
+	GaborBank oBank;
+	return imwrite(sFilename.toStdString(), oBank.getThumbnails());
 }

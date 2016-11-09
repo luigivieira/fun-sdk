@@ -83,11 +83,11 @@ namespace fsdk
 		 * The default is Size(64, 64).
 		 * @param bThumResize Boolean indicating if each thumbnail should be resized to
 		 * oThumSize or not. If the thumbnails are not resized, they will be cropped and
-		 * centered at oThumbSize as needed. The default is true.
+		 * centered at oThumbSize as needed. The default is false.
 		 * @return OpenCV's Mat with the image of the thumbnails of all kernels in the bank,
 		 * collated together in rows and columns for each wavelength and orientation.
 		 */
-		cv::Mat getThumbnails(const GaborKernel::KernelComponent eComp = GaborKernel::RealComp, const cv::Size oThumbSize = cv::Size(64, 64), const bool bThumbResize = true) const;
+		cv::Mat getThumbnails(const GaborKernel::KernelComponent eComp = GaborKernel::RealComp, const cv::Size oThumbSize = cv::Size(64, 64), const bool bThumbResize = false) const;
 
 	private:
 

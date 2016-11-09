@@ -67,7 +67,10 @@ namespace fsdk
 			CommandLineVersionRequested,
 
 			/** The user requested the application to display its help information. */
-			CommandLineHelpRequested
+			CommandLineHelpRequested,
+
+			/** The user requested data (like the gabor bank images) to be exported. */
+			DataExportRequested
 		};
 
 		/**
@@ -159,6 +162,14 @@ namespace fsdk
 		 */
 		void deleteTask(fsdk::GaborExtractionTask* pTask);
 
+		/**
+		 * Exports the bank of Gabor kernels used by this application, saving it
+		 * as a collated image to the given file (the formats supported are BMP,
+		 * PNG, JPEG and TIFF, automatically detected from the file extension).
+		 * @param sFilename Path and name of the file to save the PNG image.
+		 */
+		bool exportGaborBank(QString sFilename) const;
+
 	private:
 
 		/** Files to be used by the tasks (input file to read x csv file to produce). */
@@ -166,9 +177,6 @@ namespace fsdk
 
 		/** List of tasks in execution. */
 		QList<GaborExtractionTask*> m_lTasks;
-
-		/** Minimum ideal quality for the tracker. */
-		float m_fMinimumQuality;
 	};
 }
 
