@@ -99,11 +99,21 @@ namespace fsdk
 		 * is different than 0). The default is Scalar(0).
 		 * @param oImgBkgColor OpenCV Scalar with the background color for the whole collated image
 		 * (visible when there are empty cells remaining). The default is Scalar(255).
+		 * @param lXLabels QStringList with the labels for each image in the X axis.
+		 * If QStringList() (an empty list) is provided, no labels will be outputed. The
+		 * default is an empty list.
+		 * @param lYLabels QStringList with the labels for each image in Y axis.
+		 * If QStringList() (an empty list) is provided, no labels will be outputed. The
+		 * default is an empty list.
+		 * @param sXTitle QString with the title for the X axis. if QString() (an empty string)
+		 * is provided, no title will be outputed. The default is an empty string.
+		 * @param sYTitle QString with the title for the Y axis. if QString() (an empty string)
+		 * is provided, no title will be outputed. The default is an empty string.
 		 * @param iImgType Integer with the image type to create the collated image. The default is
 		 * CV_8UC1 (unsigned 8 bits and 1 channel).
 		 * @return OpenCV Mat with the collated image created.
 		 */
-		static cv::Mat collateMats(const QList<cv::Mat> &lMats, const cv::Size &oMatSize, uint iRows, uint iCols, bool bMatResize = true, cv::Scalar &oMatBkgColor = cv::Scalar(128), uint iMatBorderWidth = 0, cv::Scalar &oMatBorderColor = cv::Scalar(0), cv::Scalar &oImgBkgColor = cv::Scalar(255), int iImgType = CV_8UC1);
+		static cv::Mat collateMats(const QList<cv::Mat> &lMats, const cv::Size &oMatSize, uint iRows, uint iCols, bool bMatResize = true, cv::Scalar &oMatBkgColor = cv::Scalar(128), uint iMatBorderWidth = 0, cv::Scalar &oMatBorderColor = cv::Scalar(0), cv::Scalar &oImgBkgColor = cv::Scalar(255), const QStringList &lXLabels = QStringList(), const QStringList &lYLabels = QStringList(), const QString &sXTitle = QString(), const QString &sYTitle = QString(), int iImgType = CV_8UC1);
 	};
 }
 

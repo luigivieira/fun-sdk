@@ -32,7 +32,7 @@ fsdk::GaborKernel::GaborKernel()
 // +-----------------------------------------------------------
 fsdk::GaborKernel::GaborKernel(const double dTheta, const double dLambda, const double dPsi)
 {
-	m_dTheta = std::min(std::max(dTheta, 0.0), CV_PI);
+	m_dTheta = std::min(std::max(dTheta, 0.0), CV_PI) * -1;
 	m_dLambda = std::max(dLambda, 3.0);
 	m_dPsi = std::min(std::max(dPsi, 0.0), CV_PI);
 	rebuildKernel();
@@ -177,7 +177,7 @@ double fsdk::GaborKernel::theta() const
 // +-----------------------------------------------------------
 void fsdk::GaborKernel::setTheta(const double dValue)
 {
-	m_dTheta = std::min(std::max(dValue, 0.0), CV_PI);
+	m_dTheta = std::min(std::max(dValue, 0.0), CV_PI) * -1;
 	rebuildKernel();
 }
 

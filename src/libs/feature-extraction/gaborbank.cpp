@@ -19,6 +19,7 @@
 
 #include "gaborbank.h"
 #include "imageman.h"
+#include <QApplication>
 
 using namespace cv;
 
@@ -26,7 +27,7 @@ using namespace cv;
 fsdk::GaborBank::GaborBank()
 {
 	m_lWavelengths = QList<double>({ 3, 6, 9, 13, 17, 21 });
-	for(double dTheta = CV_PI; dTheta > 0; dTheta -= CV_PI / 8)
+	for(double dTheta = 0; dTheta < CV_PI; dTheta += CV_PI / 8)
 		m_lOrientations.append(dTheta);
 
 	foreach(double dLambda, m_lWavelengths)
@@ -76,15 +77,28 @@ fsdk::GaborBank& fsdk::GaborBank::operator=(const GaborBank &oOther)
 Mat fsdk::GaborBank::getThumbnails(const GaborKernel::KernelComponent eComp, const Size oSize, const bool bResize) const
 {
 	QList<Mat> lThumbs;
+	QStringList lXLabels, lYLabels;
 
 	foreach(double dLambda, m_lWavelengths)
 	{
+		QString sLambda;
+		sLambda.sprintf("%2.0f", dLambda);
+		lYLabels.append(sLambda);
 		foreach(double dTheta, m_lOrientations)
 		{
+			if(lXLabels.count() != m_lOrientations.count())
+			{
+				QString sTheta;
+				sTheta.sprintf("%2.1f", dTheta * 180 / CV_PI);
+				lXLabels.append(sTheta);
+			}
 			GaborKernel oKernel = m_mKernels[KernelParameters(dLambda, dTheta)];
 			lThumbs.append(oKernel.getThumbnail(eComp, oSize, bResize));
 		}
 	}
 
-	return ImageMan::collateMats(lThumbs, oSize, m_lWavelengths.count(), m_lOrientations.count(), bResize, Scalar(128), 2, Scalar(255));
+	QString sXTitle = QApplication::translate("GaborBank", "Orientations (in degrees)");
+	QString sYTitle = QApplication::translate("GaborBank", "Wavelengths (in pixels)");
+
+	return ImageMan::collateMats(lThumbs, oSize, m_lWavelengths.count(), m_lOrientations.count(), bResize, Scalar(128), 2, Scalar(255), Scalar(255), lXLabels, lYLabels, sXTitle, sYTitle);
 }

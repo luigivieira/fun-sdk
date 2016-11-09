@@ -19,6 +19,7 @@
 
 #include "imageman.h"
 #include <QDebug>
+#include <opencv2/imgproc/imgproc.hpp>
 
 using namespace cv;
 
@@ -105,22 +106,131 @@ Mat fsdk::ImageMan::Pixmap2Mat(const QPixmap &oPixmap)
 }
 
 // +-----------------------------------------------------------
-Mat fsdk::ImageMan::collateMats(const QList<Mat> &lMats, const Size &oMatSize, uint iRows, uint iCols, bool bMatResize, Scalar &oMatBkgColor, uint iMatBorderWidth, Scalar &oMatBorderColor, Scalar &oImgBkgColor, int iImgType)
+Mat fsdk::ImageMan::collateMats(const QList<Mat> &lMats, const Size &oMatSize, uint iRows, uint iCols, bool bMatResize, Scalar &oMatBkgColor, uint iMatBorderWidth, Scalar &oMatBorderColor, Scalar &oImgBkgColor, const QStringList &lXLabels, const QStringList &lYLabels, const QString &sXTitle, const QString &sYTitle, int iImgType)
 {
 	iMatBorderWidth = qMin((int) iMatBorderWidth, 3);
 
-	// Create the collate image so it can hold all mat images
+	int iFontFace = FONT_HERSHEY_SIMPLEX;
+	double dFontScale = 0.5;
+	int iThickness = 1;
+	int iBaseline = 0;
+
+	int iXLabelHeight = 0;
+	foreach(QString sXLabel, lXLabels)
+	{
+		Size oFntSize = getTextSize(sXLabel.toStdString(), iFontFace, dFontScale, iThickness, &iBaseline);
+		if(oFntSize.height > iXLabelHeight)
+			iXLabelHeight = oFntSize.height;
+	}
+	iXLabelHeight *= 2;
+
+	int iYLabelWidth = 0;
+	foreach(QString sYLabel, lYLabels)
+	{
+		Size oFntSize = getTextSize(sYLabel.toStdString(), iFontFace, dFontScale, iThickness, &iBaseline);
+		if(oFntSize.width > iYLabelWidth)
+			iYLabelWidth = oFntSize.width;
+	}
+	iYLabelWidth *= 1.5;	
+
+	int iXTitleHeight = 0;
+	if(!sXTitle.isEmpty())
+	{
+		Size oFntSize = getTextSize(sXTitle.toStdString(), iFontFace, dFontScale, iThickness, &iBaseline);
+		iXTitleHeight = oFntSize.height;
+	}
+	iXTitleHeight *= 2;
+
+	int iYTitleHeight = 0;
+	if(!sYTitle.isEmpty())
+	{
+		Size oFntSize = getTextSize(sYTitle.toStdString(), iFontFace, dFontScale, iThickness, &iBaseline);
+		iYTitleHeight = oFntSize.height;
+	}
+	iYTitleHeight *= 2;
+
+	// Create the collate image so it can hold all mat images + their borders and the labels
 	Size oSize;
-	oSize.width = iCols * oMatSize.width + (iCols + 1) * iMatBorderWidth;
-	oSize.height = iRows * oMatSize.height + (iRows + 1) * iMatBorderWidth;
+	oSize.width = iCols * oMatSize.width + (iCols + 1) * iMatBorderWidth + iYLabelWidth + iYTitleHeight;
+	oSize.height = iRows * oMatSize.height + (iRows + 1) * iMatBorderWidth + iXLabelHeight + iXTitleHeight;
 
 	Mat oCollateImage;
 	oCollateImage.create(oSize, iImgType);
 	oCollateImage = oImgBkgColor;
 
+	// Draw the titles (if provided)
+	if(!sYTitle.isEmpty())
+	{
+		Size oFntSize = getTextSize(sYTitle.toStdString(), iFontFace, dFontScale + 0.2, iThickness, &iBaseline);
+
+		Mat oText;
+		oText.create(Size(oSize.height, oSize.width), iImgType);
+		oText = oImgBkgColor;
+		
+		// Draw the title text
+		int x = iXLabelHeight - iXTitleHeight + (iRows * oMatSize.height + iRows * (iMatBorderWidth + 1)) / 2 - oFntSize.width / 2;
+		int y = iXLabelHeight / 2 + oFntSize.height / 2;
+		putText(oText, sYTitle.toStdString(), Point(x, y), iFontFace, dFontScale + 0.2, Scalar(0), iThickness);
+
+		// Rotate it by 90 degrees
+		Mat oRot = getRotationMatrix2D(Point2f(oSize.width / 2, oSize.height / 2), 90, 1.0);
+		warpAffine(oText, oText, oRot, oSize, INTER_LINEAR, BORDER_CONSTANT, Scalar(255));
+
+		// Translate to correct the difference in aspect ratio
+		float fDx = oSize.width / 2 - oSize.height / 2;
+		float fDy = oSize.height / 2 - oSize.width / 2;
+		float aData[2][3] = { { 1.0f, 0.0f, -fDx },{ 0.0f, 1.0f, fDy } };
+		Mat oTrans(2, 3, CV_32F, aData);
+		warpAffine(oText, oText, oTrans, oSize, INTER_LINEAR, BORDER_CONSTANT, Scalar(255));	
+
+		// Make the base image equal to the image with the text
+		oCollateImage = oText;
+	}
+	if(!sXTitle.isEmpty())
+	{
+		// Draw the title text
+		Size oFntSize = getTextSize(sXTitle.toStdString(), iFontFace, dFontScale + 0.2, iThickness, &iBaseline);
+		int x = iYLabelWidth + iYTitleHeight + (iCols * oMatSize.width + iCols * (iMatBorderWidth + 1)) / 2 - oFntSize.width / 2;
+		int y = iXLabelHeight / 2 + oFntSize.height / 2;
+		putText(oCollateImage, sXTitle.toStdString(), Point(x, y), iFontFace, dFontScale + 0.2, Scalar(0), iThickness);
+	}
+
+	// Draw the labels (if provided)
+	int iRow = 0;
+	foreach(QString sYLabel, lYLabels)
+	{
+		Size oFntSize = getTextSize(sYLabel.toStdString(), iFontFace, dFontScale, iThickness, &iBaseline);
+
+		int x = iYLabelWidth / 2 + iYTitleHeight - oFntSize.width / 2;
+		int y = iXLabelHeight * 2 + iXTitleHeight + oFntSize.height + iRow * oMatSize.height + iRow * iMatBorderWidth;
+
+		Point oPos(x, y);
+		putText(oCollateImage, sYLabel.toStdString(), oPos, iFontFace, dFontScale, Scalar(0), iThickness);
+
+		iRow++;
+		if(iRow == iRows)
+			break;
+	}
+	
+	int iCol = 0;
+	foreach(QString sXLabel, lXLabels)
+	{
+		Size oFntSize = getTextSize(sXLabel.toStdString(), iFontFace, dFontScale, iThickness, &iBaseline);
+
+		int x = iYLabelWidth + iYTitleHeight + iCol * oMatSize.width + iCol * iMatBorderWidth;
+		int y = iXLabelHeight + oFntSize.height * 1.5;
+
+		Point oPos(x + oMatSize.width / 2 - oFntSize.width / 2, y);
+		putText(oCollateImage, sXLabel.toStdString(), oPos, iFontFace, dFontScale, Scalar(0), iThickness);
+
+		iCol++;
+		if(iCol == iCols)
+			break;
+	}
+
 	// Copy all images in the list into the collate image, according to
 	// the requested rows and columns
-	int iRow = 0, iCol = 0;
+	iRow = 0, iCol = 0;
 	foreach(Mat oImage, lMats)
 	{
 		// Prepare the current image before copying it into the collated image
@@ -163,8 +273,8 @@ Mat fsdk::ImageMan::collateMats(const QList<Mat> &lMats, const Size &oMatSize, u
 		}
 
 		// Copy current image over the collated image
-		int x = iCol * oMatSize.width + iCol * iMatBorderWidth;
-		int y = iRow * oMatSize.height + iRow * iMatBorderWidth;
+		int x = iYLabelWidth + iYTitleHeight + iCol * oMatSize.width + iCol * iMatBorderWidth;
+		int y = iXLabelHeight + iXTitleHeight + iRow * oMatSize.height + iRow * iMatBorderWidth;
 		if(iMatBorderWidth > 0)
 		{
 			Rect oBorder(x, y, oMatSize.width + 2 * iMatBorderWidth, oMatSize.height + 2 * iMatBorderWidth);
