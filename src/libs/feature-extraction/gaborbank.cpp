@@ -97,8 +97,8 @@ Mat fsdk::GaborBank::getThumbnails(const GaborKernel::KernelComponent eComp, con
 		}
 	}
 
-	QString sXTitle = QApplication::translate("GaborBank", "Orientations (in degrees)");
-	QString sYTitle = QApplication::translate("GaborBank", "Wavelengths (in pixels)");
+	QString sXTitle = QApplication::translate("GaborBank", "Orientation (in degrees)");
+	QString sYTitle = QApplication::translate("GaborBank", "Wavelength (in pixels)");
 
 	return ImageMan::collateMats(lThumbs, oSize, m_lWavelengths.count(), m_lOrientations.count(), bResize, Scalar(128), 2, Scalar(255), Scalar(255), lXLabels, lYLabels, sXTitle, sYTitle);
 }

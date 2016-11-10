@@ -480,10 +480,5 @@ void fsdk::GaborApp::cancel()
 bool fsdk::GaborApp::exportGaborBank(QString sFilename) const
 {
 	GaborBank oBank;
-	//return imwrite(sFilename.toStdString(), oBank.getThumbnails());
-
-	namedWindow("teste", WINDOW_AUTOSIZE);
-	imshow("teste", oBank.getThumbnails());
-	waitKey(0);
-	return true;
+	return imwrite(sFilename.toStdString(), oBank.getThumbnails());
 }
