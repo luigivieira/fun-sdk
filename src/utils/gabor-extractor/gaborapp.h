@@ -166,9 +166,16 @@ namespace fsdk
 		 * Exports the bank of Gabor kernels used by this application, saving it
 		 * as a collated image to the given file (the formats supported are BMP,
 		 * PNG, JPEG and TIFF, automatically detected from the file extension).
-		 * @param sFilename Path and name of the file to save the PNG image.
+		 * @param sFilename Path and name of the file to save the image.
 		 */
-		bool exportGaborBank(QString sFilename) const;
+		bool exportGaborBank(const QString &sFilename) const;
+
+		/**
+		 * Test the bank of Gabor filters in this application with a the given test
+		 * image, displaying in a window a collated image with the responses.
+		 * @param sFilename Path and name of the image file to use in the tests.
+		 */
+		bool testGaborBank(const QString &sFilename) const;
 
 	private:
 

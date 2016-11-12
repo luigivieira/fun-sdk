@@ -27,6 +27,7 @@
 #include "naming.h"
 #include <QRegularExpression>
 #include "gaborbank.h"
+#include "imageman.h"
 
 // To allow using _getch()/getch() for reading the overwrite confirmation answer
 #ifdef WIN32
@@ -88,12 +89,22 @@ fsdk::GaborApp::CommandLineParseResult fsdk::GaborApp::parseCommandLine()
 
 	// Export kernel images option
 	QCommandLineOption oKernelsExpOpt(QStringList({ "k", "kernels" }),
-		tr("Exports the bank of Gabor kernels used by this application, saving it "
-			"as a collated image to the given file (the formats supported are BMP, "
+		tr("Exports the bank of Gabor kernels used by this application as a "
+			"collated image saved the given file (the formats supported are BMP, "
 			"PNG, JPEG and TIFF, automatically detected from the file extension)."),
 		tr("filename")
 	);
 	oParser.addOption(oKernelsExpOpt);
+
+	// Test kernel bank option
+	QCommandLineOption oTestKernelsOpt(QStringList({ "t", "test" }),
+		tr("Tests the Gabor kernels used by this application against a default "
+			"test image, saving the result as a collated image to the given "
+			"file (the formats supported are BMP, PNG, JPEG and TIFF, "
+			"automatically detected from the file extension)."),
+		tr("filename")
+	);
+	oParser.addOption(oTestKernelsOpt);
 
 	// Automatic confirm overwrite option
 	QCommandLineOption oAutoConfirmOpt(QStringList({ "y", "yes" }),
@@ -137,6 +148,18 @@ fsdk::GaborApp::CommandLineParseResult fsdk::GaborApp::parseCommandLine()
 		if(!exportGaborBank(sFilename))
 		{
 			qCritical().noquote() << tr("it was not possible to write to file %1").arg(sFilename) << endl;
+			return CommandLineError;
+		}
+		return DataExportRequested;
+	}
+
+	// Check if kernel testing was requested
+	if(oParser.isSet(oTestKernelsOpt))
+	{
+		QString sFilename = oParser.value(oTestKernelsOpt);
+		if(!testGaborBank(sFilename))
+		{
+			qCritical().noquote() << tr("it was not possible to read file %1").arg(sFilename) << endl;
 			return CommandLineError;
 		}
 		return DataExportRequested;
@@ -477,8 +500,60 @@ void fsdk::GaborApp::cancel()
 }
 
 // +-----------------------------------------------------------
-bool fsdk::GaborApp::exportGaborBank(QString sFilename) const
+bool fsdk::GaborApp::exportGaborBank(const QString &sFilename) const
 {
 	GaborBank oBank;
 	return imwrite(sFilename.toStdString(), oBank.getThumbnails());
+}
+
+// +-----------------------------------------------------------
+bool fsdk::GaborApp::testGaborBank(const QString &sFilename) const
+{
+	// Read the image file
+	Mat oTestImage = imread(sFilename.toStdString(), CV_LOAD_IMAGE_COLOR);
+	if(oTestImage.empty())
+		return false;
+
+	// Filter the image with the Gabor bank
+	GaborBank oBank;
+	QMap<KernelParameters, cv::Mat> mResponses;
+	QMap<KernelParameters, cv::Mat> mReal;
+	QMap<KernelParameters, cv::Mat> mImag;
+	oBank.filter(oTestImage, mResponses, mReal, mImag);
+
+	// Produce a collated image with the responses
+	QList<Mat> lResponses;
+	QStringList lXLabels, lYLabels;
+	QMap<KernelParameters, cv::Mat>::const_iterator it;
+	for(it = mResponses.cbegin(); it != mResponses.cend(); ++it)
+	{
+		KernelParameters oParams = it.key();
+		Mat oResponses = it.value();
+
+		double dLambda = oParams.first;
+		double dTheta = oParams.second;
+		QString sLambda, sTheta;
+		sLambda.sprintf("%2.0f", dLambda);
+		sTheta.sprintf("%2.1f", dTheta * 180 / CV_PI);
+
+		if(!lXLabels.contains(sTheta))
+			lXLabels.append(sTheta);
+		if(!lYLabels.contains(sLambda))
+			lYLabels.append(sLambda);
+
+		lResponses.append(oResponses);
+	}
+
+	QString sXTitle = tr("Kernel Orientation (in degrees)");
+	QString sYTitle = tr("Kernel Wavelength (in pixels)");
+
+	Mat oResult = ImageMan::collateMats(lResponses, Size(128, 128), oBank.wavelengths().count(), oBank.orientations().count(), true, Scalar(128), 2, Scalar(0), Scalar(255), lXLabels, lYLabels, sXTitle, sYTitle);
+
+	//namedWindow(tr("Result").toStdString(), WINDOW_AUTOSIZE);
+	//imshow(tr("Result").toStdString(), oResult);
+	//waitKey(0);
+
+	imwrite("c:/temp/teste.png", oResult);
+
+	return true;
 }

@@ -73,6 +73,18 @@ namespace fsdk
 		GaborBank& operator=(const GaborBank &oOther);
 
 		/**
+		 * Gets the wavelengths used to build this bank of filters.
+		 * @return QList of doubles with the wavelengths (in pixels).
+		 */
+		QList<double> wavelengths() const;
+
+		/**
+		 * Gets the orientations used to build this bank of filters.
+		 * @return QList of doubles with the orientations (in radians).
+		 */
+		QList<double> orientations() const;
+
+		/**
 		 * Builds a thumbnail collation of the Gabor bank, with each kernel in the given
 		 * size. The thumbnail is normalized to gray scale, so it can be used for visual
 		 * inspection of the values of all kernels.
@@ -88,6 +100,29 @@ namespace fsdk
 		 * collated together in rows and columns for each wavelength and orientation.
 		 */
 		cv::Mat getThumbnails(const GaborKernel::KernelComponent eComp = GaborKernel::RealComp, const cv::Size oThumbSize = cv::Size(64, 64), const bool bThumbResize = false) const;
+
+		/**
+		 * Filters the given image with the kernels in the bank and get their responses.
+		 * @param oImage OpenCV's Mat with the image in which to apply the filter.
+		 * @param mResponses Reference to a QMap (mappping KernelParameters to OpenCV's
+		 * Mats) with the responses for each kernel in the bank.
+		 */
+		void filter(const cv::Mat &oImage, QMap<KernelParameters, cv::Mat> &mResponses);
+
+		/**
+		 * Filters the given image with the kernel and get the responses (that is,
+		 * convolve the image with both the real and imaginary components and calculate
+		 * the magnitude/energy between their responses), as well as the real and 
+		 * imaginary components used when filtering.
+		 * @param oImage OpenCV's Mat with the image in which to apply the filter.
+		 * @param oResponses Reference to an OpenCV's Mat that will receive the filter
+		 * responses.
+		 * @param oReal Reference to an OpenCV's Mat that will receive the real component
+		 * of the responses.
+		 * @param oImaginary Reference to an OpenCV's Mat that will receive the imaginary
+		 * component of the responses.
+		 */
+		void filter(const cv::Mat &oImage, QMap<KernelParameters, cv::Mat> &mResponses, QMap<KernelParameters, cv::Mat> &mReal, QMap<KernelParameters, cv::Mat> &mImaginary);
 
 	private:
 

@@ -43,14 +43,29 @@ namespace fsdk
 		GaborKernel();
 
 		/**
-		 * Main class constructor. Builds a Gabor Kernel with both real and imaginary
-		 * components from the given parameters.
-		 * In this implementation, sigma (σ) is automatically calculated from lambda (λ)
-		 * and a fixed bandwidth of one octave, as it is a standard in the literature
-		 * (supposedly this mimics well the visual system of animals - for further details,
-		 * refer to this link: http://www.cs.rug.nl/~imaging/simplecell.html).
-		 * The kernel size is also automatically calculated from sigma, in order to limit
-		 * the cutoff to a maximum of 0.5%.
+		 * Class constructor. Creates a kernel from the given parameters.		 
+		 * @param iWindowSize Integer with the size of the kernel window (in pixels).
+		 * This value is used for both the width and height of the kernel, since this
+		 * implementation only supports squared (aspect ratio = 1) kernels.
+		 * @param dTheta Double with the theta (θ) value used for the direction of the
+		 * Sinusoidal carrier of the kernel (in radians).
+		 * @param dLambda Double with the lambda (λ) value used for the wavelength of the
+		 * Sinusoidal carrier of the kernel (in pixels).
+		 * @param dSigma Double with the sigma (σ) value used for the Gaussian envelope
+		 * of the kernel (in radians).
+		 * @param dPsi Double with the psi (ψ) value used for the wave phase offset of the
+		 * Sinusoidal carrier of the kernel (in radians).
+		 */
+		GaborKernel(const int iWindowSize, const double dTheta, const double dLambda, const double dSigma, const double dPsi);
+
+		/**
+		 * Class constructor. Creates a kernel from the given parameters.
+		 * In this implementation, sigma (σ) and the kernel size are automatically calculated.
+		 * Sigma is calculated from lambda (λ) and a fixed bandwidth of one octave, as it is
+		 * a standard in the literature (supposedly this mimics well the visual system of
+		 * animals - for further details, refer to this link: http://www.cs.rug.nl/~imaging/simplecell.html).
+		 * The kernel size is calculated from sigma in order to limit the cutoff to a maximum
+		 * of 0.5%.
 		 * @param dTheta Double with the theta (θ) value used for the direction of the
 		 * Sinusoidal carrier of the kernel (in radians).
 		 * @param dLambda Double with the lambda (λ) value used for the wavelength of the
@@ -77,8 +92,7 @@ namespace fsdk
 
 		/**
 		 * Gets the value of the theta (θ) parameter, used in the kernel to 
-		 * define the orientation of the sinusoidal carrier in radians
-		 * (in range [0, PI]).
+		 * define the orientation of the sinusoidal carrier.
 		 * @return Double with the orientation of the sinusoidal carrier
 		 * in radians.
 		 */
@@ -86,16 +100,15 @@ namespace fsdk
 
 		/**
 		 * Sets the value of the theta (θ) parameter, used in the kernel to
-		 * define the orientation of the sinusoidal carrier in radians
-		 * (in range [0, PI]).
+		 * define the orientation of the sinusoidal carrier.
 		 * @param dValue Double with the orientation of the sinusoidal carrier
-		 * in radians.
+		 * in radians and in range [0, PI].
 		 */
 		void setTheta(const double dValue);
 
 		/**
 		 * Gets the value of the lambda (λ) parameter, used in the kernel to 
-		 * define the wavelength of the sinusoidal carrier in pixels.
+		 * define the wavelength of the sinusoidal carrier.
 		 * @return Double with the wavelength of the sinusoidal carrier
 		 * in pixels.
 		 */
@@ -103,20 +116,18 @@ namespace fsdk
 
 		/**
 		 * Sets the value of the lambda (λ) parameter, used in the kernel to
-		 * define the wavelength of the sinusoidal carrier in pixels. The
-		 * minimum value accepted is 3. Even though this method does not fix
-		 * a maximum, the value of lambda *should not* be greater than W/2
-		 * (where W is the size of the image which the kernel will be convolved
-		 * with), otherwise you may get weird results.
+		 * define the wavelength of the sinusoidal carrier in pixels.
 		 * @param dValue Double with the wavelength of the sinusoidal carrier
-		 * in pixels.
+		 * in pixels. The minimum value accepted is 3. P.S.: Even though there
+		 * is no fixed maximum, the value of lambda *should not* be greater than
+		 * W/2 (where W is the size of the image which the kernel will be convolved
+		 * with), otherwise the filtering may produce weird results.
 		 */
 		void setLambda(const double dValue);
 
 		/**
 		 * Gets the value of the psi (ψ) parameter, used in the kernel to
-		 * define the phase of the sinusoidal carrier in radians
-		 * (in range [0, PI]).
+		 * define the phase of the sinusoidal carrier.
 		 * @return Double with the phase of the sinusoidal carrier
 		 * in radians.
 		 */
@@ -124,42 +135,52 @@ namespace fsdk
 
 		/**
 		 * Sets the value of the psi (ψ) parameter, used in the kernel to
-		 * define the phase of the sinusoidal carrier in radians
-		 * (in range [0, PI]).
+		 * define the phase of the sinusoidal carrier.
 		 * @param dValue Double with the phase of the sinusoidal carrier
-		 * in radians.
+		 * in radians and in range [0, PI].
 		 */
 		void setPsi(const double dValue);
 
 		/**
 		 * Gets the value of the sigma (σ) parameter, used to define the
-		 * standard deviation (i.e. the size) of the Gaussian envelope,
-		 * in radians (in range [0, PI]). It is automatically calculated
-		 * from the the value of Lambda and a fixed bandwidth of 1 octave,
-		 * hence it is read-only (i.e. there is no setter method to change
-		 * its value).
+		 * standard deviation (i.e. the size) of the Gaussian envelope.
 		 * @return Double with the standard deviation of the Gaussian envelope
 		 * in radians.
 		 */
 		double sigma() const;
 
 		/**
-		 * Gets the bandwidth of the signal that will respond to the kernel,
+		 * Sets the value of the sigma (σ) parameter, used to define
+		 * the standard variation (i.e. the cutoff) of the Gaussian envelope,
+		 * in radians.
+		 * @param dValue Double with the standard deviation of the Gaussian
+		 * envelope. The minimum value accepted is 0.
+		 */
+		void setSigma(const double dValue);
+
+		/**
+		 * Gets the window size (both width and height) of the kernel.
+		 * @return Integer with the size of the kernel size in pixels.
+		 */
+		int windowSize() const;
+
+		/**
+		 * Sets the window size (both width and height) of the kernel.
+		 * @param iValue Integer with the window size in pixels. If the
+		 * provided value is even, 1 will be added to make it odd (since
+		 * the kernel has its origin at the center). The minimum value
+		 * accepted is 3.
+		 */
+		void setWindowSize(int iValue);
+
+		/**
+		 * Gets the bandwidth of the signal(s) that will respond to the kernel,
 		 * calculated from the ration between sigma and lambda (for further
-		 * information: http://www.cs.rug.nl/~imaging/simplecell.html#sigma).
-		 * Since sigma is automatically calculated to make the kernel response
-		 * fit a 1 octave bandwidth, this method exists only for verification
-		 * purposes in the current implementation.
+		 * information, refer to: http://www.cs.rug.nl/~imaging/simplecell.html#sigma).
 		 * @return Double with the bandwidth of the signal that will respond
 		 * to the kernel.
 		 */
 		double bandWidth() const;
-
-		/**
-		 * Gets the size of the kernel, in pixels for both axes (width and height).
-		 * @return OpenCV's Size structure with the kernel size in pixels.
-		 */
-		cv::Size size() const;
 
 		/**
 		 * Enumeration defining the different components of the Gabor kernel.
@@ -201,10 +222,25 @@ namespace fsdk
 		 * convolve the image with both the real and imaginary components and calculate
 		 * the magnitude/energy between their responses).
 		 * @param oImage OpenCV's Mat with the image in which to apply the filter.
-		 * @return OpenCV's Mat with the same size of the original image and with the
-		 * filter responses in each pixel.
+		 * @param oResponses Reference to an OpenCV's Mat that will receive the filter
+		 * responses.
 		 */
-		cv::Mat filter(const cv::Mat &oImage);
+		void filter(const cv::Mat &oImage, cv::Mat &oResponses);
+
+		/**
+		 * Filters the given image with the kernel and get the responses (that is,
+		 * convolve the image with both the real and imaginary components and calculate
+		 * the magnitude/energy between their responses), as well as the real and 
+		 * imaginary components used when filtering.
+		 * @param oImage OpenCV's Mat with the image in which to apply the filter.
+		 * @param oResponses Reference to an OpenCV's Mat that will receive the filter
+		 * responses.
+		 * @param oReal Reference to an OpenCV's Mat that will receive the real component
+		 * of the responses.
+		 * @param oImaginary Reference to an OpenCV's Mat that will receive the imaginary
+		 * component of the responses.
+		 */
+		void filter(const cv::Mat &oImage, cv::Mat &oResponses, cv::Mat &oReal, cv::Mat &oImaginary);
 
 	protected:
 
@@ -226,6 +262,9 @@ namespace fsdk
 
 		/** Standard deviation (σ) of the Gaussian envelop of the kernel, in radians. */
 		double m_dSigma;
+
+		/** Width and height of the squared kernel window. */
+		int m_iWindowSize;
 
 		/** OpenCV's Mat with the real data for the Gabor kernel. */
 		cv::Mat m_oRealComp;

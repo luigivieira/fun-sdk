@@ -25,16 +25,35 @@ using namespace cv;
 fsdk::GaborKernel::GaborKernel()
 {
 	m_dTheta = 0;
-	m_dLambda = 0;
+	m_dLambda = 3;
 	m_dPsi = CV_PI / 2;
+	m_dSigma = 0;
+	m_iWindowSize = 3;
+}
+
+// +-----------------------------------------------------------
+fsdk::GaborKernel::GaborKernel(const int iWindowSize, const double dTheta, const double dLambda, const double dSigma, const double dPsi)
+{
+	m_dTheta = std::min(std::max(dTheta, 0.0), CV_PI) * -1; // Theta is only flipped to visually simulate the "natural" orientation of angles
+	m_dLambda = std::max(dLambda, 3.0);
+	m_dPsi = std::min(std::max(dPsi, 0.0), CV_PI);
+	m_dSigma = std::max(dSigma, 0.0);
+	m_iWindowSize = std::max(iWindowSize, 3);
+	if(m_iWindowSize % 2 == 0)
+		m_iWindowSize++;
+
+	rebuildKernel();
 }
 
 // +-----------------------------------------------------------
 fsdk::GaborKernel::GaborKernel(const double dTheta, const double dLambda, const double dPsi)
 {
-	m_dTheta = std::min(std::max(dTheta, 0.0), CV_PI) * -1;
+	m_dTheta = std::min(std::max(dTheta, 0.0), CV_PI) * -1; // Theta is only flipped to visually simulate the "natural" orientation of angles
 	m_dLambda = std::max(dLambda, 3.0);
 	m_dPsi = std::min(std::max(dPsi, 0.0), CV_PI);
+	m_dSigma = 0.56 * m_dLambda;
+	m_iWindowSize = 1 + 2 * std::ceil(std::sqrt(-2 * std::pow(m_dSigma, 2) * std::log(0.005))); // Kernel size is based on sigma (to limit the cutoff to 0.5%)
+
 	rebuildKernel();
 }
 
@@ -45,6 +64,8 @@ fsdk::GaborKernel::GaborKernel(const GaborKernel &oOther)
 	m_dLambda = oOther.m_dLambda;
 	m_dPsi = oOther.m_dPsi;
 	m_dSigma = oOther.m_dSigma;
+	m_iWindowSize = oOther.m_iWindowSize;
+
 	m_oRealComp = oOther.m_oRealComp.clone();
 	m_oImaginaryComp = oOther.m_oImaginaryComp.clone();
 }
@@ -56,6 +77,8 @@ fsdk::GaborKernel& fsdk::GaborKernel::operator=(const GaborKernel &oOther)
 	m_dLambda = oOther.m_dLambda;
 	m_dPsi = oOther.m_dPsi;
 	m_dSigma = oOther.m_dSigma;
+	m_iWindowSize = oOther.m_iWindowSize;
+
 	m_oRealComp = oOther.m_oRealComp.clone();
 	m_oImaginaryComp = oOther.m_oImaginaryComp.clone();
 
@@ -65,22 +88,13 @@ fsdk::GaborKernel& fsdk::GaborKernel::operator=(const GaborKernel &oOther)
 // +-----------------------------------------------------------
 void fsdk::GaborKernel::rebuildKernel()
 {
-	// Calculate sigma from lambda considering a fixed bandwidth of one octave
-	m_dSigma = 0.56 * m_dLambda;
-
-	// Calculate the kernel size based on sigma in order to limit the cutoff
-	// effect of the Gaussian to 0.5% (hence reducing ripple effects in the
-	// filter response)
-	double dVariance = std::pow(m_dSigma, 2);
-	int iSize = 1 + 2 * std::ceil(std::sqrt(-2 * dVariance * std::log(0.005)));
-
 	// Then, calculate the Gabor kernel for both the real and imaginary parts
 	int x, y;
-	int iHalfSize = (iSize - 1) / 2; // Half the even size, so kernel's max value is "centered" at (0, 0)
+	int iHalfSize = (m_iWindowSize - 1) / 2; // Half the even size, so kernel's max value is "centered" at (0, 0)
 	double dThetaX, dThetaY, dGauss, dRealSignal, dImagSignal;
 
-	m_oRealComp.create(iSize, iSize, CV_32F);
-	m_oImaginaryComp.create(iSize, iSize, CV_32F);
+	m_oRealComp.create(m_iWindowSize, m_iWindowSize, CV_32F);
+	m_oImaginaryComp.create(m_iWindowSize, m_iWindowSize, CV_32F);
 
 	for(y = -iHalfSize; y <= iHalfSize; y++)
 	{
@@ -91,7 +105,7 @@ void fsdk::GaborKernel::rebuildKernel()
 			dThetaY = -x * std::sin(m_dTheta) + y * std::cos(m_dTheta);
 
 			// Value of the Gaussian envelope at (x, y)
-			dGauss = exp(-((std::pow(dThetaX, 2) + std::pow(dThetaY, 2)) / (2 * dVariance)));
+			dGauss = exp(-((std::pow(dThetaX, 2) + std::pow(dThetaY, 2)) / (2 * std::pow(m_dSigma, 2))));
 
 			// Real value of the sinusoidal carrier at (x, y)
 			dRealSignal = (std::cos(2 * CV_PI * dThetaX / m_dLambda + m_dPsi));
@@ -214,9 +228,25 @@ double fsdk::GaborKernel::sigma() const
 }
 
 // +-----------------------------------------------------------
-Size fsdk::GaborKernel::size() const
+void fsdk::GaborKernel::setSigma(const double dValue)
 {
-	return m_oRealComp.size();
+	m_dSigma = std::max(dValue, 0.0);
+	rebuildKernel();
+}
+
+// +-----------------------------------------------------------
+int fsdk::GaborKernel::windowSize() const
+{
+	return m_iWindowSize;
+}
+
+// +-----------------------------------------------------------
+void fsdk::GaborKernel::setWindowSize(int iValue)
+{
+	m_iWindowSize = std::max(iValue, 3);
+	if(m_iWindowSize % 2 == 0)
+		m_iWindowSize++;
+	rebuildKernel();
 }
 
 // +-----------------------------------------------------------
@@ -228,30 +258,36 @@ double fsdk::GaborKernel::bandWidth() const
 }
 
 // +-----------------------------------------------------------
-Mat fsdk::GaborKernel::filter(const Mat &oImage)
+void fsdk::GaborKernel::filter(const Mat &oImage, Mat &oResponses)
 {
+	Mat oReal, oImaginary;
+	filter(oImage, oResponses, oReal, oImaginary);
+}
+
+// +-----------------------------------------------------------
+void fsdk::GaborKernel::filter(const Mat &oImage, Mat &oResponses, Mat &oReal, Mat &oImaginary)
+{
+	// Convert the image to gray scale
+	Mat oGrImage;
+	cvtColor(oImage, oGrImage, CV_BGR2GRAY);
+
 	// Convolve the image with the two components
-	Mat oReal, oImag;
-	filter2D(oImage, oReal, CV_32F, m_oRealComp);
-	filter2D(oImage, oImag, CV_32F, m_oImaginaryComp);
+	filter2D(oGrImage, oReal, CV_32F, m_oRealComp);
+	filter2D(oGrImage, oImaginary, CV_32F, m_oImaginaryComp);
 
 	// Calculate the response (the magnitude/energy)
-	/*Mat oRet;
-	magnitude(oReal, oImag, oRet);*/
+	magnitude(oReal, oImaginary, oResponses);
 
-	double dReal, dImag, dMag;
-	Mat oRet;
-	oRet.create(oImage.size(), CV_32F);
+	/*double dReal, dImag, dMag;
+	oResponses.create(oImage.size(), CV_32F);
 	for(int iRow = 0; iRow < oImage.rows; iRow++)
 	{
 		for(int iCol = 0; iCol < oImage.cols; iCol++)
 		{
 			dReal = oReal.at<float>(iRow, iCol);
-			dImag = oImag.at<float>(iRow, iCol);
+			dImag = oImaginary.at<float>(iRow, iCol);
 			dMag = std::sqrt(std::pow(dReal, 2) + std::pow(dImag, 2));
-			oRet.at<float>(iRow, iCol) = dMag;
+			oResponses.at<float>(iRow, iCol) = dMag;
 		}
-	}
-
-	return oRet;
+	}*/
 }

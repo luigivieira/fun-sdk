@@ -20,6 +20,7 @@
 #include "gaborbank.h"
 #include "imageman.h"
 #include <QApplication>
+#include <QDebug>
 
 using namespace cv;
 
@@ -74,6 +75,19 @@ fsdk::GaborBank& fsdk::GaborBank::operator=(const GaborBank &oOther)
 }
 
 // +-----------------------------------------------------------
+QList<double> fsdk::GaborBank::wavelengths() const
+{
+	return m_lWavelengths;
+}
+
+
+// +-----------------------------------------------------------
+QList<double> fsdk::GaborBank::orientations() const
+{
+	return m_lOrientations;
+}
+
+// +-----------------------------------------------------------
 Mat fsdk::GaborBank::getThumbnails(const GaborKernel::KernelComponent eComp, const Size oSize, const bool bResize) const
 {
 	QList<Mat> lThumbs;
@@ -101,4 +115,30 @@ Mat fsdk::GaborBank::getThumbnails(const GaborKernel::KernelComponent eComp, con
 	QString sYTitle = QApplication::translate("GaborBank", "Wavelength (in pixels)");
 
 	return ImageMan::collateMats(lThumbs, oSize, m_lWavelengths.count(), m_lOrientations.count(), bResize, Scalar(128), 2, Scalar(255), Scalar(255), lXLabels, lYLabels, sXTitle, sYTitle);
+}
+
+// +-----------------------------------------------------------
+void fsdk::GaborBank::filter(const cv::Mat &oImage, QMap<KernelParameters, cv::Mat> &mResponses)
+{
+	QMap<KernelParameters, cv::Mat> mReal;
+	QMap<KernelParameters, cv::Mat> mImaginary;
+	filter(oImage, mResponses, mReal, mImaginary);
+}
+
+// +-----------------------------------------------------------
+void fsdk::GaborBank::filter(const cv::Mat &oImage, QMap<KernelParameters, cv::Mat> &mResponses, QMap<KernelParameters, cv::Mat> &mReal, QMap<KernelParameters, cv::Mat> &mImaginary)
+{
+	QMap<KernelParameters, GaborKernel>::const_iterator it;
+	for(it = m_mKernels.cbegin(); it != m_mKernels.cend(); ++it)
+	{
+		KernelParameters oParams = it.key();
+		GaborKernel oKernel = it.value();
+
+		Mat oResponses, oReal, oImaginary;
+		oKernel.filter(oImage, oResponses, oReal, oImaginary);
+
+		mResponses[oParams] = oResponses;
+		mReal[oParams] = oReal;
+		mImaginary[oParams] = oImaginary;
+	}
 }

@@ -157,7 +157,7 @@ Mat fsdk::ImageMan::collateMats(const QList<Mat> &lMats, const Size &oMatSize, u
 	Mat oCollateImage;
 	oCollateImage.create(oSize, iImgType);
 	oCollateImage = oImgBkgColor;
-
+	
 	// Draw the titles (if provided)
 	if(!sYTitle.isEmpty())
 	{

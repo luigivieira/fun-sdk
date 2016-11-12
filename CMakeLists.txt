@@ -64,6 +64,7 @@ add_subdirectory(src/libs/face-tracking)
 add_subdirectory(src/libs/feature-extraction)
 
 add_subdirectory(src/utils/landmarks-extractor)
+add_subdirectory(src/utils/gabor-test)
 add_subdirectory(src/utils/gabor-extractor)
 
 add_subdirectory(src/gui/fun-inspector)
