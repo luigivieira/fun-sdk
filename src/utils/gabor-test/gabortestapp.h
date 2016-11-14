@@ -86,6 +86,13 @@ namespace fsdk
 	protected:
 
 		/**
+		 * Converts angle values from degrees to radians.
+		 * @param dValue Double with the angle value in degrees.
+		 * @return Double with the angle value in radians.
+		 */
+		inline double degreesToRadians(const double dValue) const;
+
+		/**
 		 * Displays the bank of Gabor kernels used by this application or saves it
 		 * as a collated image to the given file (the formats supported are BMP,
 		 * PNG, JPEG and TIFF, automatically detected from the file extension).
@@ -114,20 +121,18 @@ namespace fsdk
 
 	private:
 
-		/** Indicates if the displaying of the Gabor bank was requested. */
-		bool m_bBankDisplay;
-
-		/** Indicates if a kernel generation was requested. */
-		bool m_bKernelGen;
-
 		/** Name of the image file to save the result. */
 		QString m_sSaveImageFilename;
 
-		/** Kernel used when custom kernel is used. */
-		GaborKernel *m_pKernel;
+		QList<double> m_lLambda;
 
-		/** Bank created when no custom kernel is used. */
-		GaborBank *m_pBank;
+		QList<double> m_lTheta;
+
+		QList<double> m_lSigma;
+
+		QList<double> m_lPsi;
+
+		QList<int> m_lWindowSize;
 	};
 }
 

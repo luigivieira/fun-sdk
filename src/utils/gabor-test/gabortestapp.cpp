@@ -48,75 +48,64 @@ fsdk::GaborTestApp::CommandLineParseResult fsdk::GaborTestApp::parseCommandLine(
 	//***************************************
 	QCommandLineParser oParser;
 	
-	oParser.setApplicationDescription(tr("Allows testing the Gabor filters used by the Fun SDK project."));
+	oParser.setApplicationDescription(tr("Testing utility of Gabor filters."));
 	oParser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
 
-	// Test image filename option
-	/*oParser.addPositionalArgument("test image",
-		tr("Image file to use in the test against the bank of Gabor kernels "
-			"(the formats supported are BMP, PNG, JPEG and TIFF, automatically "
-			"detected from the file extension)."),
-		tr("[test image]")
-	);*/
-
-	QCommandLineOption oBankOpt(QStringList({ "b", "bank" }),
-		tr("Displays the project's default bank of Gabor kernels to "
-			"the given image file (supported formats include BMP, "
-			"PNG, JPEG and TIFF, automatically detected from the "
-			"file extension). This option is exclusive and cannot "
-			"be used with any other with exception of -f, --file."
-		)
-	);
-	oParser.addOption(oBankOpt);
-
-	QCommandLineOption oLambdaOpt(QStringList({ "l", "lambda" }),
-		tr("Sets the wavelength, in pixels, used to create a Gabor kernel. "
-			"This is a mandatory parameter for creating a custom Gabor kernel."
+	QCommandLineOption oLambdaOpt(QStringList({ "w", "wavelength" }),
+		tr("Sets the wavelength in pixels of the sinusoidal carrier in a Gabor kernel. "
+			"The minimum value accepted is 3. To set more than one wavelength, "
+			"separate their values with commas (example: -w 5,11,22). This argument "
+			"is mandatory to use custom Gabor kernels."
 		), tr("value")
 	);
 	oParser.addOption(oLambdaOpt);
 
-	QCommandLineOption oThetaOpt(QStringList({ "t", "theta" }),
-		tr("Sets the orientation, in degrees, used to create a Gabor kernel. "
-			"This is a mandatory parameter for creating a custom Gabor kernel."
+	QCommandLineOption oThetaOpt(QStringList({ "o", "orientation" }),
+		tr("Sets the orientation in degrees of the sinusoidal carrier in a Gabor kernel. "
+			"Accepted values are in range [0, 180]. To set more than one orientation, "
+			"separate their values with commas (example: -o 0,45,90). This argument "
+			"is mandatory to use custom Gabor kernels."
 		), tr("value")
 	);
 	oParser.addOption(oThetaOpt);
 
-	QCommandLineOption oSigmaOpt(QStringList({ "s", "sigma" }),
-		tr("Sets the standard deviation, in radians, used to create a Gabor kernel. "
-			"This parameter is not mandatory for creating a custom Gabor kernel, "
-			"and will be calculated (to limit the cutoff to 0.5%) if not provided. "
+	QCommandLineOption oSigmaOpt(QStringList({ "d", "deviation" }),
+		tr("Sets the standard deviation in pixels of the Gaussian envelope in a Gabor kernel. "
+			"The minimum value accepted is 3. To set more than one deviation, "
+			"separate their values with commas (example: -d 12,45). If this argument "
+			"is not provided or if it has less values than informed in wavelenght/orientation, "
+			"the missing values will be automatically calculated to limit the cutoff to 0.5%. "
 		), tr("value")
 	);
 	oParser.addOption(oSigmaOpt);
 
-	QCommandLineOption oPsiOpt(QStringList({ "p", "psi" }),
-		tr("Sets the offset, in radians, used to create a Gabor kernel. "
-			"This parameter is not mandatory for creating a custom Gabor kernel, "
-			"and will be set to the default PI / 2 if not provided. "
+	QCommandLineOption oPsiOpt(QStringList({ "p", "phase" }),
+		tr("Sets the phase offset in degrees of the sinusioidal carrier in a Gabor kernel. "
+			"The minimum value accepted is 0. To set more than one phase, "
+			"separate their values with commas (example: -p 0,45). If this argument "
+			"is not provided or if it has less values than informed in wavelength/orientation, "
+			"the missing values will use the default of 90."
 		), tr("value")
 	);
 	oParser.addOption(oPsiOpt);
 
-	QCommandLineOption oWindowSizeOpt(QStringList({ "w", "windowsize" }),
-		tr("Sets the window size, in pixels, used to create a Gabor kernel. "
-			"This parameter is not mandatory for creating a custom Gabor kernel, "
-			"and will be calculated (according to the value of sigma) if not provided. "
-			"The integer value provided is added +1 if it is even "
-			"(since the window size needs to be odd) and it will "
-			"be used for both the width and height of the kernel "
-			"window, since this implementation supports only "
-			"squared (aspect ratio = 1) kernels. "
+	QCommandLineOption oWindowSizeOpt(QStringList({ "s", "size" }),
+		tr("Sets the window size in pixels of a Gabor kernel. "
+			"The minimum value accepted is 3. To set more than one window size, "
+			"separate their values with commas (example: -s 3,9). If this argument "
+			"is not provided or if it has less values than informed in wavelength/orientation, "
+			"the missing values will be automatically calculated from the deviation value. "
+			"Obs.: the same value is used for both the width and height of a kernel because "
+			"this implementation only supports non-elliptical Gaussian envelopes (spatial aspect "
+			"ratio = 1)."
 		), tr("value")
 	);
 	oParser.addOption(oWindowSizeOpt);
 
 	QCommandLineOption oFileOpt(QStringList({ "f", "file" }),
 		tr("Instead of displaying the result image in a graphical window, "
-			"saves the result image to the given file image file (supported "
-			"formats include BMP, PNG, JPEG and TIFF, automatically detected "
-			"from the file extension)."
+			"saves the it to the given image file (supported formats include"
+			"BMP, PNG, JPEG and TIFF, automatically detected from the file extension)."
 		), tr("file")
 	);
 	oParser.addOption(oFileOpt);
@@ -154,150 +143,117 @@ fsdk::GaborTestApp::CommandLineParseResult fsdk::GaborTestApp::parseCommandLine(
 	//* Handle the argument values
 	//***************************************
 
-	m_bBankDisplay = false;
-	m_bKernelGen = false;
-
-	// Check if exporting Gabor bank was requested
-	if(oParser.isSet(oBankOpt))
-		m_bBankDisplay = true;
-
-	// Check if the Lambda parameter was provided
-	double dLambda = 0;
+	// Process the Lambda parameters
 	if(oParser.isSet(oLambdaOpt))
 	{
-		m_bKernelGen = true;
-		QString sValue = oParser.value(oLambdaOpt);
-		bool bOk;
-		dLambda = sValue.toDouble(&bOk);
-		if(!bOk)
+		QStringList lValues = oParser.value(oLambdaOpt).split(',');
+		foreach(QString sValue, lValues)
 		{
-			qCritical().noquote() << tr("invalid lambda value %1").arg(sValue) << endl;
-			oParser.showHelp();
-			return CommandLineError;
+			bool bOk;
+			double dLambda = sValue.toDouble(&bOk);
+			if(!bOk || dLambda < 3)
+			{
+				qCritical().noquote() << tr("invalid wavelength value %1").arg(sValue) << endl;
+				return CommandLineError;
+			}
+			m_lLambda.append(dLambda);
 		}
 	}
 
-	// Check if the Theta parameter was provided
-	double dTheta = 0;
+	// Process the Theta parameters
 	if(oParser.isSet(oThetaOpt))
 	{
-		m_bKernelGen = true;
-		QString sValue = oParser.value(oThetaOpt);
-		bool bOk;
-		dTheta = sValue.toDouble(&bOk);
-		if(!bOk)
+		QStringList lValues = oParser.value(oThetaOpt).split(',');
+		foreach(QString sValue, lValues)
 		{
-			qCritical().noquote() << tr("invalid theta value %1").arg(sValue) << endl;
-			oParser.showHelp();
-			return CommandLineError;
+			bool bOk;
+			double dTheta = sValue.toDouble(&bOk);
+			if(!bOk || dTheta < 0 || dTheta > 180)
+			{
+				qCritical().noquote() << tr("invalid orientation value %1").arg(sValue) << endl;
+				return CommandLineError;
+			}
+			m_lTheta.append(degreesToRadians(dTheta));
 		}
-		dTheta = dTheta * CV_PI / 180.0;
 	}
 
-	// Check if the both theta and lambda parameters were specified for custom kernel generation
-	if(m_bKernelGen)
+	if((oParser.isSet(oLambdaOpt) || oParser.isSet(oThetaOpt)) && (m_lLambda.count() != m_lTheta.count()))
 	{
-		if(!oParser.isSet(oLambdaOpt))
-		{
-			qCritical().noquote() << tr("the lambda value is required for created kernels.") << endl;
-			oParser.showHelp();
-			return CommandLineError;
-		}
-		if(!oParser.isSet(oThetaOpt))
-		{
-			qCritical().noquote() << tr("the theta value is required for created kernels.") << endl;
-			oParser.showHelp();
-			return CommandLineError;
-		}
+		qCritical().noquote() << tr("the wavelength and orientation must have the same number of values.") << endl;
+		return CommandLineError;
 	}
 
-	// Check if the Sigma parameter was provided
-	double dSigma = 0;
+	// Process the Sigma parameters
 	if(oParser.isSet(oSigmaOpt))
 	{
-		m_bKernelGen = true;
-		QString sValue = oParser.value(oSigmaOpt);
-		bool bOk;
-		dSigma = sValue.toDouble(&bOk);
-		if(!bOk)
+		QStringList lValues = oParser.value(oSigmaOpt).split(',');
+		foreach(QString sValue, lValues)
 		{
-			qCritical().noquote() << tr("invalid sigma value %1").arg(sValue) << endl;
-			oParser.showHelp();
-			return CommandLineError;
+			bool bOk;
+			double dSigma = sValue.toDouble(&bOk);
+			if(!bOk || dSigma < 0)
+			{
+				qCritical().noquote() << tr("invalid standard deviation value %1").arg(sValue) << endl;
+				return CommandLineError;
+			}
+			m_lSigma.append(dSigma);
 		}
 	}
+	if(m_lSigma.count() > m_lLambda.count())
+	{
+		qCritical().noquote() << tr("too much standard deviation values were informed %1").arg(oParser.value(oSigmaOpt)) << endl;
+		return CommandLineError;
+	}
 
-	// Check if the Psi parameter was provided
-	double dPsi = 0;
+	//  Process the Psi parameters
 	if(oParser.isSet(oPsiOpt))
 	{
-		m_bKernelGen = true;
-		QString sValue = oParser.value(oPsiOpt);
-		bool bOk;
-		dPsi = sValue.toDouble(&bOk);
-		if(!bOk)
+		QStringList lValues = oParser.value(oPsiOpt).split(',');
+		foreach(QString sValue, lValues)
 		{
-			qCritical().noquote() << tr("invalid psi value %1").arg(sValue) << endl;
-			oParser.showHelp();
-			return CommandLineError;
+			bool bOk;
+			double dPsi = sValue.toDouble(&bOk);
+			if(!bOk || dPsi < 0)
+			{
+				qCritical().noquote() << tr("invalid phase offset value %1").arg(sValue) << endl;
+				oParser.showHelp();
+				return CommandLineError;
+			}
+			m_lPsi.append(degreesToRadians(dPsi));
 		}
 	}
+	if(m_lPsi.count() > m_lLambda.count())
+	{
+		qCritical().noquote() << tr("too much phase offset values were informed %1").arg(oParser.value(oPsiOpt)) << endl;
+		return CommandLineError;
+	}
 
-	// Check if the WindowSize parameter was provided
-	int iWindowSize = 0;
+	// Process the WindowSize parameters
 	if(oParser.isSet(oWindowSizeOpt))
 	{
-		m_bKernelGen = true;
-		QString sValue = oParser.value(oWindowSizeOpt);
-		bool bOk;
-		iWindowSize = sValue.toInt(&bOk);
-		if(!bOk)
+		QStringList lValues = oParser.value(oWindowSizeOpt).split(',');
+		foreach(QString sValue, lValues)
 		{
-			qCritical().noquote() << tr("invalid window size value %1").arg(sValue) << endl;
-			oParser.showHelp();
-			return CommandLineError;
+			bool bOk;
+			int iWindowSize = sValue.toInt(&bOk);
+			if(!bOk || iWindowSize < 3)
+			{
+				qCritical().noquote() << tr("invalid window size value %1").arg(sValue) << endl;
+				oParser.showHelp();
+				return CommandLineError;
+			}
+			m_lWindowSize.append(iWindowSize);
 		}
 	}
+	if(m_lWindowSize.count() > m_lLambda.count())
+	{
+		qCritical().noquote() << tr("too much window size values were informed %1").arg(oParser.value(oWindowSizeOpt)) << endl;
+		return CommandLineError;
+	}
 
-	// Check if the file option was set
+	// Process the save-to-file option
 	if(oParser.isSet(oFileOpt))
 		m_sSaveImageFilename = oParser.value(oFileOpt);
-
-	//***************************************
-	//* Additional validations
-	//***************************************
-
-	// Check if at least one action was requested
-	if(!m_bBankDisplay && !m_bKernelGen)
-	{
-		qCritical().noquote() << tr("no option has been defined.") << endl;
-		oParser.showHelp();
-		return CommandLineError;
-	}
-
-	// Check if bank display was the only request
-	if(m_bBankDisplay && m_bKernelGen)
-	{
-		qCritical().noquote() << tr("the option -b, --bank is exclusive.") << endl;
-		oParser.showHelp();
-		return CommandLineError;
-	}
-
-	// Create the kernel if needed
-	if(m_bKernelGen)
-	{
-		m_pKernel = new GaborKernel(dTheta, dLambda);
-		if(oParser.isSet(oPsiOpt))
-			m_pKernel->setPsi(dPsi);
-		if(oParser.isSet(oSigmaOpt))
-			m_pKernel->setSigma(dSigma);
-		if(oParser.isSet(oWindowSizeOpt))
-			m_pKernel->setWindowSize(iWindowSize);
-	}
-	
-	// Create the bank of kernels if needed
-	if(m_bBankDisplay)
-		m_pBank = new GaborBank();
 
 	return CommandLineOk;
 }
@@ -307,7 +263,36 @@ void fsdk::GaborTestApp::run()
 {
 	int iRet = 0;
 
-	if(m_bBankDisplay)
+	GaborBank oBank;
+	if(m_lLambda.count() == 0)
+		oBank = GaborBank::defaultBank();
+	else
+	{
+		for(int i = 0; i < m_lLambda.count(); i++)
+		{
+			double dLambda = m_lLambda[i];
+			double dTheta = m_lTheta[i];
+			double dPsi = i < m_lPsi.count() ? m_lPsi[i] : CV_PI / 2;
+
+			GaborKernel oKernel(dTheta, dLambda, dPsi);
+			if(i < m_lSigma.count())
+				oKernel.setSigma(m_lSigma[i]);
+			if(i < m_lWindowSize.count())
+				oKernel.setWindowSize(m_lWindowSize[i]);
+
+			oBank.addKernel(oKernel);
+		}
+	}
+
+	QString sWindowName = QApplication::translate("GaborBank", "Gabor Bank");
+	namedWindow(sWindowName.toStdString(), WINDOW_AUTOSIZE);
+	if(oBank.kernels().count() == 1)
+		imshow(sWindowName.toStdString(), oBank.kernels()[0].getThumbnail(GaborKernel::RealComp, Size(216, 216), true));
+	else
+		imshow(sWindowName.toStdString(), oBank.getThumbnails());
+	waitKey(0);
+
+	/*if(m_bBankDisplay)
 	{
 		if(!displayGaborBank(m_sSaveImageFilename))
 		{
@@ -323,30 +308,36 @@ void fsdk::GaborTestApp::run()
 			qCritical().noquote() << tr("Error writing to file %1").arg(m_sSaveImageFilename);
 			iRet = -2;
 		}
-	}
+	}*/
 
 	exit(iRet);
 }
 
 // +-----------------------------------------------------------
+double fsdk::GaborTestApp::degreesToRadians(const double dValue) const
+{
+	return dValue * CV_PI / 180;
+}
+
+// +-----------------------------------------------------------
 bool fsdk::GaborTestApp::displayGaborBank(const QString &sFilename) const
 {
-	if(sFilename.isEmpty())
-	{
+	//if(sFilename.isEmpty())
+	//{
 		QString sWindowName = QApplication::translate("GaborBank", "Project's Gabor Bank");
 		namedWindow(sWindowName.toStdString(), WINDOW_AUTOSIZE);
-		imshow(sWindowName.toStdString(), m_pBank->getThumbnails());
+		//imshow(sWindowName.toStdString(), m_pBank->getThumbnails());
 		waitKey(0);
 		return true;
-	}
-	else
-		return imwrite(sFilename.toStdString(), m_pBank->getThumbnails());
+	//}
+	//else
+		//return imwrite(sFilename.toStdString(), m_pBank->getThumbnails());
 }
 
 // +-----------------------------------------------------------
 bool fsdk::GaborTestApp::displayKernel(const QString &sFilename) const
 {
-	Mat oImage = m_pKernel->getThumbnail(GaborKernel::RealComp, Size(256, 256), true);
+	/*Mat oImage = m_pKernel->getThumbnail(GaborKernel::RealComp, Size(256, 256), true);
 	if(sFilename.isEmpty())
 	{
 		QString sWindowName = QApplication::translate("GaborBank", "Gabor Kernel");
@@ -356,7 +347,9 @@ bool fsdk::GaborTestApp::displayKernel(const QString &sFilename) const
 		return true;
 	}
 	else
-		return imwrite(sFilename.toStdString(), oImage);
+		return imwrite(sFilename.toStdString(), oImage);*/
+
+	return true;
 }
 
 // +-----------------------------------------------------------

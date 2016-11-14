@@ -27,18 +27,6 @@ using namespace cv;
 // +-----------------------------------------------------------
 fsdk::GaborBank::GaborBank()
 {
-	m_lWavelengths = QList<double>({ 3, 6, 9, 13, 17, 21 });
-	for(double dTheta = 0; dTheta < CV_PI; dTheta += CV_PI / 8)
-		m_lOrientations.append(dTheta);
-
-	foreach(double dLambda, m_lWavelengths)
-	{
-		foreach(double dTheta, m_lOrientations)
-		{
-			GaborKernel oKernel(dTheta, dLambda);
-			m_mKernels[KernelParameters(dLambda, dTheta)] = oKernel;
-		}
-	}
 }
 
 // +-----------------------------------------------------------
@@ -63,6 +51,26 @@ fsdk::GaborBank::GaborBank(const GaborBank &oOther)
 	m_lWavelengths = oOther.m_lWavelengths;
 	m_lOrientations = oOther.m_lOrientations;
 	m_mKernels = oOther.m_mKernels;
+}
+
+// +-----------------------------------------------------------
+fsdk::GaborBank fsdk::GaborBank::defaultBank()
+{
+	QList<double> lWavelengths = QList<double>({ 3, 6, 9, 13, 17, 21 });
+	QList<double> lOrientations;
+	for(double dTheta = 0; dTheta < CV_PI; dTheta += CV_PI / 8)
+		lOrientations.append(dTheta);
+
+	GaborBank oRet;
+	foreach(double dLambda, lWavelengths)
+	{
+		foreach(double dTheta, lOrientations)
+		{
+			GaborKernel oKernel(dTheta, dLambda);
+			oRet.addKernel(oKernel);
+		}
+	}
+	return oRet;
 }
 
 // +-----------------------------------------------------------
@@ -141,4 +149,32 @@ void fsdk::GaborBank::filter(const cv::Mat &oImage, QMap<KernelParameters, cv::M
 		mReal[oParams] = oReal;
 		mImaginary[oParams] = oImaginary;
 	}
+}
+
+// +-----------------------------------------------------------
+void fsdk::GaborBank::clear()
+{
+	m_lOrientations.clear();
+	m_lWavelengths.clear();
+	m_mKernels.clear();
+}
+
+// +-----------------------------------------------------------
+void fsdk::GaborBank::addKernel(const GaborKernel &oKernel)
+{
+	if(!m_lOrientations.contains(oKernel.theta()))
+		m_lOrientations.append(oKernel.theta());
+	if(!m_lWavelengths.contains(oKernel.lambda()))
+	m_lWavelengths.append(oKernel.lambda());
+	m_mKernels[KernelParameters(oKernel.lambda(), oKernel.theta())] = oKernel;
+}
+
+// +-----------------------------------------------------------
+QList<fsdk::GaborKernel> fsdk::GaborBank::kernels() const
+{
+	QList<GaborKernel> oRet;
+	QMap<KernelParameters, GaborKernel>::const_iterator it;
+	for(it = m_mKernels.cbegin(); it != m_mKernels.cend(); ++it)
+		oRet.append(it.value());
+	return oRet;
 }

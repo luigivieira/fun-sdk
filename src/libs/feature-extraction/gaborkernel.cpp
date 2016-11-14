@@ -185,7 +185,7 @@ Mat fsdk::GaborKernel::getThumbnail(const KernelComponent eComp, const Size oSiz
 // +-----------------------------------------------------------
 double fsdk::GaborKernel::theta() const
 {
-	return m_dTheta;
+	return std::abs(m_dTheta);
 }
 
 // +-----------------------------------------------------------

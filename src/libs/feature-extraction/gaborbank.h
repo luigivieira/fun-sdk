@@ -43,14 +43,12 @@ namespace fsdk
 
 		/**
 		 * Default class constructor.
-		 * Creates Gabor kernels for 6 wavelengths (3, 6, 9, 13, 17 and 21) and 8
-		 * orientations (from 0 to PI in intervals of PI/8). These choices are based
-		 * on the literature (refer to the thesis text for details).
+		 * Creates an empty bank.
 		 */
 		GaborBank();
 
 		/**
-		 * Class constructor that accepts the frequencies and orientations.
+		 * Class constructor that accepts the parameters for the Kernels to use.
 		 * @param lWavelengths List of double values with the wavelengths (lambda)
 		 * to use when building the Gabor kernels in the bank.
 		 * @param lOrientations List of double values with the orientations (theta)
@@ -123,6 +121,31 @@ namespace fsdk
 		 * component of the responses.
 		 */
 		void filter(const cv::Mat &oImage, QMap<KernelParameters, cv::Mat> &mResponses, QMap<KernelParameters, cv::Mat> &mReal, QMap<KernelParameters, cv::Mat> &mImaginary);
+
+		/**
+		 * Removes all kernels from this bank.
+		 */
+		void clear();
+
+		/**
+		 * Add the given kernel to this bank.
+		 * @param oKernel Constant reference to a GaborKernel to add to the bank.
+		 */
+		void addKernel(const GaborKernel &oKernel);
+
+		/**
+		 * Create the default bank of Gabor kernels, for 6 wavelengths (3, 6, 9, 13,
+		 * 17 and 21) and 8 orientations (from 0 to PI in intervals of PI/8). These
+		 * choices are based on the literature (refer to the thesis text for details).
+		 * @return GaborBank with the created bank of Gabor kernels.
+		 */
+		static GaborBank defaultBank();
+
+		/**
+		 * Gets the list of kernels in the bank.
+		 * @return QList of GaborKernel with the kernels in the bank.
+		 */
+		QList<GaborKernel> kernels() const;
 
 	private:
 
