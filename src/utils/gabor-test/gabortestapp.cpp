@@ -292,24 +292,6 @@ void fsdk::GaborTestApp::run()
 		imshow(sWindowName.toStdString(), oBank.getThumbnails());
 	waitKey(0);
 
-	/*if(m_bBankDisplay)
-	{
-		if(!displayGaborBank(m_sSaveImageFilename))
-		{
-			qCritical().noquote() << tr("Error writing to file %1").arg(m_sSaveImageFilename);
-			iRet = -2;
-		}
-	}
-
-	if(m_bKernelGen)
-	{
-		if(!displayKernel(m_sSaveImageFilename))
-		{
-			qCritical().noquote() << tr("Error writing to file %1").arg(m_sSaveImageFilename);
-			iRet = -2;
-		}
-	}*/
-
 	exit(iRet);
 }
 
