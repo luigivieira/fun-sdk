@@ -93,45 +93,53 @@ namespace fsdk
 		inline double degreesToRadians(const double dValue) const;
 
 		/**
-		 * Displays the bank of Gabor kernels used by this application or saves it
-		 * as a collated image to the given file (the formats supported are BMP,
-		 * PNG, JPEG and TIFF, automatically detected from the file extension).
-		 * @param sFilename Path and name of the file to save the image, or an empty
-		 * string if the image should be displayed in a window.
-		 * @return Boolean indicating if the saving was successful or not.
+		 * Displays the image on a window with the given title.
+		 * @param oImage OpenCV's Mat with the image to display.
+		 * @param sWindowTitle QString with the title of the window used to display the image.
 		 */
-		bool displayGaborBank(const QString &sFilename) const;
+		void displayImage(const cv::Mat &oImage, const QString &sWindowTitle) const;
 
 		/**
-		 * Displays the custom Gabor kernel or saves it as a collated image to the
-		 * given file (the formats supported are BMP, PNG, JPEG and TIFF,
-		 * automatically detected from the file extension).
-		 * @param sFilename Path and name of the file to save the image, or an empty
-		 * string if the image should be displayed in a window.
+		 * Saves the image on a file.
+		 * @param oImage OpenCV's Mat with the image to save.
+		 * @param sFilename Path and name of the file to save the image. The formats
+		 * supported are BMP, PNG, JPEG and TIFF, automatically detected from the
+		 * file extension.
 		 * @return Boolean indicating if the saving was successful or not.
 		 */
-		bool displayKernel(const QString &sFilename) const;
+		bool saveImage(const cv::Mat &oImage, const QString &sFilename) const;
 
 		/**
-		 * Test the bank of Gabor filters in this application with a the given test
-		 * image, displaying in a window a collated image with the responses.
-		 * @param sFilename Path and name of the image file to use in the tests.
+		 * Apply the given bank of Gabor kernels to the given image (i.e. filter
+		 * the image with all kernels in the bank), producing a collated image
+		 * with the responses.
+		 * @param oBank Reference to a GaborBank with the bank of Gabor kernels to use.
+		 * @param oImage OpenCV's Mat with the image to be filtered with the bank.
+		 * @return OpenCV's Mat with the image of the collated responses.
 		 */
-		bool testGaborBank(const QString &sFilename) const;
+		cv::Mat applyBank(const GaborBank &oBank, const cv::Mat &oImage) const;
 
 	private:
 
 		/** Name of the image file to save the result. */
 		QString m_sSaveImageFilename;
 
+		/** Name of the test image to apply the filters. */
+		QString m_sTestImageFilename;
+
+		/** List of wavelenghts to create the Gabor bank. */
 		QList<double> m_lLambda;
 
+		/** List of orientations to create the Gabor bank. */
 		QList<double> m_lTheta;
 
+		/** List of standard deviations to create the Gabor bank. */
 		QList<double> m_lSigma;
 
+		/** List of phase offsets to create the Gabor bank. */
 		QList<double> m_lPsi;
 
+		/** List of kernel window sizes to create the Gabor bank. */
 		QList<int> m_lWindowSize;
 	};
 }

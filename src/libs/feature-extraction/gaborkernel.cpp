@@ -267,13 +267,9 @@ void fsdk::GaborKernel::filter(const Mat &oImage, Mat &oResponses)
 // +-----------------------------------------------------------
 void fsdk::GaborKernel::filter(const Mat &oImage, Mat &oResponses, Mat &oReal, Mat &oImaginary)
 {
-	// Convert the image to gray scale
-	Mat oGrImage;
-	cvtColor(oImage, oGrImage, CV_BGR2GRAY);
-
 	// Convolve the image with the two components
-	filter2D(oGrImage, oReal, CV_32F, m_oRealComp);
-	filter2D(oGrImage, oImaginary, CV_32F, m_oImaginaryComp);
+	filter2D(oImage, oReal, CV_32F, m_oRealComp);
+	filter2D(oImage, oImaginary, CV_32F, m_oImaginaryComp);
 
 	// Calculate the response (the magnitude/energy)
 	magnitude(oReal, oImaginary, oResponses);

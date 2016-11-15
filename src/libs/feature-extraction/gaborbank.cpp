@@ -126,7 +126,7 @@ Mat fsdk::GaborBank::getThumbnails(const GaborKernel::KernelComponent eComp, con
 }
 
 // +-----------------------------------------------------------
-void fsdk::GaborBank::filter(const cv::Mat &oImage, QMap<KernelParameters, cv::Mat> &mResponses)
+void fsdk::GaborBank::filter(const cv::Mat &oImage, QMap<KernelParameters, cv::Mat> &mResponses) const
 {
 	QMap<KernelParameters, cv::Mat> mReal;
 	QMap<KernelParameters, cv::Mat> mImaginary;
@@ -134,8 +134,20 @@ void fsdk::GaborBank::filter(const cv::Mat &oImage, QMap<KernelParameters, cv::M
 }
 
 // +-----------------------------------------------------------
-void fsdk::GaborBank::filter(const cv::Mat &oImage, QMap<KernelParameters, cv::Mat> &mResponses, QMap<KernelParameters, cv::Mat> &mReal, QMap<KernelParameters, cv::Mat> &mImaginary)
+void fsdk::GaborBank::filter(const cv::Mat &oImage, QMap<KernelParameters, cv::Mat> &mResponses, QMap<KernelParameters, cv::Mat> &mReal, QMap<KernelParameters, cv::Mat> &mImaginary) const
 {
+	// Convert the image to gray scale
+	Mat oGrImage;
+
+	int iType = oImage.type();
+	int iChannels = oImage.channels();
+
+	if(oImage.type() != CV_8UC1)
+		cvtColor(oImage, oGrImage, CV_BGR2GRAY);
+	else
+		oGrImage = oImage;
+
+	// Filter with all kernels
 	QMap<KernelParameters, GaborKernel>::const_iterator it;
 	for(it = m_mKernels.cbegin(); it != m_mKernels.cend(); ++it)
 	{
@@ -143,7 +155,7 @@ void fsdk::GaborBank::filter(const cv::Mat &oImage, QMap<KernelParameters, cv::M
 		GaborKernel oKernel = it.value();
 
 		Mat oResponses, oReal, oImaginary;
-		oKernel.filter(oImage, oResponses, oReal, oImaginary);
+		oKernel.filter(oGrImage, oResponses, oReal, oImaginary);
 
 		mResponses[oParams] = oResponses;
 		mReal[oParams] = oReal;

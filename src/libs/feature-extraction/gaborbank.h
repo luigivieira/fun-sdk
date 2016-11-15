@@ -105,7 +105,7 @@ namespace fsdk
 		 * @param mResponses Reference to a QMap (mappping KernelParameters to OpenCV's
 		 * Mats) with the responses for each kernel in the bank.
 		 */
-		void filter(const cv::Mat &oImage, QMap<KernelParameters, cv::Mat> &mResponses);
+		void filter(const cv::Mat &oImage, QMap<KernelParameters, cv::Mat> &mResponses) const;
 
 		/**
 		 * Filters the given image with the kernel and get the responses (that is,
@@ -120,7 +120,7 @@ namespace fsdk
 		 * @param oImaginary Reference to an OpenCV's Mat that will receive the imaginary
 		 * component of the responses.
 		 */
-		void filter(const cv::Mat &oImage, QMap<KernelParameters, cv::Mat> &mResponses, QMap<KernelParameters, cv::Mat> &mReal, QMap<KernelParameters, cv::Mat> &mImaginary);
+		void filter(const cv::Mat &oImage, QMap<KernelParameters, cv::Mat> &mResponses, QMap<KernelParameters, cv::Mat> &mReal, QMap<KernelParameters, cv::Mat> &mImaginary) const;
 
 		/**
 		 * Removes all kernels from this bank.

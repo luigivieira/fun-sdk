@@ -202,7 +202,7 @@ Mat fsdk::ImageMan::collateMats(const QList<Mat> &lMats, const Size &oMatSize, u
 		Size oFntSize = getTextSize(sYLabel.toStdString(), iFontFace, dFontScale, iThickness, &iBaseline);
 
 		int x = iYLabelWidth / 2 + iYTitleHeight - oFntSize.width / 2;
-		int y = iXLabelHeight * 2 + iXTitleHeight + oFntSize.height + iRow * oMatSize.height + iRow * iMatBorderWidth;
+		int y = iXLabelHeight + iXTitleHeight + iRow * oMatSize.height + iRow * iMatBorderWidth + oMatSize.height / 2 + oFntSize.height / 2;
 
 		Point oPos(x, y);
 		putText(oCollateImage, sYLabel.toStdString(), oPos, iFontFace, dFontScale, Scalar(0), iThickness);

@@ -51,6 +51,16 @@ fsdk::GaborTestApp::CommandLineParseResult fsdk::GaborTestApp::parseCommandLine(
 	oParser.setApplicationDescription(tr("Testing utility of Gabor filters."));
 	oParser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
 
+	// Test file option
+	oParser.addPositionalArgument("test file",
+		tr("File with an image to use for testing (i.e. applying the Gabor bank "
+			"configured). Supported formats include BMP, PNG, JPEG and TIFF, "
+			"automatically detected from the file extension. If this argument is "
+			"not provided, the Gabor bank is displayed instead of the result of the test."
+		),
+		tr("[test file]")
+	);
+
 	QCommandLineOption oLambdaOpt(QStringList({ "w", "wavelength" }),
 		tr("Sets the wavelength in pixels of the sinusoidal carrier in a Gabor kernel. "
 			"The minimum value accepted is 3. To set more than one wavelength, "
@@ -142,6 +152,18 @@ fsdk::GaborTestApp::CommandLineParseResult fsdk::GaborTestApp::parseCommandLine(
 	//***************************************
 	//* Handle the argument values
 	//***************************************
+
+	// Process the test image
+	if(oParser.positionalArguments().count() > 1)
+	{
+		QStringList lUnknown;
+		for(int i = 1; i < oParser.positionalArguments().count(); i++)
+			lUnknown.append(oParser.positionalArguments()[i]);
+		qCritical().noquote() << tr("unexpected arguments %1").arg(lUnknown.join(',')) << endl;
+		return CommandLineError;
+	}
+	if(oParser.positionalArguments().count() == 1)
+		m_sTestImageFilename = oParser.positionalArguments()[0];
 
 	// Process the Lambda parameters
 	if(oParser.isSet(oLambdaOpt))
@@ -261,8 +283,7 @@ fsdk::GaborTestApp::CommandLineParseResult fsdk::GaborTestApp::parseCommandLine(
 // +-----------------------------------------------------------
 void fsdk::GaborTestApp::run()
 {
-	int iRet = 0;
-
+	// Build the bank as requested
 	GaborBank oBank;
 	if(m_lLambda.count() == 0)
 		oBank = GaborBank::defaultBank();
@@ -284,15 +305,66 @@ void fsdk::GaborTestApp::run()
 		}
 	}
 
-	QString sWindowName = QApplication::translate("GaborBank", "Gabor Bank");
-	namedWindow(sWindowName.toStdString(), WINDOW_AUTOSIZE);
-	if(oBank.kernels().count() == 1)
-		imshow(sWindowName.toStdString(), oBank.kernels()[0].getThumbnail(GaborKernel::RealComp, Size(216, 216), true));
-	else
-		imshow(sWindowName.toStdString(), oBank.getThumbnails());
-	waitKey(0);
+	// Test against an image, if requested
+	if(!m_sTestImageFilename.isEmpty())
+	{
+		Mat oTest = imread(m_sTestImageFilename.toStdString(), 0);
+		if(oTest.empty())
+		{
+			qCritical().noquote() << tr("error reading image file %1").arg(m_sTestImageFilename);
+			exit(-2);
+			return;
+		}
 
-	exit(iRet);
+		// Apply the filters
+		Mat oImage = applyBank(oBank, oTest);
+
+		// Display/save the result
+		if(m_sSaveImageFilename.isEmpty())
+			displayImage(oImage, QApplication::translate("GaborBank", "Test Result"));
+		else
+		{
+			if(!saveImage(oImage, m_sSaveImageFilename))
+			{
+				qCritical().noquote() << tr("error saving image file %1").arg(m_sSaveImageFilename);
+				exit(-3);
+				return;
+			}
+		}
+
+	}
+
+	// Simply show the bank, if no testing is requested
+	else
+	{
+		// Get the bank thumbnails
+		QString sWindowTitle;
+		Mat oImage;
+		if(oBank.kernels().count() == 1)
+		{
+			sWindowTitle = QApplication::translate("GaborBank", "Gabor Kernel");
+			oImage = oBank.kernels()[0].getThumbnail(GaborKernel::RealComp, Size(216, 216), false);
+		}
+		else
+		{
+			sWindowTitle = QApplication::translate("GaborBank", "Gabor Bank");
+			oImage = oBank.getThumbnails(GaborKernel::RealComp, Size(96, 96), false);
+		}
+
+		// Display/save the thumbnails
+		if(m_sSaveImageFilename.isEmpty())
+			displayImage(oImage, sWindowTitle);
+		else
+		{
+			if(!saveImage(oImage, m_sSaveImageFilename))
+			{
+				qCritical().noquote() << tr("error saving image file %1").arg(m_sSaveImageFilename);
+				exit(-3);
+			}
+		}
+	}
+
+	exit(0);
 }
 
 // +-----------------------------------------------------------
@@ -302,52 +374,25 @@ double fsdk::GaborTestApp::degreesToRadians(const double dValue) const
 }
 
 // +-----------------------------------------------------------
-bool fsdk::GaborTestApp::displayGaborBank(const QString &sFilename) const
+void fsdk::GaborTestApp::displayImage(const cv::Mat &oImage, const QString &sWindowTitle) const
 {
-	//if(sFilename.isEmpty())
-	//{
-		QString sWindowName = QApplication::translate("GaborBank", "Project's Gabor Bank");
-		namedWindow(sWindowName.toStdString(), WINDOW_AUTOSIZE);
-		//imshow(sWindowName.toStdString(), m_pBank->getThumbnails());
-		waitKey(0);
-		return true;
-	//}
-	//else
-		//return imwrite(sFilename.toStdString(), m_pBank->getThumbnails());
+	namedWindow(sWindowTitle.toStdString(), WINDOW_AUTOSIZE);
+	imshow(sWindowTitle.toStdString(), oImage);
+	waitKey(0);
 }
 
 // +-----------------------------------------------------------
-bool fsdk::GaborTestApp::displayKernel(const QString &sFilename) const
+bool fsdk::GaborTestApp::saveImage(const cv::Mat &oImage, const QString &sFilename) const
 {
-	/*Mat oImage = m_pKernel->getThumbnail(GaborKernel::RealComp, Size(256, 256), true);
-	if(sFilename.isEmpty())
-	{
-		QString sWindowName = QApplication::translate("GaborBank", "Gabor Kernel");
-		namedWindow(sWindowName.toStdString(), WINDOW_AUTOSIZE);
-		imshow(sWindowName.toStdString(), oImage);
-		waitKey(0);
-		return true;
-	}
-	else
-		return imwrite(sFilename.toStdString(), oImage);*/
-
-	return true;
+	return imwrite(sFilename.toStdString(), oImage);
 }
 
 // +-----------------------------------------------------------
-bool fsdk::GaborTestApp::testGaborBank(const QString &sFilename) const
+Mat fsdk::GaborTestApp::applyBank(const GaborBank &oBank, const cv::Mat &oImage) const
 {
-	// Read the image file
-	Mat oTestImage = imread(sFilename.toStdString(), CV_LOAD_IMAGE_COLOR);
-	if(oTestImage.empty())
-		return false;
-
 	// Filter the image with the Gabor bank
-	GaborBank oBank;
 	QMap<KernelParameters, cv::Mat> mResponses;
-	QMap<KernelParameters, cv::Mat> mReal;
-	QMap<KernelParameters, cv::Mat> mImag;
-	oBank.filter(oTestImage, mResponses, mReal, mImag);
+	oBank.filter(oImage, mResponses);
 
 	// Produce a collated image with the responses
 	QList<Mat> lResponses;
@@ -372,16 +417,8 @@ bool fsdk::GaborTestApp::testGaborBank(const QString &sFilename) const
 		lResponses.append(oResponses);
 	}
 
-	QString sXTitle = tr("Kernel Orientation (in degrees)");
-	QString sYTitle = tr("Kernel Wavelength (in pixels)");
+	QString sXTitle = tr("Orientation (in degrees)");
+	QString sYTitle = tr("Wavelength (in pixels)");
 
-	Mat oResult = ImageMan::collateMats(lResponses, Size(128, 128), oBank.wavelengths().count(), oBank.orientations().count(), true, Scalar(128), 2, Scalar(0), Scalar(255), lXLabels, lYLabels, sXTitle, sYTitle);
-
-	namedWindow(tr("Result").toStdString(), WINDOW_AUTOSIZE);
-	imshow(tr("Result").toStdString(), oResult);
-	waitKey(0);
-
-	//imwrite("c:/temp/teste.png", oResult);
-
-	return true;
+	return ImageMan::collateMats(lResponses, Size(128, 128), oBank.wavelengths().count(), oBank.orientations().count(), true, Scalar(128), 2, Scalar(0), Scalar(255), lXLabels, lYLabels, sXTitle, sYTitle);
 }
