@@ -60,7 +60,7 @@ fsdk::GaborApp::CommandLineParseResult fsdk::GaborApp::parseCommandLine()
 
 	// Input file option
 	oParser.addPositionalArgument("input file",
-		tr("Image or video file (wildcard masks can be used) to use for the landmark extraction."),
+		tr("Image or video file (wildcard masks can be used) to use for the Gabor responses extraction."),
 		tr("<input file>")
 	);
 
@@ -86,25 +86,6 @@ fsdk::GaborApp::CommandLineParseResult fsdk::GaborApp::parseCommandLine()
 		), tr("value"), "1"
 	);
 	oParser.addOption(oMsgLevelOpt);
-
-	// Export kernel images option
-	QCommandLineOption oKernelsExpOpt(QStringList({ "k", "kernels" }),
-		tr("Exports the bank of Gabor kernels used by this application as a "
-			"collated image saved the given file (the formats supported are BMP, "
-			"PNG, JPEG and TIFF, automatically detected from the file extension)."),
-		tr("filename")
-	);
-	oParser.addOption(oKernelsExpOpt);
-
-	// Test kernel bank option
-	QCommandLineOption oTestKernelsOpt(QStringList({ "t", "test" }),
-		tr("Tests the Gabor kernels used by this application against a default "
-			"test image, saving the result as a collated image to the given "
-			"file (the formats supported are BMP, PNG, JPEG and TIFF, "
-			"automatically detected from the file extension)."),
-		tr("filename")
-	);
-	oParser.addOption(oTestKernelsOpt);
 
 	// Automatic confirm overwrite option
 	QCommandLineOption oAutoConfirmOpt(QStringList({ "y", "yes" }),
@@ -141,30 +122,6 @@ fsdk::GaborApp::CommandLineParseResult fsdk::GaborApp::parseCommandLine()
 		return CommandLineVersionRequested;
 	}
 
-	// Check if kernel images exporting was requested
-	if(oParser.isSet(oKernelsExpOpt))
-	{
-		QString sFilename = oParser.value(oKernelsExpOpt);
-		if(!exportGaborBank(sFilename))
-		{
-			qCritical().noquote() << tr("it was not possible to write to file %1").arg(sFilename) << endl;
-			return CommandLineError;
-		}
-		return DataExportRequested;
-	}
-
-	// Check if kernel testing was requested
-	if(oParser.isSet(oTestKernelsOpt))
-	{
-		QString sFilename = oParser.value(oTestKernelsOpt);
-		if(!testGaborBank(sFilename))
-		{
-			qCritical().noquote() << tr("it was not possible to read file %1").arg(sFilename) << endl;
-			return CommandLineError;
-		}
-		return DataExportRequested;
-	}
-
 	// Get the requested message level
 	QRegularExpression oRELevel("^[1-4]$");
 	bool bValid = oRELevel.match(oParser.value(oMsgLevelOpt)).hasMatch();
@@ -177,26 +134,31 @@ fsdk::GaborApp::CommandLineParseResult fsdk::GaborApp::parseCommandLine()
 	int iLevel = oParser.value(oMsgLevelOpt).toInt();
 	setLogLevel(static_cast<LogLevel>(iLevel));
 
-	// Check the input file and CSV files (or wildcards) arguments
+	// Check the input and landmark files, as well as the CSV files (or wildcards) arguments
 	switch(oParser.positionalArguments().count())
 	{
 		case 0:
-			qCritical().noquote() << tr("the arguments <input file> and <csv file> are required") << endl;
+			qCritical().noquote() << tr("the arguments <input file>, <landmarks file> and <csv file> are required") << endl;
 			oParser.showHelp();
 			return CommandLineError;
 
 		case 1:
-			qCritical().noquote() << tr("the argument <csv file> is required") << endl;
+			qCritical().noquote() << tr("the arguments <landmarks file> and <csv file> are required") << endl;
 			oParser.showHelp();
 			return CommandLineError;
 
 		case 2:
+			qCritical().noquote() << tr("the argument <csv file> is required") << endl;
+			oParser.showHelp();
+			return CommandLineError;
+
+		case 3:
 			break;
 
 		default:
 		{
 			QStringList lUnknown;
-			for(int i = 2; i < oParser.positionalArguments().count(); i++)
+			for(int i = 3; i < oParser.positionalArguments().count(); i++)
 				lUnknown.append(oParser.positionalArguments()[i]);
 			qCritical().noquote() << tr("unexpected arguments: %1").arg(lUnknown.join(' ')) << endl;
 			oParser.showHelp();
@@ -204,51 +166,77 @@ fsdk::GaborApp::CommandLineParseResult fsdk::GaborApp::parseCommandLine()
 		}
 	}
 
-	// Map the image/video/wildcard to the CSV file/wildcard
-	QString sInputFile = oParser.positionalArguments().at(0);;
-	QString sCSVFile = oParser.positionalArguments().at(1);
-	m_mTaskFiles.clear();
-	Naming::WildcardListingReturn eRet = Naming::wildcardListing(sInputFile, sCSVFile, m_mTaskFiles);
+	// Map the input image/video/wildcard to the landmarks and CSV file/wildcard
+	QString sInputFile = oParser.positionalArguments().at(0);
+	QString sLandmarksFile = oParser.positionalArguments().at(1);
+	QString sCSVFile = oParser.positionalArguments().at(2);
+	
+	QMap<QString, QString> mMapping[2];
+	Naming::WildcardListingReturn aRet[2];
+	aRet[0] = Naming::wildcardListing(sInputFile, sLandmarksFile, mMapping[0]);
+	aRet[1] = Naming::wildcardListing(sLandmarksFile, sCSVFile, mMapping[1]);
 
-	switch(eRet)
+	for(int i = 0; i < 2; i++)
 	{
-		case Naming::InvalidSourceWildcard:
-			qCritical().noquote() << tr("invalid wildcard for the input file: %1").arg(sInputFile) << endl;
-			oParser.showHelp();
-			return CommandLineError;
+		QString sSrc = (i == 0 ? sInputFile : sLandmarksFile);
+		QString sTgt = (i == 0 ? sLandmarksFile : sCSVFile);
 
-		case Naming::InvalidTargetWildcard:
-			qCritical().noquote() << tr("invalid wildcard for the CSV file: %1").arg(sCSVFile) << endl;
-			oParser.showHelp();
-			return CommandLineError;
+		switch(aRet[i])
+		{
+			case Naming::InvalidSourceWildcard:
+				qCritical().noquote() << tr("invalid wildcard for the file: %1").arg(sSrc) << endl;
+				oParser.showHelp();
+				return CommandLineError;
 
-		case Naming::DifferentWildcards:
-			qCritical().noquote() << tr("the input file and CSV file wildcards must be the same: %1 != %2").arg(sInputFile, sCSVFile) << endl;
-			oParser.showHelp();
-			return CommandLineError;
+			case Naming::InvalidTargetWildcard:
+				qCritical().noquote() << tr("invalid wildcard for the file: %1").arg(sTgt) << endl;
+				oParser.showHelp();
+				return CommandLineError;
 
-		case Naming::FileNotExist:
-			qCritical().noquote() << tr("input file does not exist: %1").arg(sInputFile) << endl;
-			oParser.showHelp();
-			return CommandLineError;
+			case Naming::DifferentWildcards:
+				qCritical().noquote() << tr("the wildcards between file %1 and %2 must be the same").arg(sSrc).arg(sTgt) << endl;
+				oParser.showHelp();
+				return CommandLineError;
 
-		case Naming::EmptySourceListing:
-			qCritical().noquote() << tr("input file wildcard did not return any file: %1").arg(sInputFile) << endl;
-			oParser.showHelp();
-			return CommandLineError;
+			case Naming::FileNotExist:
+				qCritical().noquote() << tr("file does not exist: %1").arg(sSrc) << endl;
+				oParser.showHelp();
+				return CommandLineError;
 
-		case Naming::ListingOk:
-			break;
+			case Naming::EmptySourceListing:
+				qCritical().noquote() << tr("file wildcard did not return any file: %1").arg(sSrc) << endl;
+				oParser.showHelp();
+				return CommandLineError;
+
+			case Naming::ListingOk:
+				break;
+		}
+	}
+
+	if(mMapping[0].count() != mMapping[1].count()) // Sanity check
+	{
+		qCritical().noquote() << tr("something unexpected happened when processing the wildcards in command line");
+		return CommandLineError;
+	}
+
+	// Add the files to the final task map
+	m_mTaskFiles.clear();
+	for(int i = 0; i < mMapping[0].count(); i++)
+	{
+		QString sInput = (mMapping[0].cbegin() + i).key();
+		QString sLandmarks = (mMapping[0].cbegin() + i).value();
+		QString sCSV = (mMapping[1].cbegin() + i).value();
+		m_mTaskFiles[sInput] = TaskPair(sLandmarks, sCSV);
 	}
 
 	// Check if existing CSV files should be overwriting
 	QStringList lIgnored;
 	bool bAutoConfirm = oParser.isSet(oAutoConfirmOpt);
-	QMap<QString, QString>::const_iterator it;
+	QMap<QString, TaskPair>::const_iterator it;
 	for(it = m_mTaskFiles.cbegin(); it != m_mTaskFiles.cend(); ++it)
 	{
 		QString sInputFile = it.key();
-		QString sCSVFile = it.value();
+		QString sCSVFile = it.value().second;
 
 		if(!confirmOverwrite(sCSVFile, bAutoConfirm))
 			lIgnored.append(sInputFile);
@@ -263,7 +251,7 @@ fsdk::GaborApp::CommandLineParseResult fsdk::GaborApp::parseCommandLine()
 	for(it = m_mTaskFiles.cbegin(); it != m_mTaskFiles.cend(); ++it)
 	{
 		QString sInputFile = it.key();
-		QString sCSVFile = it.value();
+		QString sCSVFile = it.value().second;
 
 		bool bCancel;
 		if(!confirmWritable(sCSVFile, bAutoConfirm, bCancel))
@@ -280,7 +268,7 @@ fsdk::GaborApp::CommandLineParseResult fsdk::GaborApp::parseCommandLine()
 	// Remove the tasks with CSV files that can not be opened with read-write access
 	foreach(QString sIgnored, lIgnored)
 	{
-		qDebug().noquote() << tr("Ignoring input file %1 because target CSV %2 is not writable").arg(sIgnored, m_mTaskFiles[sIgnored]);
+		qDebug().noquote() << tr("Ignoring input file %1 because target CSV %2 is not writable").arg(sIgnored, m_mTaskFiles[sIgnored].second);
 		m_mTaskFiles.remove(sIgnored);
 	}
 
@@ -392,9 +380,9 @@ bool fsdk::GaborApp::confirmWritable(const QString sCSVFilename, bool &bAutoIgno
 }
 
 // +-----------------------------------------------------------
-fsdk::GaborExtractionTask* fsdk::GaborApp::createTask(const QString sInputFile)
+fsdk::GaborExtractionTask* fsdk::GaborApp::createTask(const QString &sInputFile, const QString &sLandmarksFile)
 {
-	/*GaborExtractionTask *pTask = new GaborExtractionTask(sInputFile, m_fMinimumQuality);
+	GaborExtractionTask *pTask = new GaborExtractionTask(sInputFile, sLandmarksFile);
 	pTask->setAutoDelete(false);
 	m_lTasks.append(pTask);
 
@@ -402,9 +390,7 @@ fsdk::GaborExtractionTask* fsdk::GaborApp::createTask(const QString sInputFile)
 	connect(pTask, &GaborExtractionTask::taskProgress, this, &GaborApp::taskProgress);
 	connect(pTask, &GaborExtractionTask::taskFinished, this, &GaborApp::taskFinished);
 
-	return pTask;*/
-
-	return NULL;
+	return pTask;
 }
 
 // +-----------------------------------------------------------
@@ -422,11 +408,12 @@ void fsdk::GaborApp::deleteTask(fsdk::GaborExtractionTask* pTask)
 // +-----------------------------------------------------------
 void fsdk::GaborApp::run()
 {
-	QMap<QString, QString>::const_iterator it;
+	QMap<QString, TaskPair>::const_iterator it;
 	for(it = m_mTaskFiles.cbegin(); it != m_mTaskFiles.cend(); ++it)
 	{
 		QString sInputFile = it.key();
-		GaborExtractionTask *pTask = createTask(sInputFile);
+		QString sLandmarksFile = it.value().first;
+		GaborExtractionTask *pTask = createTask(sInputFile, sLandmarksFile);
 		QThreadPool::globalInstance()->start(pTask);
 	}
 }
@@ -472,9 +459,9 @@ void fsdk::GaborApp::taskFinished(const QString &sInputFile, const QVariant &vDa
 	deleteTask(pTask);
 
 	int iRet;
-	QString sCSVFile = m_mTaskFiles[sInputFile];
+	QString sCSVFile = m_mTaskFiles[sInputFile].second;
 
-	if(!vData.value<LandmarksData>().saveToCSV(sCSVFile))
+	if(!vData.value<GaborData>().saveToCSV(sCSVFile))
 	{
 		qCritical().noquote() << tr("error writing to CSV file %1").arg(sCSVFile);
 		iRet = -3;
@@ -497,63 +484,4 @@ void fsdk::GaborApp::cancel()
 {
 	foreach(ExtractionTask *pTask, m_lTasks)
 		pTask->cancel();
-}
-
-// +-----------------------------------------------------------
-bool fsdk::GaborApp::exportGaborBank(const QString &sFilename) const
-{
-	GaborBank oBank;
-	return imwrite(sFilename.toStdString(), oBank.getThumbnails());
-}
-
-// +-----------------------------------------------------------
-bool fsdk::GaborApp::testGaborBank(const QString &sFilename) const
-{
-	// Read the image file
-	Mat oTestImage = imread(sFilename.toStdString(), CV_LOAD_IMAGE_COLOR);
-	if(oTestImage.empty())
-		return false;
-
-	// Filter the image with the Gabor bank
-	GaborBank oBank;
-	QMap<KernelParameters, cv::Mat> mResponses;
-	QMap<KernelParameters, cv::Mat> mReal;
-	QMap<KernelParameters, cv::Mat> mImag;
-	oBank.filter(oTestImage, mResponses, mReal, mImag);
-
-	// Produce a collated image with the responses
-	QList<Mat> lResponses;
-	QStringList lXLabels, lYLabels;
-	QMap<KernelParameters, cv::Mat>::const_iterator it;
-	for(it = mResponses.cbegin(); it != mResponses.cend(); ++it)
-	{
-		KernelParameters oParams = it.key();
-		Mat oResponses = it.value();
-
-		double dLambda = oParams.first;
-		double dTheta = oParams.second;
-		QString sLambda, sTheta;
-		sLambda.sprintf("%2.0f", dLambda);
-		sTheta.sprintf("%2.1f", dTheta * 180 / CV_PI);
-
-		if(!lXLabels.contains(sTheta))
-			lXLabels.append(sTheta);
-		if(!lYLabels.contains(sLambda))
-			lYLabels.append(sLambda);
-
-		lResponses.append(oResponses);
-	}
-
-	QString sXTitle = tr("Kernel Orientation (in degrees)");
-	QString sYTitle = tr("Kernel Wavelength (in pixels)");
-
-	Mat oResult = ImageMan::collateMats(lResponses, Size(128, 128), oBank.wavelengths().count(), oBank.orientations().count(), true, Scalar(128), 2, Scalar(0), Scalar(255), lXLabels, lYLabels, sXTitle, sYTitle);
-
-	//namedWindow(tr("Result").toStdString(), WINDOW_AUTOSIZE);
-	//imshow(tr("Result").toStdString(), oResult);
-	//waitKey(0);
-
-	imwrite("c:/temp/teste.png", oResult);
-
-	return true;
 }

@@ -19,6 +19,7 @@
 
 #include "landmarksdata.h"
 #include "csvfile.h"
+#include <QApplication>
 
 // +-----------------------------------------------------------
 fsdk::LandmarksData::LandmarksData()
@@ -131,7 +132,48 @@ bool fsdk::LandmarksData::saveToCSV(const QString &sFilename) const
 // +-----------------------------------------------------------
 bool fsdk::LandmarksData::readFromCSV(const QString &sFilename)
 {
-	return false;
+	CSVFile oData;
+	if(!oData.read(sFilename))
+	{
+		qDebug().noquote() << QApplication::translate("LandmarksData", "error reading landmarks CSV file");
+		return false;
+	}
+
+	QMap<int, QList<QPoint>> mLandmarks;
+	QMap<int, float> mQualities;
+	int iLandmarksCount = 0;
+
+	QList<QStringList> lData = oData.lines();
+	foreach(QStringList lLine, lData)
+	{
+		if(lLine.count() < 2)
+		{
+			qDebug().noquote() << QApplication::translate("LandmarksData", "format error in landmarks CSV file");
+			return false;
+		}
+
+		int iFrame = lLine[0].toInt();
+		float fQuality = lLine[1].toFloat();
+
+		QList<QPoint> lPoints;
+		for(int i = 2; i < lLine.count() - 1; i += 2)
+		{
+			int x = lLine[i].toInt();
+			int y = lLine[i + 1].toInt();
+
+			lPoints.append(QPoint(x, y));
+		}
+
+		mQualities[iFrame] = fQuality;
+		mLandmarks[iFrame] = lPoints;
+		iLandmarksCount = qMax(iLandmarksCount, lPoints.count());
+	}		
+
+	m_mQualities = mQualities;
+	m_mLandmarks = mLandmarks;
+	m_iLandmarksCount = iLandmarksCount;
+
+	return true;
 }
 
 // +-----------------------------------------------------------

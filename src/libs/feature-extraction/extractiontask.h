@@ -54,6 +54,9 @@ namespace fsdk
 			/** Indicates that the input file could not be read. */
 			InvalidInputFile,
 
+			/** Indicates that other input paranter than the input file could not be processed. */
+			InvalidInputParameters,
+
 			/** Indicates that a cancellation was requested. */
 			CancelRequested,
 

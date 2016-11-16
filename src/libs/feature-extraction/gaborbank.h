@@ -122,6 +122,8 @@ namespace fsdk
 		 */
 		void filter(const cv::Mat &oImage, QMap<KernelParameters, cv::Mat> &mResponses, QMap<KernelParameters, cv::Mat> &mReal, QMap<KernelParameters, cv::Mat> &mImaginary) const;
 
+		cv::Mat filter(const cv::Mat &oImage) const;
+
 		/**
 		 * Removes all kernels from this bank.
 		 */

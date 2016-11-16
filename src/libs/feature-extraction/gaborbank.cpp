@@ -56,7 +56,7 @@ fsdk::GaborBank::GaborBank(const GaborBank &oOther)
 // +-----------------------------------------------------------
 fsdk::GaborBank fsdk::GaborBank::defaultBank()
 {
-	QList<double> lWavelengths = QList<double>({ 3, 6, 9, 13, 17, 21 });
+	QList<double> lWavelengths = QList<double>({ 3, 6, 9, 13 });
 	QList<double> lOrientations;
 	for(double dTheta = 0; dTheta < CV_PI; dTheta += CV_PI / 8)
 		lOrientations.append(dTheta);
@@ -138,10 +138,6 @@ void fsdk::GaborBank::filter(const cv::Mat &oImage, QMap<KernelParameters, cv::M
 {
 	// Convert the image to gray scale
 	Mat oGrImage;
-
-	int iType = oImage.type();
-	int iChannels = oImage.channels();
-
 	if(oImage.type() != CV_8UC1)
 		cvtColor(oImage, oGrImage, CV_BGR2GRAY);
 	else
@@ -189,4 +185,43 @@ QList<fsdk::GaborKernel> fsdk::GaborBank::kernels() const
 	for(it = m_mKernels.cbegin(); it != m_mKernels.cend(); ++it)
 		oRet.append(it.value());
 	return oRet;
+}
+
+// +-----------------------------------------------------------
+Mat fsdk::GaborBank::filter(const cv::Mat &oImage) const
+{
+	// Convert the image to gray scale
+	Mat oGrImage;
+	if(oImage.type() != CV_8UC1)
+		cvtColor(oImage, oGrImage, CV_BGR2GRAY);
+	else
+		oGrImage = oImage;
+
+	QList<Mat> lResps;
+	QStringList lXLabels, lYLabels;
+
+	foreach(double dLambda, m_lWavelengths)
+	{
+		QString sLambda;
+		sLambda.sprintf("%2.0f", dLambda);
+		lYLabels.append(sLambda);
+		foreach(double dTheta, m_lOrientations)
+		{
+			if(lXLabels.count() != m_lOrientations.count())
+			{
+				QString sTheta;
+				sTheta.sprintf("%2.1f", dTheta * 180 / CV_PI);
+				lXLabels.append(sTheta);
+			}
+			GaborKernel oKernel = m_mKernels[KernelParameters(dLambda, dTheta)];
+			Mat oResp;
+			oKernel.filter(oGrImage, oResp);
+			lResps.append(oResp);
+		}
+	}
+
+	QString sXTitle = QApplication::translate("GaborBank", "Orientation (in degrees)");
+	QString sYTitle = QApplication::translate("GaborBank", "Wavelength (in pixels)");
+
+	return ImageMan::collateMats(lResps, Size(128, 128), m_lWavelengths.count(), m_lOrientations.count(), true, Scalar(128), 2, Scalar(255), Scalar(255), lXLabels, lYLabels, sXTitle, sYTitle);
 }

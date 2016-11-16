@@ -112,6 +112,7 @@ Mat fsdk::ImageMan::collateMats(const QList<Mat> &lMats, const Size &oMatSize, u
 
 	int iFontFace = FONT_HERSHEY_SIMPLEX;
 	double dFontScale = 0.5;
+	double dTitleScale = 1.0;
 	int iThickness = 1;
 	int iBaseline = 0;
 
@@ -122,7 +123,11 @@ Mat fsdk::ImageMan::collateMats(const QList<Mat> &lMats, const Size &oMatSize, u
 		if(oFntSize.height > iXLabelHeight)
 			iXLabelHeight = oFntSize.height;
 	}
-	iXLabelHeight *= 2;
+	if(!sXTitle.isEmpty())
+	{
+		Size oFntSize = getTextSize(sXTitle.toStdString(), iFontFace, dTitleScale, iThickness, &iBaseline);
+		iXLabelHeight += oFntSize.height;
+	}	
 
 	int iYLabelWidth = 0;
 	foreach(QString sYLabel, lYLabels)
@@ -131,7 +136,11 @@ Mat fsdk::ImageMan::collateMats(const QList<Mat> &lMats, const Size &oMatSize, u
 		if(oFntSize.width > iYLabelWidth)
 			iYLabelWidth = oFntSize.width;
 	}
-	iYLabelWidth *= 1.5;	
+	if(!sYTitle.isEmpty())
+	{
+		Size oFntSize = getTextSize(sYTitle.toStdString(), iFontFace, dTitleScale, iThickness, &iBaseline);
+		iYLabelWidth += oFntSize.height;
+	}
 
 	int iXTitleHeight = 0;
 	if(!sXTitle.isEmpty())
@@ -161,38 +170,48 @@ Mat fsdk::ImageMan::collateMats(const QList<Mat> &lMats, const Size &oMatSize, u
 	// Draw the titles (if provided)
 	if(!sYTitle.isEmpty())
 	{
-		Size oFntSize = getTextSize(sYTitle.toStdString(), iFontFace, dFontScale + 0.2, iThickness, &iBaseline);
+		Size oFntSize = getTextSize(sYTitle.toStdString(), iFontFace, dTitleScale, iThickness, &iBaseline);
 
 		Mat oText;
-		oText.create(Size(oSize.height, oSize.width), iImgType);
+		oText.create(Size(oFntSize.width, oFntSize.width), iImgType);
 		oText = oImgBkgColor;
 		
 		// Draw the title text
-		int x = iXLabelHeight - iXTitleHeight + (iRows * oMatSize.height + iRows * (iMatBorderWidth + 1)) / 2 - oFntSize.width / 2;
-		int y = iXLabelHeight / 2 + oFntSize.height / 2;
-		putText(oText, sYTitle.toStdString(), Point(x, y), iFontFace, dFontScale + 0.2, Scalar(0), iThickness);
+		putText(oText, sYTitle.toStdString(), Point(0, oFntSize.width / 2 + oFntSize.height / 2), iFontFace, dTitleScale, Scalar(0), iThickness);
 
 		// Rotate it by 90 degrees
-		Mat oRot = getRotationMatrix2D(Point2f(oSize.width / 2, oSize.height / 2), 90, 1.0);
-		warpAffine(oText, oText, oRot, oSize, INTER_LINEAR, BORDER_CONSTANT, Scalar(255));
+		Mat oRot = getRotationMatrix2D(Point2f(oFntSize.width / 2, oFntSize.width / 2), 90, 1.0);
+		warpAffine(oText, oText, oRot, Size(oFntSize.width, oFntSize.width), INTER_LINEAR, BORDER_CONSTANT, Scalar(255));
+		oText = oText(Rect(oFntSize.width / 2 - oFntSize.height / 2, 0, oFntSize.height + 5, oFntSize.width));
 
-		// Translate to correct the difference in aspect ratio
-		float fDx = oSize.width / 2 - oSize.height / 2;
-		float fDy = oSize.height / 2 - oSize.width / 2;
-		float aData[2][3] = { { 1.0f, 0.0f, -fDx },{ 0.0f, 1.0f, fDy } };
-		Mat oTrans(2, 3, CV_32F, aData);
-		warpAffine(oText, oText, oTrans, oSize, INTER_LINEAR, BORDER_CONSTANT, Scalar(255));	
+		// Copy the rotated text over the base image
+		int x = iYTitleHeight / 2 + 10;
+		int y = iXLabelHeight + iXTitleHeight / 2 + (iRows * oMatSize.height + iRows * (iMatBorderWidth + 1)) / 2 + oFntSize.height / 2;
+		Rect oSrcRect = Rect(0, 0, oText.size().width, oText.size().height);
+		Rect oTgtRect = Rect(x - oText.size().width / 2, y - oText.size().height / 2, oText.size().width, oText.size().height);
+		if(oTgtRect.x < 0)
+			oTgtRect.x = 0;
+		if(oTgtRect.y < 0)
+			oTgtRect.y = 0;
+		if(oTgtRect.x + oTgtRect.width >= oSize.width)
+			oTgtRect.width = oSize.width - oTgtRect.x - 1;
+		if(oTgtRect.y + oTgtRect.height >= oSize.height)
+			oTgtRect.height = oSize.height - oTgtRect.y - 1;
 
-		// Make the base image equal to the image with the text
-		oCollateImage = oText;
+		if(oTgtRect.width != oSrcRect.width)
+			oSrcRect.width = oTgtRect.width;
+		if(oTgtRect.height != oSrcRect.height)
+			oSrcRect.height = oTgtRect.height;
+
+		oText(oSrcRect).copyTo(oCollateImage(oTgtRect));
 	}
 	if(!sXTitle.isEmpty())
 	{
 		// Draw the title text
-		Size oFntSize = getTextSize(sXTitle.toStdString(), iFontFace, dFontScale + 0.2, iThickness, &iBaseline);
+		Size oFntSize = getTextSize(sXTitle.toStdString(), iFontFace, dTitleScale, iThickness, &iBaseline);
 		int x = iYLabelWidth + iYTitleHeight + (iCols * oMatSize.width + iCols * (iMatBorderWidth + 1)) / 2 - oFntSize.width / 2;
 		int y = iXLabelHeight / 2 + oFntSize.height / 2;
-		putText(oCollateImage, sXTitle.toStdString(), Point(x, y), iFontFace, dFontScale + 0.2, Scalar(0), iThickness);
+		putText(oCollateImage, sXTitle.toStdString(), Point(x, y), iFontFace, dTitleScale, Scalar(0), iThickness);
 	}
 
 	// Draw the labels (if provided)
@@ -201,7 +220,7 @@ Mat fsdk::ImageMan::collateMats(const QList<Mat> &lMats, const Size &oMatSize, u
 	{
 		Size oFntSize = getTextSize(sYLabel.toStdString(), iFontFace, dFontScale, iThickness, &iBaseline);
 
-		int x = iYLabelWidth / 2 + iYTitleHeight - oFntSize.width / 2;
+		int x = iYLabelWidth + iYTitleHeight - oFntSize.width * 1.2;
 		int y = iXLabelHeight + iXTitleHeight + iRow * oMatSize.height + iRow * iMatBorderWidth + oMatSize.height / 2 + oFntSize.height / 2;
 
 		Point oPos(x, y);

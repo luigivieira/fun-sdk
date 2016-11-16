@@ -22,10 +22,8 @@
 
 #include "libexport.h"
 #include "extractiontask.h"
-#include "landmarksdata.h"
+#include "gaborbank.h"
 #include "gabordata.h"
-
-#include <opencv2\opencv.hpp>
 
 namespace fsdk
 {
@@ -41,10 +39,10 @@ namespace fsdk
 		 * Class constructor.
 		 * @param sVideoFile QString with the path and name of the video
 		 * file to process.
-		 * @param oLandmarks Object LandmarksData with the positions of the
-		 * facial landmarks in the video file.
+		 * @param sLandmarksFile QString with the path and name of the CSV with
+		 * the facial landmarks in the video file.
 		 */
-		GaborExtractionTask(const QString &sVideoFile, const LandmarksData &oLandmarks);
+		GaborExtractionTask(const QString &sVideoFile, const QString &sLandmarksFile);
 
 	public slots:
 
@@ -57,11 +55,15 @@ namespace fsdk
 
 	protected:
 		
+		cv::Mat cropAndNormalize(const cv::Mat &oImage, const QList<QPoint> &lLandmarks) const;
 
 	private:
 
-		/** Positions of the landmarks in the video being processed. */
-		LandmarksData m_oLandmarks;		
+		/** Name of the CSV file with the landmarks in the video being processed. */
+		QString m_sLandmarksFile;
+
+		/** Bank of Gabor filters used to extract the responses. */
+		GaborBank m_oBank;
 	};
 }
 

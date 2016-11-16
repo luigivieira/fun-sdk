@@ -24,6 +24,7 @@
 #include "gaborextractiontask.h"
 #include <QMap>
 #include <QList>
+#include <QPair>
 
 namespace fsdk
 {
@@ -67,10 +68,7 @@ namespace fsdk
 			CommandLineVersionRequested,
 
 			/** The user requested the application to display its help information. */
-			CommandLineHelpRequested,
-
-			/** The user requested data (like the gabor bank images) to be exported. */
-			DataExportRequested
+			CommandLineHelpRequested
 		};
 
 		/**
@@ -151,9 +149,10 @@ namespace fsdk
 		 * The task created can then be initiated directly (by invoking task->run())
 		 * or given to the QThreadPool to be executed in a different thread.
 		 * @param sInputFile QString with the name of the file to process.
+		 * @param sLandmaksFile QString with the name of the file with the facial landmarks.
 		 * @return Instance of GaborExtractionTask with the new task created.
 		 */
-		GaborExtractionTask* createTask(const QString sInputFile);
+		GaborExtractionTask* createTask(const QString &sInputFile, const QString &sLandmarksFile);
 
 		/**
 		 * Deletes the given task. The task MUST have been terminated already.
@@ -162,25 +161,12 @@ namespace fsdk
 		 */
 		void deleteTask(fsdk::GaborExtractionTask* pTask);
 
-		/**
-		 * Exports the bank of Gabor kernels used by this application, saving it
-		 * as a collated image to the given file (the formats supported are BMP,
-		 * PNG, JPEG and TIFF, automatically detected from the file extension).
-		 * @param sFilename Path and name of the file to save the image.
-		 */
-		bool exportGaborBank(const QString &sFilename) const;
-
-		/**
-		 * Test the bank of Gabor filters in this application with a the given test
-		 * image, displaying in a window a collated image with the responses.
-		 * @param sFilename Path and name of the image file to use in the tests.
-		 */
-		bool testGaborBank(const QString &sFilename) const;
-
 	private:
 
-		/** Files to be used by the tasks (input file to read x csv file to produce). */
-		QMap<QString, QString> m_mTaskFiles;
+		typedef QPair<QString, QString> TaskPair;
+
+		/** Files to be used by the tasks (input file x landmarks file + csv file to produce). */
+		QMap<QString, TaskPair> m_mTaskFiles;
 
 		/** List of tasks in execution. */
 		QList<GaborExtractionTask*> m_lTasks;

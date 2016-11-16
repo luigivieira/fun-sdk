@@ -18,15 +18,24 @@
  */
 
 #include "gaborextractiontask.h"
+#include "landmarksdata.h"
 #include <cmath>
+#include <QRect>
+#include <QVector2D>
+#include "csirofacetracker.h"
 
 using namespace cv;
 
+// Indexes of the landmarks at the eye corners
+#define LEFT_EYE_INNER_CORNER 39
+#define RIGHT_EYE_INNER_CORNER 42
+
 // +-----------------------------------------------------------
-fsdk::GaborExtractionTask::GaborExtractionTask(const QString &sVideoFile, const LandmarksData &oLandmarks):
+fsdk::GaborExtractionTask::GaborExtractionTask(const QString &sVideoFile, const QString &sLandmarksFile):
 	ExtractionTask(sVideoFile)
 {
-	m_oLandmarks = oLandmarks;
+	m_sLandmarksFile = sLandmarksFile;
+	m_oBank = GaborBank::defaultBank();
 }
 
 // +-----------------------------------------------------------
@@ -36,15 +45,34 @@ void fsdk::GaborExtractionTask::run()
 	GaborData oData;
 	QList<QPoint> lLandmarks;
 
+	// Try to read the CSV with the landmarks
+	LandmarksData oLandmarks;
+	if(!oLandmarks.readFromCSV(m_sLandmarksFile))
+	{
+		end(InvalidInputParameters);
+		return;
+	}
+
 	// Start the task
 	start();
 	
 	// Process while not cancelled and there are frames
 	while(!isCancelled() && !nextFrame().empty())
 	{
-		// Track the face in current video frame
+		// Get current frame and its landmarks
 		oFrame = frame();
-		lLandmarks = m_oLandmarks.landmarks(frameIndex());
+		lLandmarks = oLandmarks.landmarks(frameIndex());
+
+		// Crop the face region and normalize its image (so the distance
+		// between eyes is 50 pixels)
+		oFrame = cropAndNormalize(oFrame, lLandmarks);
+
+		imwrite("c:\\temp\\cropped.png", oFrame);
+
+		//QMap<KernelParameters, Mat> mResponses;
+		Mat oResp = m_oBank.filter(oFrame);
+
+		imwrite("c:\\temp\\response.png", oResp);
 
 		// Store the landmarks obtained in the map
 		//oData.add(frameIndex(), oTracker.getLandmarks(), oTracker.getQuality());
@@ -58,4 +86,49 @@ void fsdk::GaborExtractionTask::run()
 		end(CancelRequested);
 	else
 		end(QVariant::fromValue(oData));
+}
+
+// +-----------------------------------------------------------
+Mat fsdk::GaborExtractionTask::cropAndNormalize(const Mat &oImage, const QList<QPoint> &lLandmarks) const
+{
+	// Get the face region: the region that encloses all landmarks
+	int iMinX = oImage.cols;
+	int iMinY = oImage.rows;
+	int iMaxX = 0;
+	int iMaxY = 0;
+	for(uint i = 0; i < CSIROFaceTracker::landmarksCount(); i++)
+	{
+		QPoint oPoint = lLandmarks[i];
+		if(oPoint.x() < iMinX)
+			iMinX = oPoint.x();
+		if(oPoint.y() < iMinY)
+			iMinY = oPoint.y();
+		if(oPoint.x() > iMaxX)
+			iMaxX = oPoint.x();
+		if(oPoint.y() > iMaxY)
+			iMaxY = oPoint.y();
+	}
+
+	// Give a margin of 10 pixels around the face region
+	iMinX -= 10; if(iMinX < 0) iMinX = 0;
+	iMinY -= 10; if(iMinY < 0) iMinY = 0;
+	iMaxX += 10; if(iMaxX >= oImage.cols) iMaxX = oImage.cols - 1;
+	iMaxY += 10; if(iMaxY >= oImage.rows) iMaxY = oImage.rows - 1;
+
+	// Crop the image to keep only the face region
+	Mat oRet = oImage(Rect(iMinX, iMinY, iMaxX - iMinX, iMaxY - iMinY));
+
+	// Calculate the distance between the eyes
+	QPoint oLeftEye(lLandmarks[LEFT_EYE_INNER_CORNER]);
+	QPoint oRightEye(lLandmarks[RIGHT_EYE_INNER_CORNER]);
+	float fDistance = std::ceil(QVector2D(oRightEye - oLeftEye).length());
+
+	// Scale the image so the distance between the eyes is close to 50 pixels
+	float fScale = 50.0 / fDistance;
+	Size oSize = oRet.size();
+	oSize.width *= fScale;
+	oSize.height *= fScale;
+	resize(oRet, oRet, oSize);
+
+	return oRet;
 }

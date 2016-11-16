@@ -61,7 +61,6 @@ int main(int argc, char* argv[])
 
 		case GaborApp::CommandLineVersionRequested:
 		case GaborApp::CommandLineHelpRequested:
-		case GaborApp::DataExportRequested:
 			return 0;
 
 		case GaborApp::CommandLineOk:
