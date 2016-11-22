@@ -63,16 +63,20 @@ void fsdk::GaborExtractionTask::run()
 		oFrame = frame();
 		lLandmarks = oLandmarks.landmarks(frameIndex());
 
+		// Ignore frames where there is no landmarks (i.e. the tracking quality was 0)
+		if(lLandmarks.count() == 0)
+		{
+			setProgress(int(float(frameIndex()) / float(frameCount()) * 100.0f));
+			continue;
+		}
+
 		// Crop the face region and normalize its image (so the distance
 		// between eyes is 50 pixels)
 		oFrame = cropAndNormalize(oFrame, lLandmarks);
 
-		imwrite("c:\\temp\\cropped.png", oFrame);
-
-		//QMap<KernelParameters, Mat> mResponses;
-		Mat oResp = m_oBank.filter(oFrame);
-
-		imwrite("c:\\temp\\response.png", oResp);
+		// Filter the frame with the bank of Gabor kernels
+		QList<Mat> lResponses;
+		m_oBank.filter(oFrame, lResponses);
 
 		// Store the landmarks obtained in the map
 		//oData.add(frameIndex(), oTracker.getLandmarks(), oTracker.getQuality());

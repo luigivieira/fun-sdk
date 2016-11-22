@@ -101,18 +101,26 @@ namespace fsdk
 
 		/**
 		 * Filters the given image with the kernels in the bank and get their responses.
-		 * @param oImage OpenCV's Mat with the image in which to apply the filter.
+		 * @param oImage OpenCV's Mat with the image in which to apply the filters.
+		 * @param lResponses Reference to a QList of OpenCV's Mat with the responses
+		 * for each kernel in the bank.
+		 */
+		void filter(const cv::Mat &oImage, QList<cv::Mat> &lResponses) const;
+
+		/**
+		 * Filters the given image with the kernels in the bank and get their responses
+		 * and the parameters used for the kernels.
+		 * @param oImage OpenCV's Mat with the image in which to apply the filters.
 		 * @param mResponses Reference to a QMap (mappping KernelParameters to OpenCV's
 		 * Mats) with the responses for each kernel in the bank.
 		 */
 		void filter(const cv::Mat &oImage, QMap<KernelParameters, cv::Mat> &mResponses) const;
 
 		/**
-		 * Filters the given image with the kernel and get the responses (that is,
-		 * convolve the image with both the real and imaginary components and calculate
-		 * the magnitude/energy between their responses), as well as the real and 
-		 * imaginary components used when filtering.
-		 * @param oImage OpenCV's Mat with the image in which to apply the filter.
+		 * Filters the given image with the kernel and get the responses and the parameters
+		 * used for the kernels, as well as the real and imaginary components used when
+		 * filtering.
+		 * @param oImage OpenCV's Mat with the image in which to apply the filters.
 		 * @param oResponses Reference to an OpenCV's Mat that will receive the filter
 		 * responses.
 		 * @param oReal Reference to an OpenCV's Mat that will receive the real component
@@ -122,6 +130,12 @@ namespace fsdk
 		 */
 		void filter(const cv::Mat &oImage, QMap<KernelParameters, cv::Mat> &mResponses, QMap<KernelParameters, cv::Mat> &mReal, QMap<KernelParameters, cv::Mat> &mImaginary) const;
 
+		/**
+		 * Helper filter method used for debug purposes. Filter the image with the kernels
+		 * in this bank and produce a collated image with the responses.
+		 * @param oImage OpenCV's Mat with the image in which to apply the filters.
+		 * @return OpenCV's Mat with the collated image with the responses from each kernel.
+		 */
 		cv::Mat filter(const cv::Mat &oImage) const;
 
 		/**

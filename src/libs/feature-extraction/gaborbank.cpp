@@ -56,7 +56,7 @@ fsdk::GaborBank::GaborBank(const GaborBank &oOther)
 // +-----------------------------------------------------------
 fsdk::GaborBank fsdk::GaborBank::defaultBank()
 {
-	QList<double> lWavelengths = QList<double>({ 3, 6, 9, 13 });
+	QList<double> lWavelengths = QList<double>({ 3, 6, 9, 12 });
 	QList<double> lOrientations;
 	for(double dTheta = 0; dTheta < CV_PI; dTheta += CV_PI / 8)
 		lOrientations.append(dTheta);
@@ -123,6 +123,30 @@ Mat fsdk::GaborBank::getThumbnails(const GaborKernel::KernelComponent eComp, con
 	QString sYTitle = QApplication::translate("GaborBank", "Wavelength (in pixels)");
 
 	return ImageMan::collateMats(lThumbs, oSize, m_lWavelengths.count(), m_lOrientations.count(), bResize, Scalar(128), 2, Scalar(255), Scalar(255), lXLabels, lYLabels, sXTitle, sYTitle);
+}
+
+// +-----------------------------------------------------------
+void fsdk::GaborBank::filter(const cv::Mat &oImage, QList<cv::Mat> &lResponses) const
+{
+	// Convert the image to gray scale
+	Mat oGrImage;
+	if(oImage.type() != CV_8UC1)
+		cvtColor(oImage, oGrImage, CV_BGR2GRAY);
+	else
+		oGrImage = oImage;
+
+	// Filter with all kernels
+	lResponses.clear();
+	QMap<KernelParameters, GaborKernel>::const_iterator it;
+	for(it = m_mKernels.cbegin(); it != m_mKernels.cend(); ++it)
+	{
+		GaborKernel oKernel = it.value();
+
+		Mat oResponses;
+		oKernel.filter(oGrImage, oResponses);
+
+		lResponses.append(oResponses);
+	}
 }
 
 // +-----------------------------------------------------------
